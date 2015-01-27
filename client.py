@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 import AmqpConnector
-import concurrent.futures
-import deps.webFunctions
 import json
 import logging
 import os.path
-import deps.logSetup
 import threading
 import ssl
 import time
@@ -64,6 +61,9 @@ class RpcHandler(object):
 
 	def _process(self, body):
 		body = json.loads(body)
+
+		assert isinstance(body, dict) == True, 'The message must decode to a dict!'
+
 		delay = None
 
 		try:
@@ -73,6 +73,7 @@ class RpcHandler(object):
 			self.log.info("Received request. Processing.")
 			ret = self.process(body)
 
+			assert isinstance(ret, dict) == True, '`process()` call in child-class must return a dict!'
 
 			# Copy the jobid and dbid across, so we can cross-reference the job
 			# when it's received.
@@ -82,7 +83,10 @@ class RpcHandler(object):
 				ret['jobid'] = body['jobid']
 
 			if not 'success' in ret:
-				ret['success'] == True
+				ret['success'] = True
+			if not 'cancontinue' in ret:
+				ret['cancontinue'] = True
+
 
 			self.log.info("Processing complete. Submitting job with id '%s'.", ret['jobid'])
 		except Exception:
@@ -90,7 +94,7 @@ class RpcHandler(object):
 				'success'     : False,
 				'error'       : "unknown",
 				'traceback'   : traceback.format_exc(),
-				'cancontinue' : False
+				'cancontinue' : True
 			}
 			self.log.error("Had exception?")
 			for line in traceback.format_exc().split("\n"):
@@ -196,95 +200,3 @@ class RpcHandler(object):
 
 
 		self.log.info("Closed. Exiting")
-
-class Grabber(RpcHandler):
-
-	def __init__(self, settings):
-		super().__init__(settings)
-
-		self.wg = deps.webFunctions.WebGetRobust()
-
-	def process(self, body):
-		print("STUFF GOES HERE")
-
-		# import string
-		# size = random.randint(1, 100)
-		# fCont = ''.join(random.choice(string.printable) for i in range(1024*32))
-		# fCont = fCont * 32 * size
-		# fCont = bytes(fCont, 'ascii')
-
-		# fName = u'datTemp-{num}.bin'.format(num=time.time())
-
-		# ret = {
-		# 	u'success'     : True,
-		# 	u'fileN'       : fName,
-		# 	u'fileC'       : 'wat',
-		# 	u'cancontinue' : True
-		# }
-
-
-		# return ret
-
-def loadSettings():
-
-	settings = None
-
-	sPaths = ['./settings.json', '../settings.json']
-
-	for sPath in sPaths:
-		if not os.path.exists(sPath):
-			continue
-		with open('./settings.json', 'r') as fp:
-			settings = json.load(fp)
-
-	if not settings:
-		raise ValueError("No settings.json file found!")
-
-	return settings
-
-
-def launchThread(settings):
-	print("Launching scraper in single-threaded mode.")
-	rpc = Grabber(settings)
-	rpc.processEvents()
-
-def multithread(numThreads, settings):
-	global RUN_STATE
-
-	print("Launching {num} threads.".format(num=numThreads))
-
-	with concurrent.futures.ThreadPoolExecutor(max_workers=numThreads) as executor:
-		for thnum in range(numThreads):
-			print("Launching thread {num}".format(num=thnum))
-			executor.submit(launchThread, settings)
-		try:
-			while 1:
-				time.sleep(1)
-		except KeyboardInterrupt:
-			print("Main thread interrupt!")
-
-		RUN_STATE = False
-
-	print("Main thread exited.")
-
-
-def go():
-	deps.logSetup.initLogging(logLevel=logging.INFO)
-	settings = loadSettings()
-
-	threads = 1
-	if 'threads' in settings and settings['threads']:
-		threads = settings['threads']
-		print("Have multithreading configuration directive!", threads)
-	else:
-		print("Running in single thread mode.")
-
-
-
-	if threads == 1:
-		launchThread(settings)
-	else:
-		multithread(threads, settings)
-
-if __name__ == "__main__":
-	go()
