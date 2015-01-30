@@ -96,9 +96,16 @@ class RpcHandler(object):
 				'traceback'   : traceback.format_exc(),
 				'cancontinue' : True
 			}
+			if 'jobid' in body:
+				ret['jobid'] = body['jobid']
+
 			self.log.error("Had exception?")
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
+
+
+			# Disable the delay if the call had an exception.
+			delay = 0
 
 		if not 'cancontinue' in ret:
 			self.log.error('Invalid return value from `process()`')
