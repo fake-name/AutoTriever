@@ -199,7 +199,8 @@ class WebGetRobust:
 			headers = {}
 			if postData != None:
 				self.log.info("Making a post-request!")
-				params['data'] = urllib.parse.urlencode(postData).encode("utf-8")
+				# data = urllib.parse.urlencode(postData)
+				params['data'] = postData.encode("utf-8")
 			if addlHeaders != None:
 				self.log.info("Have additional GET parameters!")
 				headers = addlHeaders
@@ -398,6 +399,9 @@ class WebGetRobust:
 		nativeError    = kwargs.setdefault("nativeError",     False)
 		binaryForm     = kwargs.setdefault("binaryForm",      False)
 
+		# print("addlHeaders", addlHeaders)
+		# print("PostData", postData)
+		# print("PostData", type(postData))
 
 
 		pgctnt = None

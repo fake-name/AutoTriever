@@ -16,7 +16,19 @@ class RpcCallDispatcher(client.RpcHandler):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
-		self.plugins = loadPlugins()
+		initCalls = loadPlugins('init', 'InitSystem_')
+
+		for initCall in initCalls:
+
+			# Instantiate the initialization class
+			p = initCalls[initCall]()
+
+			if 'init' in p.calls:
+				# and then call it's setup method
+				p.calls['init']()
+
+		self.plugins = loadPlugins('modules', "PluginInterface_")
+
 
 		self.classCache = {}
 
@@ -26,8 +38,8 @@ class RpcCallDispatcher(client.RpcHandler):
 
 		self.log.info("Calling module '%s'", module)
 		self.log.info("internal call name '%s'", call)
-		self.log.info("Args '%s'", call_args)
-		self.log.info("Kwargs '%s'", call_kwargs)
+		# self.log.info("Args '%s'", call_args)
+		# self.log.info("Kwargs '%s'", call_kwargs)
 
 		return self.classCache[module].calls[call](*call_args, **call_kwargs)
 
@@ -62,7 +74,7 @@ class RpcCallDispatcher(client.RpcHandler):
 			kwargs = command['kwargs']
 
 		ret = self.doCall(command['module'], command['call'], args, kwargs)
-
+		# print(ret)
 		response = {
 			'ret' : ret,
 			'success' : True,
@@ -73,9 +85,9 @@ class RpcCallDispatcher(client.RpcHandler):
 		return response
 
 
-def getPythonScriptModules():
+def getPythonScriptModules(dirPath):
 	scriptDir = os.path.split(os.path.realpath(__file__))[0]
-	moduleDir = os.path.join(scriptDir, "modules")
+	moduleDir = os.path.join(scriptDir, dirPath)
 
 	ret = []
 	for fName in os.listdir(moduleDir):
@@ -94,11 +106,11 @@ def getPythonScriptModules():
 
 	return ret
 
-def findPluginClass(module):
+def findPluginClass(module, prefix):
 
 	interfaces = []
 	for item in dir(module):
-		if not item.startswith("PluginInterface_"):
+		if not item.startswith(prefix):
 			continue
 
 		plugClass = getattr(module, item)
@@ -108,14 +120,14 @@ def findPluginClass(module):
 		interfaces.append((plugClass.name, plugClass))
 
 	return interfaces
-def loadPlugins():
-	modules = getPythonScriptModules()
+def loadPlugins(onPath, prefix):
+	modules = getPythonScriptModules(onPath)
 	ret = {}
 
 	for fPath, modName in modules:
 		loader = SourceFileLoader(modName, fPath)
 		mod = loader.load_module()
-		plugClasses = findPluginClass(mod)
+		plugClasses = findPluginClass(mod, prefix)
 		for key, pClass in plugClasses:
 			if key in ret:
 				raise ValueError("Two plugins providing an interface with the same name? Name: '%s'" % key)
@@ -131,12 +143,14 @@ def test():
 	deps.logSetup.initLogging()
 	log.info("Testing import options")
 
-	plugins = loadPlugins()
-	for name, plugin in plugins.items():
-		print(name)
-		p = plugin()
-		print(p.calls)
+	initCalls = loadPlugins('init', 'InitSystem_')
 
+	for initCall in initCalls:
+		p = initCalls[initCall]()
+		print(p.calls['init']())
+		print('InitCall: ', initCall)
+
+	plugins = loadPlugins('modules', "PluginInterface_")
 
 
 if __name__ == "__main__":
