@@ -78,8 +78,6 @@ class RpcHandler(object):
 
 			# Copy the jobid and dbid across, so we can cross-reference the job
 			# when it's received.
-			if 'dbId' in body:
-				ret['dbid']  = body['dbid']
 			if 'jobid' in body:
 				ret['jobid'] = body['jobid']
 
@@ -160,11 +158,11 @@ class RpcHandler(object):
 		try:
 			while RUN_STATE and not self.die:
 				try:
-					connector = AmqpConnector.Connector(userid      = self.settings["RABBIT_LOGIN"],
-															password     = self.settings["RABBIT_PASWD"],
-															host         = self.settings["RABBIT_SRVER"],
-															virtual_host = self.settings["RABBIT_VHOST"],
-															ssl          = sslopts)
+					connector = AmqpConnector.Connector(userid       = self.settings["RABBIT_LOGIN"],
+														password     = self.settings["RABBIT_PASWD"],
+														host         = self.settings["RABBIT_SRVER"],
+														virtual_host = self.settings["RABBIT_VHOST"],
+														ssl          = sslopts)
 				except IOError:
 					self.log.error("Error while connecting to server.")
 					self.log.error("Is the AMQP server not available?")

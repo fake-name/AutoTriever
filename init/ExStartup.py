@@ -7,25 +7,6 @@ import os.path
 
 import main
 
-
-def loadSettings():
-
-	settings = None
-
-	sPaths = ['./settings.json', '../settings.json']
-
-	for sPath in sPaths:
-		if not os.path.exists(sPath):
-			continue
-		with open('./settings.json', 'r') as fp:
-			settings = json.load(fp)
-
-	if not settings:
-		raise ValueError("No settings.json file found!")
-
-	return settings
-
-
 class ExInit():
 
 

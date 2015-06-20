@@ -28,6 +28,7 @@ class RpcCallDispatcher(client.RpcHandler):
 				p.calls['init']()
 
 		self.plugins = loadPlugins('modules', "PluginInterface_")
+		self.log.info("Found '%s' Plugins:", len(self.plugins))
 		for item in self.plugins.keys():
 			self.log.info("Enabled plugin: '%s'", item)
 		self.classCache = {}
@@ -37,7 +38,9 @@ class RpcCallDispatcher(client.RpcHandler):
 
 	def doCall(self, module, call, call_args, call_kwargs):
 		if not module in self.classCache:
+			self.log.info("First call to module '%s'", module)
 			self.classCache[module] =  self.plugins[module]()
+			self.log.info("Module provided calls: '%s'", self.classCache[module].calls.keys())
 
 		self.log.info("Calling module '%s'", module)
 		self.log.info("internal call name '%s'", call)
@@ -49,12 +52,17 @@ class RpcCallDispatcher(client.RpcHandler):
 	def process(self, command):
 		if not 'module' in command:
 			self.log.error("No 'module' in message!")
+			self.log.error("Message: '%s'", command)
 
 			ret = {
 				'success'     : False,
 				'error'       : "No module in message!",
 				'cancontinue' : True
 			}
+
+			if 'extradat' in command:
+				ret['extradat'] = command['extradat']
+
 			return ret
 
 		if not 'call' in command:
@@ -65,6 +73,8 @@ class RpcCallDispatcher(client.RpcHandler):
 				'error'       : "No call in message!",
 				'cancontinue' : True
 			}
+			if 'extradat' in command:
+				ret['extradat'] = command['extradat']
 			return ret
 
 
@@ -84,6 +94,8 @@ class RpcCallDispatcher(client.RpcHandler):
 			'cancontinue' : True
 		}
 
+		if 'extradat' in command:
+			response['extradat'] = command['extradat']
 
 		return response
 
