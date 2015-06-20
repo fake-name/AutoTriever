@@ -22,4 +22,5 @@ else
 	echo "SCRAPE_CREDS is set!"
 fi
 
+echo "Launching executable."
 python3 ./main.py

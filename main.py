@@ -63,6 +63,7 @@ def multithread(numThreads, settings):
 
 
 def go():
+	print("AutoTreiver Launching!")
 	deps.logSetup.initLogging(logLevel=logging.INFO)
 	settings = loadSettings()
 
