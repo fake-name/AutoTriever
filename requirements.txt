@@ -3,3 +3,4 @@ BeautifulSoup4
 msgpack-python 
 colorama 
 ftfy
+selenium
