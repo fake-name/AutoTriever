@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import AmqpConnector
-import json
+import msgpack
 import logging
 import os.path
 import threading
@@ -60,7 +60,8 @@ class RpcHandler(object):
 
 
 	def _process(self, body):
-		body = json.loads(body)
+		# body = json.loads(body)
+		body = msgpack.unpackb(body, use_list=True, encoding='utf-8')
 
 		assert isinstance(body, dict) == True, 'The message must decode to a dict!'
 
@@ -119,7 +120,8 @@ class RpcHandler(object):
 
 		self.log.info("Returning")
 
-		return json.dumps(ret), delay
+		return msgpack.packb(ret, use_bin_type=True), delay
+		# return json.dumps(ret), delay
 
 	def successDelay(self, sleeptime):
 		'''
