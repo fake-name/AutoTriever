@@ -84,7 +84,65 @@ class ExContentLoader(object):
 			raise LoginException("Login failed! Is your login data valid?")
 
 		self.permuteCookies()
+		self.setSiteConfig()
 		self.wg.saveCookies()
+
+	def setSiteConfig(self):
+
+		params = {
+			'apply'       : 'Apply',
+			'ar'          : '0',
+			'cs'          : 'a',
+			'dm'          : 'l',
+			'f_artistcg'  : 'on',
+			'f_asianporn' : 'on',
+			'f_cosplay'   : 'on',
+			'f_doujinshi' : 'on',
+			'f_gamecg'    : 'on',
+			'f_imageset'  : 'on',
+			'f_manga'     : 'on',
+			'f_misc'      : 'on',
+			'f_non-h'     : 'on',
+			'f_western'   : 'on',
+			'favorite_0'  : 'Favorites 0',
+			'favorite_1'  : 'Favorites 1',
+			'favorite_2'  : 'Favorites 2',
+			'favorite_3'  : 'Favorites 3',
+			'favorite_4'  : 'Favorites 4',
+			'favorite_5'  : 'Favorites 5',
+			'favorite_6'  : 'Favorites 6',
+			'favorite_7'  : 'Favorites 7',
+			'favorite_8'  : 'Favorites 8',
+			'favorite_9'  : 'Favorites 9',
+			'hk'          : '',
+			'hp'          : '',
+			'oi'          : 'y',
+			'pn'          : '0',
+			'qb'          : 'n',
+			'rc'          : '3',   # This is the only setting here I actually give a shit about.
+			'rx'          : '0',
+			'ry'          : '0',
+			'sc'          : '0',
+			'tf'          : 'n',
+			'tl'          : 'm',
+			'to'          : 'a',
+			'tr'          : '2',
+			'ts'          : 'm',
+			'uh'          : 'y',
+			}
+
+		# Plain access sets the "hath_perks" cookie, apparently
+		self.wg.getpage('http://exhentai.org/uconfig.php', addlHeaders={"Referer" : 'http://exhentai.org/home.php'}, returnMultiple=True)
+		self.wg.getpage('http://exhentai.org/uconfig.php', addlHeaders={"Referer" : 'http://exhentai.org/uconfig.php'}, postData=params, returnMultiple=True)
+
+		self.wg.getpage('http://g.e-hentai.org/uconfig.php', addlHeaders={"Referer" : 'http://g.e-hentai.org/home.php'}, returnMultiple=True)
+		self.wg.getpage('http://g.e-hentai.org/uconfig.php', addlHeaders={"Referer" : 'http://g.e-hentai.org/uconfig.php'}, postData=params, returnMultiple=True)
+
+		# Plain access sets the "hath_perks" cookie, apparently
+		# pg, hdr = self.wg.getpage('http://g.e-hentai.org/uconfig.php', addlHeaders={"Referer" : 'http://g.e-hentai.org/home.php'}, returnMultiple=True)
+		# print(hdr.headers)
+		# self.wg.getpage('http://g.e-hentai.org/uconfig.php', addlHeaders={"Referer" : 'http://g.e-hentai.org/uconfig.php'}, postData=params, returnMultiple=True)
+
 
 	# So exhen uses some irritating cross-site login hijinks.
 	# Anyways, we need to copy the cookies for e-hentai to exhentai,
@@ -98,24 +156,6 @@ class ExContentLoader(object):
 				dup = copy.copy(cookie)
 				dup.domain = 'exhentai.org'
 				self.wg.addCookie(dup)
-
-				if "ipb_member_id" in cookie.name:
-					# Crude, CRUDE hack to install the gallery view settings
-					# Specificaly, rc_3 which sets the per-page items to 200, rather then 25 (requires a hath perk)
-					dup1 = copy.copy(cookie)
-					dup2 = copy.copy(cookie)
-
-					dup2.domain = 'exhentai.org'
-					dup1.name  = 'uconfig'
-					dup2.name  = 'uconfig'
-					dup1.value = 'tl_m-uh_y-tr_2-ts_m-prn_y-dm_l-ar_0-xns_0-rc_3-rx_0-ry_0-cs_a-to_a-pn_0-sc_0-cats_0-ms_n-mt_n-sa_y-oi_n-qb_n-tf_n-hp_-hk_-xl_'
-					dup2.value = 'tl_m-uh_y-tr_2-ts_m-prn_y-dm_l-ar_0-xns_0-rc_3-rx_0-ry_0-cs_a-to_a-pn_0-sc_0-cats_0-ms_n-mt_n-sa_y-oi_n-qb_n-tf_n-hp_-hk_-xl_'
-					self.wg.addCookie(dup1)
-					self.wg.addCookie(dup2)
-
-
-
-
 
 
 	# MOAR checking. We load the root page, and see if we have anything.
