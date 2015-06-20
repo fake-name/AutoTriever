@@ -5,7 +5,8 @@ set -e
 
 # This is just a very minimal script that starts the scraper.
 echo "Updating local git repo"
-git pull .
+git fetch . origin/master
+git pull . origin/master
 
 echo "Current release:"
 git log -1
