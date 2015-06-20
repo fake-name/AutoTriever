@@ -8,6 +8,8 @@ import json
 import deps.logSetup
 import logging
 import os.path
+import os
+
 
 RUN_STATE = True
 
@@ -22,10 +24,15 @@ def loadSettings():
 		if not os.path.exists(sPath):
 			continue
 		with open('./settings.json', 'r') as fp:
+			print("Found settings.json file! Loading settings.")
 			settings = json.load(fp)
 
+	if not settings and 'SCRAPE_CREDS' in os.environ:
+		print("Found 'SCRAPE_CREDS' environment variable! Loading settings.")
+		settings = json.loads(os.environ['SCRAPE_CREDS'])
+
 	if not settings:
-		raise ValueError("No settings.json file found!")
+		raise ValueError("No settings.json file or 'SCRAPE_CREDS' environment variable found!")
 
 	return settings
 

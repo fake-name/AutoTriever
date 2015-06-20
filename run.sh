@@ -17,10 +17,8 @@ git pull .
 # env var. Therefore, dump them to the settings.json file.
 if [ -z "$SCRAPE_CREDS" ];
 then
-	echo "SCRAPE_CREDS is $SCRAPE_CREDS"
-	echo "Apparently it's unset!"
+	echo "SCRAPE_CREDS is unset!"
 else
-	echo $SCRAPE_CREDS > settings.json
 	echo "SCRAPE_CREDS is set!"
 fi
 

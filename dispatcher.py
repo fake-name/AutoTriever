@@ -28,9 +28,12 @@ class RpcCallDispatcher(client.RpcHandler):
 				p.calls['init']()
 
 		self.plugins = loadPlugins('modules', "PluginInterface_")
-
-
+		for item in self.plugins.keys():
+			self.log.info("Enabled plugin: '%s'", item)
 		self.classCache = {}
+
+
+
 
 	def doCall(self, module, call, call_args, call_kwargs):
 		if not module in self.classCache:
