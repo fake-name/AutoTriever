@@ -27,7 +27,7 @@ class RpcHandler(object):
 		self.settings = settings
 
 		# Require clientID in settings
-		assert 'clientid' in settings
+		assert 'clientid'     in settings
 		assert "RABBIT_LOGIN" in settings
 		assert "RABBIT_PASWD" in settings
 		assert "RABBIT_SRVER" in settings

@@ -1,0 +1,5 @@
+AmqpConnector 
+BeautifulSoup4 
+msgpack-python 
+colorama 
+ftfy
