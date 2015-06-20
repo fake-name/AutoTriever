@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
 
+set -e
+
 # This is just a very minimal script that starts the scraper.
-# It's run in a screen session by the bootstrapping process.
-
-# If we're in a vagrant environment, /vagrant will exist.
-# As such, cd there. Otherwise, just run from
-# the current directory.
-if [ -d /vagrant ]
-then
-	cd /vagrant
-fi
-
+echo "Updating local git repo"
 git pull .
+
+echo "Current release:"
+git log -1
 
 # If we're in a docker instance, the credentials will have been passed in as a
 # env var. Therefore, dump them to the settings.json file.
@@ -20,7 +16,7 @@ then
 	echo "SCRAPE_CREDS is unset!"
 else
 	echo "SCRAPE_CREDS is set!"
-fi
+fi;
 
 echo "Launching executable."
 python3 ./main.py
