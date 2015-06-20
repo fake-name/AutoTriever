@@ -21,7 +21,7 @@ then
 	echo "Apparently it's unset!"
 else
 	echo $SCRAPE_CREDS > settings.json
-	echo "SCRAPE_CREDS is $SCRAPE_CREDS"
+	echo "SCRAPE_CREDS is set!"
 fi
 
 python3 ./main.py
