@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# Halt on errors.
 set -e
 
 # This is just a very minimal script that starts the scraper.
