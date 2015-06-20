@@ -97,8 +97,25 @@ class ExContentLoader(object):
 
 				dup = copy.copy(cookie)
 				dup.domain = 'exhentai.org'
-
 				self.wg.addCookie(dup)
+
+				if "ipb_member_id" in cookie.name:
+					# Crude, CRUDE hack to install the gallery view settings
+					# Specificaly, rc_3 which sets the per-page items to 200, rather then 25 (requires a hath perk)
+					dup1 = copy.copy(cookie)
+					dup2 = copy.copy(cookie)
+
+					dup2.domain = 'exhentai.org'
+					dup1.name  = 'uconfig'
+					dup2.name  = 'uconfig'
+					dup1.value = 'tl_m-uh_y-tr_2-ts_m-prn_y-dm_l-ar_0-xns_0-rc_3-rx_0-ry_0-cs_a-to_a-pn_0-sc_0-cats_0-ms_n-mt_n-sa_y-oi_n-qb_n-tf_n-hp_-hk_-xl_'
+					dup2.value = 'tl_m-uh_y-tr_2-ts_m-prn_y-dm_l-ar_0-xns_0-rc_3-rx_0-ry_0-cs_a-to_a-pn_0-sc_0-cats_0-ms_n-mt_n-sa_y-oi_n-qb_n-tf_n-hp_-hk_-xl_'
+					self.wg.addCookie(dup1)
+					self.wg.addCookie(dup2)
+
+
+
+
 
 
 	# MOAR checking. We load the root page, and see if we have anything.
