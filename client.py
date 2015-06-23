@@ -113,7 +113,6 @@ class RpcHandler(object):
 			self.die = True
 
 
-
 		ret['user'] = self.settings['clientid']
 
 		self.log.info("Returning")
@@ -180,6 +179,7 @@ class RpcHandler(object):
 				while RUN_STATE and not self.die:
 					message = connector.getMessage()
 					if message:
+						self.log.info("Processing message.")
 
 						response, postDelay = self._process(message)
 
