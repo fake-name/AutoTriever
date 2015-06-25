@@ -89,9 +89,12 @@ class RpcCallDispatcher(client.RpcHandler):
 		ret = self.doCall(command['module'], command['call'], args, kwargs)
 		# print(ret)
 		response = {
-			'ret' : ret,
-			'success' : True,
-			'cancontinue' : True
+			'ret'          : ret,
+			'success'      : True,
+			'cancontinue'  : True,
+			'dispatch_key' : command['dispatch_key'],
+			'module'       : command['module'],
+			'call'         : command['call'],
 		}
 
 		if 'extradat' in command:
