@@ -259,8 +259,10 @@ class ExContentLoader(object):
 		downloadUrl, gpCost = self.getDownloadUrl(downloadUrl, sourceUrl)
 		fCont, fName = self.wg.getFileAndName(downloadUrl)
 
-
-		self.log.info("Downloaded filename: %s.", fName)
+		try:
+			self.log.info("Downloaded filename: %s.", fName)
+		except UnicodeEncodeError:
+			self.log.warning("Could not print filename with len %s!", len(fName))
 
 		response = {
 			u'success'     : True,
