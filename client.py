@@ -163,6 +163,7 @@ class RpcHandler(object):
 														virtual_host        = self.settings["RABBIT_VHOST"],
 														ssl                 = sslopts,
 														session_fetch_limit = 1,
+														durable             = True,
 														)
 				except IOError:
 					self.log.error("Error while connecting to server.")
