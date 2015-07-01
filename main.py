@@ -2,6 +2,7 @@
 
 import dispatcher
 import time
+import traceback
 import concurrent.futures
 import deps.webFunctions
 import json
@@ -39,8 +40,19 @@ def loadSettings():
 
 def launchThread(settings):
 	print("Launching scraper in single-threaded mode.")
-	rpc = dispatcher.RpcCallDispatcher(settings)
-	rpc.processEvents()
+	rpc = None
+	while 1:
+		try:
+			if not rpc:
+				rpc = dispatcher.RpcCallDispatcher(settings)
+			rpc.processEvents()
+		except KeyboardInterrupt:
+			break
+		except Exception:
+			print("Error! Wat?")
+			traceback.print_exc()
+			rpc = None
+			time.sleep(60*3)
 
 def multithread(numThreads, settings):
 	global RUN_STATE

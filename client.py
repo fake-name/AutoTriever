@@ -154,6 +154,8 @@ class RpcHandler(object):
 		else:
 			sslopts = None
 
+		shutdownType = "dirty"
+
 		try:
 			while RUN_STATE and not self.die:
 				try:
@@ -199,6 +201,8 @@ class RpcHandler(object):
 
 		except KeyboardInterrupt:
 			self.log.info("Keyboard Interrupt exit!")
+			self.die = True
+
 
 		self.log.info("Halting message consumer.")
 		try:
@@ -210,3 +214,6 @@ class RpcHandler(object):
 
 
 		self.log.info("Closed. Exiting")
+
+		if not RUN_STATE or self.die:
+			raise KeyboardInterrupt
