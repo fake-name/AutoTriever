@@ -16,8 +16,9 @@ import bs4
 import re
 import gzip
 import io
-
-
+import socket
+import json
+import base64
 
 import random
 random.seed()
@@ -31,6 +32,67 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
 
+def determine_json_encoding(json_bytes):
+	'''
+	Given the fact that the first 2 characters in json are guaranteed to be ASCII, we can use
+	these to determine the encoding.
+	See: http://tools.ietf.org/html/rfc4627#section-3
+
+	Copied here:
+	   Since the first two characters of a JSON text will always be ASCII
+	   characters [RFC0020], it is possible to determine whether an octet
+	   stream is UTF-8, UTF-16 (BE or LE), or UTF-32 (BE or LE) by looking
+	   at the pattern of nulls in the first four octets.
+
+	           00 00 00 xx  UTF-32BE
+	           00 xx 00 xx  UTF-16BE
+	           xx 00 00 00  UTF-32LE
+	           xx 00 xx 00  UTF-16LE
+	           xx xx xx xx  UTF-8
+	'''
+	assert(isinstance(json_bytes, bytes))
+	if len(json_bytes) > 4:
+		b1, b2, b3, b4 = json_bytes[0], json_bytes[1], json_bytes[2], json_bytes[3]
+		if   b1 == 0 and b2 == 0 and b3 == 0 and b4 != 0:
+			return "UTF-32BE"
+		elif b1 == 0 and b2 != 0 and b3 == 0 and b4 != 0:
+			return "UTF-16BE"
+		elif b1 != 0 and b2 == 0 and b3 == 0 and b4 == 0:
+			return "UTF-32LE"
+		elif b1 != 0 and b2 == 0 and b3 != 0 and b4 == 0:
+			return "UTF-16LE"
+		elif b1 != 0 and b2 != 0 and b3 != 0 and b4 != 0:
+			return "UTF-8"
+		else:
+			raise ValueError("Unknown encoding!")
+	elif len(json_bytes) > 2:
+		b1, b2 = json_bytes[0], json_bytes[1]
+		if   b1 == 0 and b2 == 0:
+			return "UTF-32BE"
+		elif b1 == 0 and b2 != 0:
+			return "UTF-16BE"
+		elif b1 != 0 and b2 == 0:
+			raise ValueError("Json string too short to definitively infer encoding.")
+		elif b1 != 0 and b2 != 0:
+			return "UTF-8"
+		else:
+			raise ValueError("Unknown encoding!")
+
+	raise ValueError("Input string too short to guess encoding!")
+
+
+class title_not_contains(object):
+	""" An expectation for checking that the title *does not* contain a case-sensitive
+	substring. title is the fragment of title expected
+	returns True when the title matches, False otherwise
+	"""
+	def __init__(self, title):
+		self.title = title
+
+
+	def __call__(self, driver):
+		return self.title not in driver.title
+
 #pylint: disable-msg=E1101, C0325, R0201, W0702, W0703
 
 # A urllib2 wrapper that provides error handling and logging, as well as cookie management. It's a bit crude, but it works.
@@ -39,8 +101,30 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 # Arrrgh.
 
 from threading import Lock
-cookieWriteLock = Lock()
+COOKIEWRITELOCK = Lock()
 
+GLOBAL_COOKIE_FILE = None
+
+class PreemptiveBasicAuthHandler(urllib.request.HTTPBasicAuthHandler):
+	'''Preemptive basic auth.
+
+	Instead of waiting for a 403 to then retry with the credentials,
+	send the credentials if the url is handled by the password manager.
+	Note: please use realm=None when calling add_password.'''
+	def http_request(self, req):
+		url = req.get_full_url()
+		realm = None
+		# this is very similar to the code from retry_http_basic_auth()
+		# but returns a request object.
+		user, pw = self.passwd.find_user_password(realm, url)
+		if pw:
+			raw = "%s:%s" % (user, pw)
+			raw = raw.encode("ascii")
+			auth = b'Basic ' + base64.standard_b64encode(raw).strip()
+			req.add_unredirected_header(self.auth_header, auth)
+		return req
+
+	https_request = http_request
 
 class WebGetRobust:
 	COOKIEFILE = 'cookies.lwp'				# the path and filename to save your cookies in
@@ -48,7 +132,7 @@ class WebGetRobust:
 	cookielib = None
 	opener = None
 
-	errorOutCount = 2
+	errorOutCount = 3
 	retryDelay = 1.5
 
 
@@ -57,9 +141,19 @@ class WebGetRobust:
 	# if test=true, no resources are actually fetched (for testing)
 	# creds is a list of 3-tuples that gets inserted into the password manager.
 	# it is structured [(top_level_url1, username1, password1), (top_level_url2, username2, password2)]
-	def __init__(self, test=False, creds=None, logPath="Main.Web"):
+	def __init__(self, test=False, creds=None, logPath="Main.Web", cookie_lock=None):
+
+		if cookie_lock:
+			self.cookie_lock = cookie_lock
+		else:
+			self.cookie_lock = COOKIEWRITELOCK
+
+
+		# Override the global default socket timeout, so hung connections will actually time out properly.
+		socket.setdefaulttimeout(30)
+
 		self.log = logging.getLogger(logPath)
-		print("Webget init! Logpath = ", logPath)
+		# print("Webget init! Logpath = ", logPath)
 		if creds:
 			print("Have creds for a domain")
 		if test:
@@ -82,7 +176,7 @@ class WebGetRobust:
 			passManager = urllib.request.HTTPPasswordMgrWithDefaultRealm()
 			for url, username, password in creds:
 				passManager.add_password(None, url, username, password)
-			self.credHandler = urllib.request.HTTPBasicAuthHandler(passManager)
+			self.credHandler = PreemptiveBasicAuthHandler(passManager)
 		else:
 			self.credHandler = None
 
@@ -108,7 +202,7 @@ class WebGetRobust:
 					print("Have cred handler. Building opener using it")
 					self.opener = urllib.request.build_opener(cookieHandler, self.credHandler)
 				else:
-					print("No cred handler")
+					# print("No cred handler")
 					self.opener = urllib.request.build_opener(cookieHandler)
 				#self.opener.addheaders = [('User-Agent', 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)')]
 				self.opener.addheaders = self.browserHeaders
@@ -163,8 +257,42 @@ class WebGetRobust:
 		if isinstance(page, bytes):
 			raise ValueError("Received content not decoded! Cannot parse!")
 
-		soup = bs4.BeautifulSoup(page)
+		soup = bs4.BeautifulSoup(page, "lxml")
 		return soup
+
+	def getJson(self, *args, **kwargs):
+		if 'returnMultiple' in kwargs and kwargs['returnMultiple']:
+			raise ValueError("getSoup cannot be called with 'returnMultiple' being true")
+
+		attempts = 0
+		while 1:
+			try:
+				page = self.getpage(*args, **kwargs)
+				if isinstance(page, bytes):
+					page = page.decode(determine_json_encoding(page))
+					# raise ValueError("Received content not decoded! Cannot parse!")
+
+				page = page.strip()
+				ret = json.loads(page)
+				return ret
+			except ValueError:
+				if attempts < 1:
+					attempts += 1
+					self.log.error("JSON Parsing issue retreiving content from page!")
+					for line in traceback.format_exc().split("\n"):
+						self.log.error("%s", line.rstrip())
+					self.log.error("Retrying!")
+
+					# Scramble our current UA
+					self.browserHeaders = getUserAgent()
+					time.sleep(3)
+				else:
+					self.log.error("JSON Parsing issue, and retries exhausted!")
+					# self.log.error("Page content:")
+					# self.log.error(page)
+					# with open("Error-ctnt-{}.json".format(time.time()), "w") as tmp_err_fp:
+					# 	tmp_err_fp.write(page)
+					raise
 
 
 	def getFileAndName(self, *args, **kwargs):
@@ -192,17 +320,20 @@ class WebGetRobust:
 
 	def buildRequest(self, pgreq, postData, addlHeaders, binaryForm):
 		# Encode Unicode URL's properly
-		pgreq = iri2uri(pgreq)
+
+		try:
+			tmp = pgreq.encode("ascii")
+		except UnicodeEncodeError:
+			print("Wat?")
+			print("pgreq: '%s'", pgreq)
+
 
 		try:
 			params = {}
 			headers = {}
 			if postData != None:
-				self.log.info("Making a post-request!")
-				if not isinstance(postData, str):
-					postData = urllib.parse.urlencode(postData)
-				params['data'] = postData.encode("utf-8")
-				# print("Post data: '%s'" % postData)
+				self.log.info("Making a post-request! Params: '%s'", postData)
+				params['data'] = urllib.parse.urlencode(postData).encode("utf-8")
 			if addlHeaders != None:
 				self.log.info("Have additional GET parameters!")
 				headers = addlHeaders
@@ -225,45 +356,34 @@ class WebGetRobust:
 
 	def decodeHtml(self, pageContent, cType):
 
-		if (";" in cType) and ("=" in cType): 		# the server is reporting an encoding. Now we use it to decode the
+		# this *should* probably be done using a parser.
+		# However, it seems to be grossly overkill to shove the whole page (which can be quite large) through a parser just to pull out a tag that
+		# should be right near the page beginning anyways.
+		# As such, it's a regular expression for the moment
 
-			# Some wierdos put two charsets in their headers:
-			# `text/html;Charset=UTF-8;charset=UTF-8`
-			# Split, and take the first two entries.
-			dummy_docType, charset = cType.split(";")[:2]
-			charset = charset.split("=")[-1]
+		# Regex is of bytes type, since we can't convert a string to unicode until we know the encoding the
+		# bytes string is using, and we need the regex to get that encoding
+		coding = re.search(rb"charset=[\'\"]?([a-zA-Z0-9\-]*)[\'\"]?", pageContent, flags=re.IGNORECASE)
 
+		cType = b""
+		charset = None
+		try:
+			if coding:
+				cType = coding.group(1)
+				codecs.lookup(cType.decode("ascii"))
+				charset = cType.decode("ascii")
 
-		else:		# The server is not reporting an encoding in the headers.
+		except LookupError:
 
-			# this *should* probably be done using a parser.
-			# However, it seems to be grossly overkill to shove the whole page (which can be quite large) through a parser just to pull out a tag that
-			# should be right near the page beginning anyways.
-			# As such, it's a regular expression for the moment
+			# I'm actually not sure what I was thinking when I wrote this if statement. I don't think it'll ever trigger.
+			if (b";" in cType) and (b"=" in cType): 		# the server is reporting an encoding. Now we use it to decode the
 
-			# Regex is of bytes type, since we can't convert a string to unicode until we know the encoding the
-			# bytes string is using, and we need the regex to get that encoding
-			coding = re.search(rb"charset=[\'\"]?([a-zA-Z0-9\-]*)[\'\"]?", pageContent, flags=re.IGNORECASE)
+				dummy_docType, charset = cType.split(b";")
+				charset = charset.split(b"=")[-1]
 
-			cType = b""
-			charset = None
-			try:
-				if coding:
-					cType = coding.group(1)
-					codecs.lookup(cType.decode("ascii"))
-					charset = cType.decode("ascii")
-
-			except LookupError:
-
-				# I'm actually not sure what I was thinking when I wrote this if statement. I don't think it'll ever trigger.
-				if (b";" in cType) and (b"=" in cType): 		# the server is reporting an encoding. Now we use it to decode the
-
-					dummy_docType, charset = cType.split(b";")
-					charset = charset.split(b"=")[-1]
-
-			if not charset:
-				self.log.warning("Could not find encoding information on page - Using default charset. Shit may break!")
-				charset = "iso-8859-1"
+		if not charset:
+			self.log.warning("Could not find encoding information on page - Using default charset. Shit may break!")
+			charset = "iso-8859-1"
 
 		try:
 			pageContent = str(pageContent, charset)
@@ -299,22 +419,47 @@ class WebGetRobust:
 	def decodeTextContent(self, pgctnt, cType):
 
 		if cType:
-			if "text/html" in cType or \
-				'text/javascript' in cType or    \
-				'application/atom+xml' in cType:				# If this is a html/text page, we want to decode it using the local encoding
+			if (";" in cType) and ("=" in cType):
+				# the server is reporting an encoding. Now we use it to decode the content
+				# Some wierdos put two charsets in their headers:
+				# `text/html;Charset=UTF-8;charset=UTF-8`
+				# Split, and take the first two entries.
+				docType, charset = cType.split(";")[:2]
+				charset = charset.split("=")[-1]
 
-				pgctnt = self.decodeHtml(pgctnt, cType)
+				# Only decode content marked as text (yeah, google is serving zip files
+				# with the content-disposition charset header specifying "UTF-8") or
+				# specifically allowed other content types I know are really text.
+				decode = ['application/atom+xml', 'application/xml', "application/json", 'text']
+				if any([item in docType for item in decode]):
+					try:
+						pgctnt = str(pgctnt, charset)
+					except UnicodeDecodeError:
+						self.log.error("Encoding Error! Stripping invalid chars.")
+						pgctnt = pgctnt.decode('utf-8', errors='ignore')
 
-			elif "text/plain" in cType or "text/xml" in cType:
-				pgctnt = bs4.UnicodeDammit(pgctnt).unicode_markup
+			else:
+				# The server is not reporting an encoding in the headers.
+				# Use content-aware mechanisms for determing the content encoding.
 
-			# Assume JSON is utf-8. Probably a bad idea?
-			elif "application/json" in cType:
-				pgctnt = pgctnt.decode('utf-8')
 
-			elif "text" in cType:
-				self.log.critical("Unknown content type!")
-				self.log.critical(cType)
+				if "text/html" in cType or \
+					'text/javascript' in cType or    \
+					'application/xml' in cType or    \
+					'application/atom+xml' in cType:				# If this is a html/text page, we want to decode it using the local encoding
+
+					pgctnt = self.decodeHtml(pgctnt, cType)
+
+				elif "text/plain" in cType or "text/xml" in cType:
+					pgctnt = bs4.UnicodeDammit(pgctnt).unicode_markup
+
+				# Assume JSON is utf-8. Probably a bad idea?
+				elif "application/json" in cType:
+					pgctnt = pgctnt.decode('utf-8')
+
+				elif "text" in cType:
+					self.log.critical("Unknown content type!")
+					self.log.critical(cType)
 
 		else:
 			self.log.critical("No content disposition header!")
@@ -380,8 +525,10 @@ class WebGetRobust:
 		# postData expects a dict
 		# addlHeaders also expects a dict
 	def getpage(self, requestedUrl, **kwargs):
-
 		# pgreq = fixurl(pgreq)
+
+		# strip trailing and leading spaces.
+		requestedUrl = requestedUrl.strip()
 
 		# addlHeaders = None, returnMultiple = False, callBack=None, postData=None, soup=False, retryQuantity=None, nativeError=False, binaryForm=False
 
@@ -401,23 +548,25 @@ class WebGetRobust:
 		nativeError    = kwargs.setdefault("nativeError",     False)
 		binaryForm     = kwargs.setdefault("binaryForm",      False)
 
-		# print("addlHeaders", addlHeaders)
-		# print("PostData", postData)
-		# print("PostData", type(postData))
+		# Conditionally encode the referrer if needed, because otherwise
+		# urllib will barf on unicode referrer values.
+		if addlHeaders and 'Referer' in addlHeaders:
+			addlHeaders['Referer'] = iri2uri(addlHeaders['Referer'])
 
-
-		pgctnt = None
-		pghandle = None
-		retryCount = 0
-
-		pgreq = self.buildRequest(requestedUrl, postData, addlHeaders, binaryForm)
-
-		errored = False
-		lastErr = ""
+		requestedUrl = iri2uri(requestedUrl)
 
 
 		if not self.testMode:
+			retryCount = 0
 			while 1:
+
+				pgctnt = None
+				pghandle = None
+
+				pgreq = self.buildRequest(requestedUrl, postData, addlHeaders, binaryForm)
+
+				errored = False
+				lastErr = ""
 
 				retryCount = retryCount + 1
 
@@ -434,7 +583,9 @@ class WebGetRobust:
 
 				#print "execution", retryCount
 				try:
-					pghandle = self.opener.open(pgreq)					# Get Webpage
+					# print("Getpage!", requestedUrl, kwargs)
+					pghandle = self.opener.open(pgreq, timeout=30)					# Get Webpage
+					# print("Gotpage")
 
 				except urllib.error.HTTPError as e:								# Lotta logging
 					self.log.warning("Error opening page: %s at %s On Attempt %s.", pgreq.get_full_url(), time.ctime(time.time()), retryCount)
@@ -458,7 +609,20 @@ class WebGetRobust:
 
 				except UnicodeEncodeError:
 					self.log.critical("Unrecoverable Unicode issue retreiving page - %s", requestedUrl)
+					for line in traceback.format_exc().split("\n"):
+						self.log.critical("%s", line.rstrip())
+					self.log.critical("Parameters:")
+					self.log.critical("	requestedUrl: '%s'", requestedUrl)
+					self.log.critical("	postData:     '%s'", postData)
+					self.log.critical("	addlHeaders:  '%s'", addlHeaders)
+					self.log.critical("	binaryForm:   '%s'", binaryForm)
+
+
 					break
+
+
+
+
 
 				except Exception:
 					errored = True
@@ -495,15 +659,16 @@ class WebGetRobust:
 
 			if lastErr and nativeError:
 				raise lastErr
-			raise urllib.error.URLError("Failed to retreive page!")
+			raise urllib.error.URLError("Failed to retreive page '%s'!" % (requestedUrl, ))
 
 		if returnMultiple:
 			return pgctnt, pghandle
 		else:
+			pghandle.close()
 			return pgctnt
 
 	def syncCookiesFromFile(self):
-		self.log.info("Synchronizing cookies with cookieFile.")
+		# self.log.info("Synchronizing cookies with cookieFile.")
 		if os.path.isfile(self.COOKIEFILE):
 			self.cj.save("cookietemp.lwp")
 			self.cj.load(self.COOKIEFILE)
@@ -515,7 +680,7 @@ class WebGetRobust:
 
 	def updateCookiesFromFile(self):
 		if os.path.exists(self.COOKIEFILE):
-			self.log.info("Synchronizing cookies with cookieFile.")
+			# self.log.info("Synchronizing cookies with cookieFile.")
 			self.cj.load(self.COOKIEFILE)
 		# Update cookies from cookiefile
 
@@ -530,23 +695,23 @@ class WebGetRobust:
 		'''
 		# print cookieDict
 		cookie = http.cookiejar.Cookie(
-				version=0
-				, name=cookieDict['name']
-				, value=cookieDict['value']
-				, port=None
-				, port_specified=False
-				, domain=cookieDict['domain']
-				, domain_specified=True
-				, domain_initial_dot=False
-				, path=cookieDict['path']
-				, path_specified=False
-				, secure=cookieDict['secure']
-				, expires=cookieDict['expiry']
-				, discard=False
-				, comment=None
-				, comment_url=None
-				, rest={"httponly":"%s" % cookieDict['httponly']}
-				, rfc2109=False
+				version=0,
+				name=cookieDict['name'],
+				value=cookieDict['value'],
+				port=None,
+				port_specified=False,
+				domain=cookieDict['domain'],
+				domain_specified=True,
+				domain_initial_dot=False,
+				path=cookieDict['path'],
+				path_specified=False,
+				secure=cookieDict['secure'],
+				expires=cookieDict['expiry'],
+				discard=False,
+				comment=None,
+				comment_url=None,
+				rest={"httponly":"%s" % cookieDict['httponly']},
+				rfc2109=False
 			)
 
 		self.cj.set_cookie(cookie)
@@ -563,15 +728,15 @@ class WebGetRobust:
 
 	def saveCookies(self, halting=False):
 
-		cookieWriteLock.acquire()
+		self.cookie_lock.acquire()
 		# print("Have %d cookies before saving cookiejar" % len(self.cj))
 		try:
-			self.log.info("Trying to save cookies!")
+			# self.log.info("Trying to save cookies!")
 			if self.cj is not None:							# If cookies were used
 
 				self.syncCookiesFromFile()
 
-				self.log.info("Have cookies to save")
+				# self.log.info("Have cookies to save")
 				for cookie in self.cj:
 					# print(cookie)
 					# print(cookie.expires)
@@ -579,11 +744,11 @@ class WebGetRobust:
 					if isinstance(cookie.expires, int) and cookie.expires > 30000000000:		# Clamp cookies that expire stupidly far in the future because people are assholes
 						cookie.expires = 30000000000
 
-				self.log.info("Calling save function")
+				# self.log.info("Calling save function")
 				self.cj.save(self.COOKIEFILE)					# save the cookies again
 
 
-				self.log.info("Cookies Saved")
+				# self.log.info("Cookies Saved")
 			else:
 				self.log.info("No cookies to save?")
 		except Exception as e:
@@ -593,7 +758,7 @@ class WebGetRobust:
 			# not informative, so just silence it.
 			# print("Possible error on exit (or just the destructor): '%s'." % e)
 		finally:
-			cookieWriteLock.release()
+			self.cookie_lock.release()
 
 		# print("Have %d cookies after saving cookiejar" % len(self.cj))
 		if not halting:
@@ -608,7 +773,7 @@ class WebGetRobust:
 
 
 
-	def stepThroughCloudFlare(self, url, titleContains):
+	def stepThroughCloudFlare(self, url, titleContains='', titleNotContains=''):
 		'''
 		Use Selenium+PhantomJS to access a resource behind cloudflare protection.
 
@@ -627,6 +792,14 @@ class WebGetRobust:
 		instance, so it can continue to use the cloudflare auth in normal requests.
 
 		'''
+
+		if (not titleContains) and (not titleNotContains):
+			raise ValueError("You must pass either a string the title should contain, or a string the title shouldn't contain!")
+
+		if titleContains and titleNotContains:
+			raise ValueError("You can only pass a single conditional statement!")
+
+
 		self.log.info("Attempting to access page through cloudflare browser verification.")
 
 		dcap = dict(DesiredCapabilities.PHANTOMJS)
@@ -642,8 +815,16 @@ class WebGetRobust:
 
 		driver.get(url)
 
+		if titleContains:
+			condition = EC.title_contains(titleContains)
+		elif titleNotContains:
+			condition = title_not_contains(titleNotContains)
+		else:
+			raise ValueError("Wat?")
+
+
 		try:
-			WebDriverWait(driver, 20).until(EC.title_contains((titleContains)))
+			WebDriverWait(driver, 20).until(condition)
 			success = True
 			self.log.info("Successfully accessed main page!")
 		except TimeoutException:
@@ -713,6 +894,9 @@ def iri2uri(uri):
 	"""Convert an IRI to a URI. Note that IRIs must be
 	passed in a unicode strings. That is, do not utf-8 encode
 	the IRI before passing it into the function."""
+
+	assert uri != None, 'iri2uri must be passed a non-none string!'
+
 	original = uri
 	if isinstance(uri ,str):
 		(scheme, authority, path, query, fragment) = urllib.parse.urlsplit(uri)
@@ -720,6 +904,7 @@ def iri2uri(uri):
 		# For each character in 'ucschar' or 'iprivate'
 		#  1. encode as utf-8
 		#  2. then %-encode each octet of that utf-8
+		path = urllib.parse.quote(path)
 		uri = urllib.parse.urlunsplit((scheme, authority, path, query, fragment))
 		uri = "".join([encode(c) for c in uri])
 
@@ -1008,22 +1193,6 @@ def getUserAgent():
 
 
 
-class PluginInterface_WebRequest(WebGetRobust):
-
-	name = 'WebRequest'
-
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
-
-		self.calls = {
-			'getpage'               : self.getpage,
-			'getFileAndName'        : self.getFileAndName,
-			'addCookie'             : self.addCookie,
-			'addSeleniumCookie'     : self.addSeleniumCookie,
-			'stepThroughCloudFlare' : self.stepThroughCloudFlare,
-		}
-
-
 
 if __name__ == "__main__":
 	import logSetup
@@ -1049,21 +1218,29 @@ if __name__ == "__main__":
 
 
 
-	content, handle = wg.getpage("http://www.lighttpd.net", returnMultiple = True)
-	print((handle.headers.get('Content-Encoding')))
-	print(len(content))
-	content, handle = wg.getpage("http://www.example.org", returnMultiple = True)
-	print((handle.headers.get('Content-Encoding')))
-	content, handle = wg.getpage("https://www.google.com/images/srpr/logo11w.png", returnMultiple = True)
-	print((handle.headers.get('Content-Encoding')))
-	content, handle = wg.getpage("http://www.doujin-moe.us/ajax/newest.php", returnMultiple = True)
-	print((handle.headers.get('Content-Encoding')))
+	# content, handle = wg.getpage("http://japtem.com/wp-content/uploads/2014/07/Arifureta.png", returnMultiple = True)
+	# print((handle.headers.get('Content-Encoding')))
+	# print(len(content))
+	# content, handle = wg.getpage("http://japtem.com/wp-content/uploads/2014/03/knm.png", returnMultiple = True)
+	# print((handle.headers.get('Content-Encoding')))
+	# content, handle = wg.getpage("https://www.google.com/images/srpr/logo11w.png", returnMultiple = True)
+	# print((handle.headers.get('Content-Encoding')))
+	# content, handle = wg.getpage("http://www.doujin-moe.us/ajax/newest.php", returnMultiple = True)
+	# print((handle.headers.get('Content-Encoding')))
 
-	print("SoupGet")
-	content_1 = wg.getpage("http://www.lighttpd.net", soup = True)
+	# print("SoupGet")
+	# content_1 = wg.getpage("http://www.lighttpd.net", soup = True)
 
-	content_2 = wg.getSoup("http://www.lighttpd.net")
-	assert(content_1 == content_2)
+	# content_2 = wg.getSoup("http://www.lighttpd.net")
+	# assert(content_1 == content_2)
+
+	gTest = wg.getpage('https://drive.google.com/folderview?id=0B2lnOX3NF2LOeW55WlpYQWIxYnM')
+	print(type(gTest))
+
+	gTest = wg.getpage('https://www.google.com/search?q=Gödel')
+	gTest = wg.getpage('https://www.google.com/search?q=禁断の愛')
+	gTest = wg.getpage('http://www.fanfiction.net/s/6711282/1/Jag-%C3%A4lskar-dig')
+	print(type(gTest))
 
 
 
