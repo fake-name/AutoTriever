@@ -11,6 +11,18 @@ git pull . origin/master
 echo "Current release:"
 git log -1
 
+if [ -d "venv" ]
+then
+	echo "Venv exists. Activating!"
+	source venv/bin/activate
+else
+	echo "No Venv! Creating."
+	virtualenv -p python3 venv
+	source venv/bin/activate
+	pip install -r requirements.txt
+
+fi;
+
 # If we're in a docker instance, the credentials will have been passed in as a
 # env var. Therefore, dump them to the settings.json file.
 if [ -z "$SCRAPE_CREDS" ];
