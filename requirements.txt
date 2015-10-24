@@ -5,3 +5,4 @@ lxml
 colorama 
 ftfy
 selenium
+fake-factory
