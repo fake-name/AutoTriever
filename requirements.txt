@@ -1,6 +1,7 @@
 AmqpConnector 
 BeautifulSoup4 
 msgpack-python 
+lxml
 colorama 
 ftfy
 selenium

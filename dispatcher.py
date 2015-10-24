@@ -110,23 +110,31 @@ def getPythonScriptModules(dirPath):
 	ret = []
 	for fName in os.listdir(moduleDir):
 
+
+		fPath = os.path.join(moduleDir, fName)
+
+		if fPath.endswith("__pycache__"):
+			continue
+
+		if os.path.isdir(fPath):
+			ret += getPythonScriptModules(fPath)
+
 		# Skip files without a '.py' extension
 		if not fName.endswith(".py"):
 			continue
-		fPath = os.path.join(moduleDir, fName)
+
+
 		fName = fName.split(".")[0]
 
-		# Skip the __init__.py file.
-		if fName == "__init__":
-			continue
 
 		ret.append((fPath, fName))
 
 	return ret
 
 def findPluginClass(module, prefix):
-
+	# print("Finding plugin classes for: ", module, prefix)
 	interfaces = []
+	# print("interfaces: ", interfaces)
 	for item in dir(module):
 		if not item.startswith(prefix):
 			continue
@@ -136,19 +144,29 @@ def findPluginClass(module, prefix):
 			continue
 
 		interfaces.append((plugClass.name, plugClass))
-
 	return interfaces
+
+def dedup_modules(modules):
+	orig = len(modules)
+	modules = [item for item in modules if 'modules/__init__.py' not in item[0]]
+	modules = list(set(modules))
+	after = len(modules)
+	return modules
+
 def loadPlugins(onPath, prefix):
+	# print("Loading modules on path: ", onPath)
 	modules = getPythonScriptModules(onPath)
+	modules = dedup_modules(modules)
 	ret = {}
 
 	for fPath, modName in modules:
 		loader = SourceFileLoader(modName, fPath)
 		mod = loader.load_module()
+		# print("Loader:", loader, "module: ", mod)
 		plugClasses = findPluginClass(mod, prefix)
 		for key, pClass in plugClasses:
 			if key in ret:
-				raise ValueError("Two plugins providing an interface with the same name? Name: '%s'" % key)
+				print("WARNING? - Two plugins providing an interface with the same name? Name: '%s'" % key)
 
 			ret[key] = pClass
 	return ret
@@ -170,6 +188,10 @@ def test():
 
 	plugins = loadPlugins('modules', "PluginInterface_")
 
+	print("plugins:", plugins)
+
+	for plugin in plugins:
+		print("Plugin: ", plugin)
 
 if __name__ == "__main__":
 	test()

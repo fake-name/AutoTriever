@@ -1,7 +1,7 @@
 
-import modules.ExContentLoader.ExContentLoader
+from modules.ExContentLoader.ExContentLoader import ExContentLoader
 
-class PluginInterface_ExContentLoader(modules.ExContentLoader.ExContentLoader.ExContentLoader):
+class PluginInterface_ExContentLoader(ExContentLoader):
 
 	name = 'ExContentLoader'
 

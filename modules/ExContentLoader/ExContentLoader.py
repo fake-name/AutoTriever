@@ -1,7 +1,8 @@
 
 # -*- coding: utf-8 -*-
 
-import modules.WebRequest
+
+from util.WebRequest import WebGetRobust
 
 import re
 
@@ -44,7 +45,7 @@ class ExContentLoader(object):
 			logPath = 'Main.SadPanda.Cl'
 
 		self.log = logging.getLogger(logPath)
-		self.wg = modules.WebRequest.WebGetRobust(logPath=logPath+".Web")
+		self.wg = WebGetRobust(logPath=logPath+".Web")
 
 		self.log = logging.getLogger(self.loggerPath)
 		self.log.info("Loading %s Runner", self.pluginName)

@@ -1,7 +1,7 @@
 
-import modules.WebRequest.WebRequest
+from util.WebRequest import WebGetRobust
 
-class PluginInterface_WebRequest(modules.WebRequest.WebRequest.WebGetRobust):
+class PluginInterface_WebRequest(WebGetRobust):
 
 	name = 'WebRequest'
 

@@ -1,6 +1,6 @@
 
 
-import WebMirror.util.webFunctions
+import util.WebRequest as webFunc
 import uuid
 import base64
 import os
@@ -9,11 +9,11 @@ random.seed()
 
 import time
 import logging
-import WebMirror.util.webFunctions as webFunc
+import hashlib
 
 SUFFIXES = [
 	'@sogetthis.com',
-	'@spamthisplease.com',
+	# '@spamthisplease.com',
 	'@zippymail.info',
 	'@bobmail.info',
 	'@sendspamhere.com',
@@ -21,7 +21,7 @@ SUFFIXES = [
 	'@binkmail.com',
 	'@tradermail.info',
 	'@notmailinator.com',
-	'@mailinator2.com',
+	# '@mailinator2.com',
 	'@spambooger.com',
 	'@spamherelots.com',
 	'@chammy.info',
@@ -44,6 +44,10 @@ class MailinatorClient(object):
 
 	def get_address(self):
 		return "%s%s" % (self.prefix, self.postfix)
+	def get_prefix(self):
+		return self.prefix
+	def get_pseudo_pass(self):
+		return hashlib.md5(self.get_address().encode("utf-8")).hexdigest()
 
 
 	def get_available_inbox(self):

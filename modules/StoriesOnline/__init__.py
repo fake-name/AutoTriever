@@ -1,8 +1,8 @@
 
 
-import modules.StoriesOnline.Scrape
+from modules.StoriesOnline.Scrape import StoriesOnlineFetch
 
-class StoriesOnlineFetch_WebRequest(modules.StoriesOnline.Scrape.StoriesOnlineFetch):
+class PluginInterface_StoriesOnlineFetch(StoriesOnlineFetch):
 
 	name = 'StoriesOnlineFetch'
 
