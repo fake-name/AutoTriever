@@ -8,10 +8,8 @@ class PluginInterface_ExContentLoader(ExContentLoader):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
-		self.checkLogin()
-
-
 		self.calls = {
+			'__setup__'             : self.checkLogin,
 			'getpage'               : self.wg.getpage,
 			'fetchcontent'          : self.getLink,
 		}

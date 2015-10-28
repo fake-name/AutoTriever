@@ -16,19 +16,26 @@ class RpcCallDispatcher(client.RpcHandler):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
-		initCalls = loadPlugins('init', 'InitSystem_')
-
-		for initCall in initCalls:
+		self.log.info("Loading plugins from disk.")
+		self.plugins = loadPlugins('modules', "PluginInterface_")
+		self.log.info("Total loaded plugins pre-init: %s", len(self.plugins))
+		for plugin_name in list(self.plugins.keys()):
 
 			# Instantiate the initialization class
-			p = initCalls[initCall]()
+			p = self.plugins[plugin_name]()
+			self.log.info("Plugin '%s' provides the following %s calls:", plugin_name, len(p.calls))
+			for call_name in p.calls.keys():
+				self.log.info("	Call: '%s'", call_name)
 
-			if 'init' in p.calls:
+			if '__setup__' in p.calls:
 				# and then call it's setup method
-				p.calls['init']()
+				try:
+					p.calls['init']()
+				except Exception:
+					self.log.error("Plugin failed to initialize: '%s'. Disabling!")
+					self.plugins.pop(plugin_name)
 
-		self.plugins = loadPlugins('modules', "PluginInterface_")
-		self.log.info("Found '%s' Plugins:", len(self.plugins))
+		self.log.info("Active post-init plugins: %s", len(self.plugins))
 		for item in self.plugins.keys():
 			self.log.info("Enabled plugin: '%s'", item)
 		self.classCache = {}
