@@ -34,7 +34,7 @@ class RpcCallDispatcher(client.RpcHandler):
 					p.calls['init']()
 				except Exception:
 					self.log.error("Plugin failed to initialize: '%s'. Disabling!", plugin_name)
-					for line in traceback.format_exc():
+					for line in traceback.format_exc().split("\n"):
 						self.log.error("	%s", line.rstrip())
 					self.plugins.pop(plugin_name)
 
