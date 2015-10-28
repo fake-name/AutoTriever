@@ -5,8 +5,14 @@ set -e
 
 # This is just a very minimal script that starts the scraper.
 echo "Updating local git repo"
+git fetch --all
 git fetch . origin/master
 git pull . origin/master
+
+
+echo "Available branches:"
+git --no-pager branch -a | cat
+
 
 echo "Current release:"
 git --no-pager log -1 | cat
