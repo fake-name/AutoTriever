@@ -31,7 +31,7 @@ class RpcCallDispatcher(client.RpcHandler):
 			if '__setup__' in p.calls:
 				# and then call it's setup method
 				try:
-					p.calls['init']()
+					p.calls['__setup__']()
 				except Exception:
 					self.log.error("Plugin failed to initialize: '%s'. Disabling!", plugin_name)
 					for line in traceback.format_exc().split("\n"):
