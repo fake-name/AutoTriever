@@ -9,7 +9,7 @@ git fetch . origin/master
 git pull . origin/master
 
 echo "Current release:"
-git log -1
+git --no-pager log -1 | cat
 
 if [ -d "venv" ]
 then

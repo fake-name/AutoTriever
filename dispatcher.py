@@ -3,6 +3,7 @@ import client
 from importlib.machinery import SourceFileLoader
 import os.path
 import os
+import traceback
 
 class RpcCallDispatcher(client.RpcHandler):
 	'''
@@ -32,7 +33,9 @@ class RpcCallDispatcher(client.RpcHandler):
 				try:
 					p.calls['init']()
 				except Exception:
-					self.log.error("Plugin failed to initialize: '%s'. Disabling!")
+					self.log.error("Plugin failed to initialize: '%s'. Disabling!", plugin_name)
+					for line in traceback.format_exc():
+						self.log.error("	%s", line.rstrip())
 					self.plugins.pop(plugin_name)
 
 		self.log.info("Active post-init plugins: %s", len(self.plugins))
