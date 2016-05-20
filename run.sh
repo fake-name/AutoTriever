@@ -29,7 +29,7 @@ else
 	./venv/bin/python3 get-pip.py
 	rm get-pip.py
 	source venv/bin/activate
-	sudo apt-get install libxml2 libxslt1-dev
+	sudo apt-get install libxml2 libxslt1-dev python3-dev -y
 	./venv/bin/pip install cython
 	./venv/bin/pip install --upgrade -r requirements.txt
 
