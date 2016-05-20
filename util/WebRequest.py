@@ -31,6 +31,9 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
+def as_soup(str):
+	return bs4.BeautifulSoup(str)
+
 
 def determine_json_encoding(json_bytes):
 	'''
@@ -95,6 +98,33 @@ class title_not_contains(object):
 
 #pylint: disable-msg=E1101, C0325, R0201, W0702, W0703
 
+
+class HeadRequest(urllib.request.Request):
+	def get_method(self):
+		return "HEAD"
+
+class HTTPRedirectBlockerErrorHandler(urllib.request.HTTPErrorProcessor):
+
+	def http_response(self, request, response):
+		code, msg, hdrs = response.code, response.msg, response.info()
+
+		# only add this line to stop 302 redirection.
+		if code == 302:
+			print("Code!", 302)
+			return response
+		if code == 301:
+			print("Code!", 301)
+			return response
+
+		print("[HTTPRedirectBlockerErrorHandler] http_response! code:", code)
+		print(hdrs)
+		print(msg)
+		if not (200 <= code < 300):
+			response = self.parent.error('http', request, response, code, msg, hdrs)
+		return response
+
+	https_response = http_response
+
 # A urllib2 wrapper that provides error handling and logging, as well as cookie management. It's a bit crude, but it works.
 # Also supports transport compresion.
 # OOOOLLLLLLDDDDD, has lots of creaky internals. Needs some cleanup desperately, but lots of crap depends on almost everything.
@@ -132,8 +162,9 @@ class WebGetRobust:
 	cookielib = None
 	opener = None
 
-	errorOutCount = 3
-	retryDelay = 1.5
+	errorOutCount = 2
+	# retryDelay = 0.1
+	retryDelay = 0.0
 
 
 	data = None
@@ -190,12 +221,15 @@ class WebGetRobust:
 			if os.path.isfile(self.COOKIEFILE):
 				try:
 					self.cj.load(self.COOKIEFILE)
-					self.log.info("Loading CookieJar")
+					# self.log.info("Loading CookieJar")
 				except:
 					self.log.critical("Cookie file is corrupt/damaged?")
-
+					try:
+						os.remove(self.COOKIEFILE)
+					except FileNotFoundError:
+						pass
 			if http.cookiejar is not None:
-				self.log.info("Installing CookieJar")
+				# self.log.info("Installing CookieJar")
 				self.log.debug(self.cj)
 				cookieHandler = urllib.request.HTTPCookieProcessor(self.cj)
 				if self.credHandler:
@@ -285,7 +319,7 @@ class WebGetRobust:
 
 					# Scramble our current UA
 					self.browserHeaders = getUserAgent()
-					time.sleep(3)
+					time.sleep(self.retryDelay)
 				else:
 					self.log.error("JSON Parsing issue, and retries exhausted!")
 					# self.log.error("Page content:")
@@ -318,7 +352,7 @@ class WebGetRobust:
 		return pgctnt, hName
 
 
-	def buildRequest(self, pgreq, postData, addlHeaders, binaryForm):
+	def buildRequest(self, pgreq, postData, addlHeaders, binaryForm, req_class = urllib.request.Request):
 		# Encode Unicode URL's properly
 
 		try:
@@ -347,7 +381,7 @@ class WebGetRobust:
 				headers['Content-length'] =  len(params['data'])
 
 
-			return urllib.request.Request(pgreq, headers=headers, **params)
+			return req_class(pgreq, headers=headers, **params)
 
 		except:
 			self.log.critical("Invalid header or url")
@@ -606,7 +640,11 @@ class WebGetRobust:
 						break
 
 					time.sleep(self.retryDelay)
-
+					if e.code == 503:
+						errcontent = e.read()
+						if b'This process is automatic. Your browser will redirect to your requested content shortly.' in errcontent:
+							self.log.warn("Cloudflare failure! Doing automatic step-through.")
+							self.stepThroughCloudFlare(requestedUrl, titleNotContains="Just a moment...")
 				except UnicodeEncodeError:
 					self.log.critical("Unrecoverable Unicode issue retreiving page - %s", requestedUrl)
 					for line in traceback.format_exc().split("\n"):
@@ -632,7 +670,7 @@ class WebGetRobust:
 					self.log.warning(lastErr)
 					self.log.warning(traceback.format_exc())
 
-					self.log.warning("Error Retrieving Page! - Trying again - Waiting 2.5 seconds")
+					self.log.warning("Error Retrieving Page! - Trying again - Waiting %s seconds", self.retryDelay)
 
 					try:
 						self.log.critical("Error on page - %s", requestedUrl)
@@ -664,8 +702,34 @@ class WebGetRobust:
 		if returnMultiple:
 			return pgctnt, pghandle
 		else:
-			pghandle.close()
+			if pghandle:
+				pghandle.close()
 			return pgctnt
+
+	def getHead(self, url, addlHeaders):
+		for x in range(9999):
+			try:
+				self.log.info("Doing HTTP HEAD request for '%s'", url)
+				pgreq = self.buildRequest(url, None, addlHeaders, None, req_class=HeadRequest)
+				pghandle = self.opener.open(pgreq, timeout=30)
+				returl = pghandle.geturl()
+				if returl != url:
+					self.log.info("HEAD request returned a different URL '%s'", returl)
+
+				return returl
+			except socket.timeout as e:
+				self.log.info("Timeout, retrying....")
+				if x >= 3:
+					self.log.error("Failure fetching: %s", url)
+					raise e
+			except urllib.error.URLError as e:
+				# Continue even in the face of cloudflare crapping it's pants
+				if e.code == 500 and e.geturl():
+					return e.geturl()
+				self.log.info("URLError, retrying....")
+				if x >= 3:
+					self.log.error("Failure fetching: %s", url)
+					raise e
 
 	def syncCookiesFromFile(self):
 		# self.log.info("Synchronizing cookies with cookieFile.")
@@ -695,23 +759,23 @@ class WebGetRobust:
 		'''
 		# print cookieDict
 		cookie = http.cookiejar.Cookie(
-				version=0,
-				name=cookieDict['name'],
-				value=cookieDict['value'],
-				port=None,
-				port_specified=False,
-				domain=cookieDict['domain'],
-				domain_specified=True,
-				domain_initial_dot=False,
-				path=cookieDict['path'],
-				path_specified=False,
-				secure=cookieDict['secure'],
-				expires=cookieDict['expiry'],
-				discard=False,
-				comment=None,
-				comment_url=None,
-				rest={"httponly":"%s" % cookieDict['httponly']},
-				rfc2109=False
+				version            = 0,
+				name               = cookieDict['name'],
+				value              = cookieDict['value'],
+				port               = None,
+				port_specified     = False,
+				domain             = cookieDict['domain'],
+				domain_specified   = True,
+				domain_initial_dot = False,
+				path               = cookieDict['path'],
+				path_specified     = False,
+				secure             = cookieDict['secure'],
+				expires            = cookieDict['expiry'],
+				discard            = False,
+				comment            = None,
+				comment_url        = None,
+				rest               = {"httponly":"%s" % cookieDict['httponly']},
+				rfc2109            = False
 			)
 
 		self.cj.set_cookie(cookie)
@@ -728,7 +792,11 @@ class WebGetRobust:
 
 	def saveCookies(self, halting=False):
 
-		self.cookie_lock.acquire()
+		locked = self.cookie_lock.acquire(timeout=5)
+		if not locked:
+			self.log.error("Failed to acquire cookie-lock!")
+			return
+
 		# print("Have %d cookies before saving cookiejar" % len(self.cj))
 		try:
 			# self.log.info("Trying to save cookies!")
@@ -1016,6 +1084,13 @@ USER_AGENTS = [
 	"Mozilla/5.0 (Windows NT 6.2; Win64; x64; rv:16.0) Gecko/16.0 Firefox/16.0",
 	"Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML like Gecko) Chrome/28.0.1469.0 Safari/537.36",
 	"Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko",
+	"Mozilla/5.0 (compatible; CloudFlare-AlwaysOnline/1.0; +https://www.cloudflare.com/always-online) AppleWebKit/534.34",
+	"Mozilla/5.0 (compatible; CloudFlare-AlwaysOnline/1.0; +https://www.cloudflare.com/always-online) AppleWebKit/534.33",
+	"Mozilla/5.0 (compatible; CloudFlare-AlwaysOnline/1.0; +https://www.cloudflare.com/always-online) AppleWebKit/534.35",
+	"Mozilla/5.0 (compatible; CloudFlare-AlwaysOnline/1.0; +https://www.cloudflare.com/always-online) AppleWebKit/534.36",
+	"Mozilla/5.0 (compatible; CloudFlare-AlwaysOnline/1.0; +https://www.cloudflare.com/always-online) AppleWebKit/534.37",
+	"Mozilla/5.0 (compatible; CloudFlare-AlwaysOnline/1.0; +https://www.cloudflare.com/always-online) AppleWebKit/534.38",
+	"Mozilla/5.0 (compatible; CloudFlare-AlwaysOnline/1.0; +https://www.cloudflare.com/always-online) AppleWebKit/533.34",
 	"Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2049.0 Safari/537.36",
 	"Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36 OPR/18.0.1284.49",
 	"Mozilla/5.0 (Windows; U; ; en-NZ) AppleWebKit/527  (KHTML, like Gecko, Safari/419.3) Arora/0.8.0",
@@ -1218,31 +1293,33 @@ if __name__ == "__main__":
 
 
 
-	# content, handle = wg.getpage("http://japtem.com/wp-content/uploads/2014/07/Arifureta.png", returnMultiple = True)
-	# print((handle.headers.get('Content-Encoding')))
-	# print(len(content))
-	# content, handle = wg.getpage("http://japtem.com/wp-content/uploads/2014/03/knm.png", returnMultiple = True)
-	# print((handle.headers.get('Content-Encoding')))
-	# content, handle = wg.getpage("https://www.google.com/images/srpr/logo11w.png", returnMultiple = True)
-	# print((handle.headers.get('Content-Encoding')))
-	# content, handle = wg.getpage("http://www.doujin-moe.us/ajax/newest.php", returnMultiple = True)
-	# print((handle.headers.get('Content-Encoding')))
+	wg.getHead("http://www.novelupdates.com/extnu/125399/", addlHeaders={"Referer" : "http://www.novelupdates.com/series/limitless-sword-god/"})
 
-	# print("SoupGet")
-	# content_1 = wg.getpage("http://www.lighttpd.net", soup = True)
+	# # content, handle = wg.getpage("http://japtem.com/wp-content/uploads/2014/07/Arifureta.png", returnMultiple = True)
+	# # print((handle.headers.get('Content-Encoding')))
+	# # print(len(content))
+	# # content, handle = wg.getpage("http://japtem.com/wp-content/uploads/2014/03/knm.png", returnMultiple = True)
+	# # print((handle.headers.get('Content-Encoding')))
+	# # content, handle = wg.getpage("https://www.google.com/images/srpr/logo11w.png", returnMultiple = True)
+	# # print((handle.headers.get('Content-Encoding')))
+	# # content, handle = wg.getpage("http://www.doujin-moe.us/ajax/newest.php", returnMultiple = True)
+	# # print((handle.headers.get('Content-Encoding')))
 
-	# content_2 = wg.getSoup("http://www.lighttpd.net")
-	# assert(content_1 == content_2)
+	# # print("SoupGet")
+	# # content_1 = wg.getpage("http://www.lighttpd.net", soup = True)
 
-	gTest = wg.getpage('https://drive.google.com/folderview?id=0B2lnOX3NF2LOeW55WlpYQWIxYnM')
-	print(type(gTest))
+	# # content_2 = wg.getSoup("http://www.lighttpd.net")
+	# # assert(content_1 == content_2)
 
-	gTest = wg.getpage('https://www.google.com/search?q=Gödel')
-	gTest = wg.getpage('https://www.google.com/search?q=禁断の愛')
-	gTest = wg.getpage('http://www.fanfiction.net/s/6711282/1/Jag-%C3%A4lskar-dig')
-	print(type(gTest))
+	# gTest = wg.getpage('https://drive.google.com/folderview?id=0B2lnOX3NF2LOeW55WlpYQWIxYnM')
+	# print(type(gTest))
+
+	# gTest = wg.getpage('https://www.google.com/search?q=Gödel')
+	# gTest = wg.getpage('https://www.google.com/search?q=禁断の愛')
+	# gTest = wg.getpage('http://www.fanfiction.net/s/6711282/1/Jag-%C3%A4lskar-dig')
+	# print(type(gTest))
 
 
 
-if __name__ == "__main__":
-	print("User agent", getUserAgent())
+# if __name__ == "__main__":
+# 	print("User agent", getUserAgent())

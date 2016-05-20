@@ -10,9 +10,9 @@ class PluginInterface_WebRequest(WebGetRobust):
 
 		self.calls = {
 			'getpage'               : self.getpage,
+			'getHead'               : self.getHead,
 			'getFileAndName'        : self.getFileAndName,
 			'addCookie'             : self.addCookie,
 			'addSeleniumCookie'     : self.addSeleniumCookie,
 			'stepThroughCloudFlare' : self.stepThroughCloudFlare,
 		}
-
