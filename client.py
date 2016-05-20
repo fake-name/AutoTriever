@@ -44,14 +44,24 @@ class RpcHandler(object):
 		'''
 		Verify the SSL cert exists in the proper place.
 		'''
+
 		curFile = os.path.abspath(__file__)
 
 		curDir = os.path.split(curFile)[0]
-		certPath = os.path.join(curDir, './deps/cacert.pem')
+		caCert = os.path.abspath(os.path.join(curDir, './deps/cacert.pem'))
+		cert = os.path.abspath(os.path.join(curDir, './deps/cert.pem'))
+		keyf = os.path.abspath(os.path.join(curDir, './deps/key.pem'))
 
-		assert os.path.exists(certPath)
+		assert os.path.exists(caCert), "No certificates found on path '%s'" % caCert
+		assert os.path.exists(cert), "No certificates found on path '%s'" % cert
+		assert os.path.exists(keyf), "No certificates found on path '%s'" % keyf
 
-		return certPath
+
+		return {"cert_reqs" : ssl.CERT_REQUIRED,
+				"ca_certs" : caCert,
+				"keyfile"  : keyf,
+				"certfile"  : cert,
+			}
 
 
 
@@ -149,12 +159,7 @@ class RpcHandler(object):
 
 		'''
 
-		if self.cert:
-			sslopts = {"cert_reqs" : ssl.CERT_REQUIRED, "ca_certs" : self.cert}
-		else:
-			sslopts = None
-
-		shutdownType = "dirty"
+		sslopts = self.findCert()
 
 		try:
 			while RUN_STATE and not self.die:
