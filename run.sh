@@ -23,9 +23,15 @@ then
 	source venv/bin/activate
 else
 	echo "No Venv! Creating."
-	virtualenv -p python3 venv
+
+	python3 -m venv --without-pip venv
+	wget https://bootstrap.pypa.io/get-pip.py
+	./venv/bin/python3 get-pip.py
+	rm get-pip.py
 	source venv/bin/activate
-	pip install -r requirements.txt
+	sudo apt-get install libxml2 libxslt
+	./venv/bin/pip install cython
+	./venv/bin/pip install --upgrade -r requirements.txt
 
 fi;
 
