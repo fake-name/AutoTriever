@@ -450,6 +450,44 @@ class WebGetRobust:
 
 		return compType, pgctnt
 
+
+	def getItem(self, itemUrl):
+
+		try:
+			content, handle = self.getpage(itemUrl, returnMultiple=True)
+		except:
+			print("Failure?")
+			if self.rules['cloudflare']:
+				if not self.stepThroughCloudFlare(itemUrl, titleNotContains='Just a moment...'):
+					raise ValueError("Could not step through cloudflare!")
+				# Cloudflare cookie set, retrieve again
+				content, handle = self.getpage(itemUrl, returnMultiple=True)
+			else:
+				raise
+
+		if not content or not handle:
+			raise urllib.error.URLError("Failed to retreive file from page '%s'!" % itemUrl)
+
+		fileN = urllib.parse.unquote(urllib.parse.urlparse(handle.geturl())[2].split("/")[-1])
+		fileN = bs4.UnicodeDammit(fileN).unicode_markup
+		mType = handle.info()['Content-Type']
+
+		# If there is an encoding in the content-type (or any other info), strip it out.
+		# We don't care about the encoding, since WebFunctions will already have handled that,
+		# and returned a decoded unicode object.
+		if mType and ";" in mType:
+			mType = mType.split(";")[0].strip()
+
+		# *sigh*. So minus.com is fucking up their http headers, and apparently urlencoding the
+		# mime type, because apparently they're shit at things.
+		# Anyways, fix that.
+		if '%2F' in  mType:
+			mType = mType.replace('%2F', '/')
+
+		self.log.info("Retreived file of type '%s', name of '%s' with a size of %0.3f K", mType, fileN, len(content)/1000.0)
+		return content, fileN, mType
+
+
 	def decodeTextContent(self, pgctnt, cType):
 
 		if cType:
