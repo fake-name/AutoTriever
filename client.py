@@ -170,7 +170,7 @@ class RpcHandler(object):
 															host                = self.settings["RABBIT_SRVER"],
 															virtual_host        = self.settings["RABBIT_VHOST"],
 															ssl                 = sslopts,
-															session_fetch_limit = 1,
+															# session_fetch_limit = 1,
 															durable             = True,
 															)
 				except IOError:
