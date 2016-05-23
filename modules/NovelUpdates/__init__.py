@@ -4,7 +4,7 @@ import urllib.error
 
 class PluginInterface_NovelUpdates(WebGetRobust):
 
-	name = 'WebRequest'
+	name = 'NUWebRequest'
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
