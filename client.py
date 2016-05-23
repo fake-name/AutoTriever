@@ -160,18 +160,19 @@ class RpcHandler(object):
 		'''
 
 		sslopts = self.findCert()
-
+		connector = None
 		try:
 			while RUN_STATE and not self.die:
 				try:
-					connector = AmqpConnector.Connector(userid              = self.settings["RABBIT_LOGIN"],
-														password            = self.settings["RABBIT_PASWD"],
-														host                = self.settings["RABBIT_SRVER"],
-														virtual_host        = self.settings["RABBIT_VHOST"],
-														ssl                 = sslopts,
-														session_fetch_limit = 1,
-														durable             = True,
-														)
+					if not connector:
+						connector = AmqpConnector.Connector(userid              = self.settings["RABBIT_LOGIN"],
+															password            = self.settings["RABBIT_PASWD"],
+															host                = self.settings["RABBIT_SRVER"],
+															virtual_host        = self.settings["RABBIT_VHOST"],
+															ssl                 = sslopts,
+															session_fetch_limit = 1,
+															durable             = True,
+															)
 				except IOError:
 					self.log.error("Error while connecting to server.")
 					self.log.error("Is the AMQP server not available?")
@@ -197,8 +198,8 @@ class RpcHandler(object):
 
 					time.sleep(0.1)
 
-				self.log.info("Closing RPC queue connection.")
-				connector.stop()
+				# self.log.info("Closing RPC queue connection.")
+				# connector.stop()
 
 
 				self.successDelay(postDelay)
