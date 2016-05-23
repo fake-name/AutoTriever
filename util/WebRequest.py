@@ -101,7 +101,9 @@ class title_not_contains(object):
 
 class HeadRequest(urllib.request.Request):
 	def get_method(self):
-		return "HEAD"
+		# Apparently HEAD is now being blocked. Because douche.
+		return "GET"
+		# return "HEAD"
 
 class HTTPRedirectBlockerErrorHandler(urllib.request.HTTPErrorProcessor):
 
