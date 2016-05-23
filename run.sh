@@ -30,6 +30,7 @@ else
 	rm get-pip.py
 	source venv/bin/activate
 	sudo apt-get install libxml2 libxslt1-dev python3-dev libz-dev -y
+	sudo apt-get install phantomjs -y
 	./venv/bin/pip install cython
 	./venv/bin/pip install --upgrade -r requirements.txt
 

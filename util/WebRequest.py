@@ -349,10 +349,7 @@ class WebGetRobust:
 			hName = ''
 		else:
 			hName = info['Content-Disposition'].split('filename=')[1]
-
-
 		return pgctnt, hName
-
 
 	def buildRequest(self, pgreq, postData, addlHeaders, binaryForm, req_class = urllib.request.Request):
 		# Encode Unicode URL's properly
@@ -362,7 +359,6 @@ class WebGetRobust:
 		except UnicodeEncodeError:
 			print("Wat?")
 			print("pgreq: '%s'", pgreq)
-
 
 		try:
 			params = {}
@@ -381,7 +377,6 @@ class WebGetRobust:
 				params['data']            = binaryForm.make_result()
 				headers['Content-type']   =  binaryForm.get_content_type()
 				headers['Content-length'] =  len(params['data'])
-
 
 			return req_class(pgreq, headers=headers, **params)
 
