@@ -10,12 +10,8 @@ class PluginInterface_NovelUpdates(WebGetRobust):
 		super().__init__(*args, **kwargs)
 
 		self.calls = {
-			'getpage'               : self.getpage,
 			'getItem'               : self.getItem_Wrapper,
 			'getHead'               : self.getHead_Wrapper,
-			'getFileAndName'        : self.getFileAndName,
-			'addCookie'             : self.addCookie,
-			'addSeleniumCookie'     : self.addSeleniumCookie,
 			'stepThroughCloudFlare' : self.stepThroughCloudFlare,
 		}
 
