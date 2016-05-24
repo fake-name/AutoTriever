@@ -176,6 +176,7 @@ class WebGetRobust:
 	# it is structured [(top_level_url1, username1, password1), (top_level_url2, username2, password2)]
 	def __init__(self, test=False, creds=None, logPath="Main.Web", cookie_lock=None):
 
+		self.rules['cloudflare'] = False
 		if cookie_lock:
 			self.cookie_lock = cookie_lock
 		else:
