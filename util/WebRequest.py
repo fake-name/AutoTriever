@@ -370,6 +370,8 @@ class WebGetRobust:
 				params['data'] = urllib.parse.urlencode(postData).encode("utf-8")
 			if addlHeaders != None:
 				self.log.info("Have additional GET parameters!")
+				for key, parameter in addlHeaders.items():
+					self.log.info("	Item: '%s' -> '%s'", key, parameter)
 				headers = addlHeaders
 			if binaryForm:
 				self.log.info("Binary form submission!")
