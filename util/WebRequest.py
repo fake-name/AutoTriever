@@ -588,7 +588,11 @@ class WebGetRobust:
 
 		# Probably a bad assumption
 		mType = "text/html"
-		return self.pjs_driver.page_source, fileN, mType
+
+		# So, self.pjs_driver.page_source appears to be the *compressed* page source as-rendered. Because reasons.
+		source = self.pjs_driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML")
+		source = "<html>"+source+"</html>"
+		return source, fileN, mType
 
 
 	def decodeTextContent(self, pgctnt, cType):
