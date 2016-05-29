@@ -572,7 +572,8 @@ class WebGetRobust:
 			# Install the headers from the WebGet class into phantomjs
 			dcap["phantomjs.page.settings.userAgent"] = wgSettings.pop('User-Agent')
 			for headerName in wgSettings:
-				dcap['phantomjs.page.customHeaders.{header}'.format(header=headerName)] = wgSettings[headerName]
+				if headerName != 'Accept-Encoding':
+					dcap['phantomjs.page.customHeaders.{header}'.format(header=headerName)] = wgSettings[headerName]
 
 			self.pjs_driver = selenium.webdriver.PhantomJS(desired_capabilities=dcap)
 			self.pjs_driver.set_window_size(1024, 768)
