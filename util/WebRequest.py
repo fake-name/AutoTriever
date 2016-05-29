@@ -255,6 +255,7 @@ class WebGetRobust:
 		else:
 			self.cookie_lock = COOKIEWRITELOCK
 
+		self.pjs_driver = None
 
 		# Override the global default socket timeout, so hung connections will actually time out properly.
 		socket.setdefaulttimeout(30)
@@ -559,6 +560,35 @@ class WebGetRobust:
 
 		self.log.info("Retreived file of type '%s', name of '%s' with a size of %0.3f K", mType, fileN, len(content)/1000.0)
 		return content, fileN, mType
+
+
+
+	def getItemPhantomJS(self, itemUrl):
+		self.log.info("Fetching page with PhantomJS")
+
+		if not self.pjs_driver:
+			dcap = dict(DesiredCapabilities.PHANTOMJS)
+			wgSettings = dict(self.browserHeaders)
+			# Install the headers from the WebGet class into phantomjs
+			dcap["phantomjs.page.settings.userAgent"] = wgSettings.pop('User-Agent')
+			for headerName in wgSettings:
+				dcap['phantomjs.page.customHeaders.{header}'.format(header=headerName)] = wgSettings[headerName]
+
+			self.pjs_driver = selenium.webdriver.PhantomJS(desired_capabilities=dcap)
+			self.pjs_driver.set_window_size(1024, 768)
+
+		self.pjs_driver.get(itemUrl)
+		time.sleep(3)
+
+		fileN = urllib.parse.unquote(urllib.parse.urlparse(self.pjs_driver.current_url)[2].split("/")[-1])
+		fileN = bs4.UnicodeDammit(fileN).unicode_markup
+
+		for cookie in self.pjs_driver.get_cookies():
+			self.addSeleniumCookie(cookie)
+
+		# Probably a bad assumption
+		mType = "text/html"
+		return self.pjs_driver.page_source, fileN, mType
 
 
 	def decodeTextContent(self, pgctnt, cType):
@@ -948,7 +978,8 @@ class WebGetRobust:
 		# print "WGH Destructor called!"
 		self.saveCookies(halting=True)
 
-
+		if self.pjs_driver != None:
+			driver.quit()
 
 
 

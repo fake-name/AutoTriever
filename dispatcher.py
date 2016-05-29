@@ -169,6 +169,7 @@ def loadPlugins(onPath, prefix):
 	modules = dedup_modules(modules)
 	ret = {}
 
+
 	for fPath, modName in modules:
 		loader = SourceFileLoader(modName, fPath)
 		mod = loader.load_module()

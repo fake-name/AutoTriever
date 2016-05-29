@@ -1,4 +1,4 @@
-AmqpConnector 
+git+https://github.com/fake-name/AmqpConnector.git
 BeautifulSoup4 
 msgpack-python 
 lxml
