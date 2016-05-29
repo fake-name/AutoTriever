@@ -562,21 +562,32 @@ class WebGetRobust:
 		return content, fileN, mType
 
 
+	def _initWebDriver(self):
+		dcap = dict(DesiredCapabilities.PHANTOMJS)
+		wgSettings = dict(self.browserHeaders)
+		# Install the headers from the WebGet class into phantomjs
+		dcap["phantomjs.page.settings.userAgent"] = wgSettings.pop('User-Agent')
+		for headerName in wgSettings:
+			if headerName != 'Accept-Encoding':
+				dcap['phantomjs.page.customHeaders.{header}'.format(header=headerName)] = wgSettings[headerName]
+
+		self.pjs_driver = selenium.webdriver.PhantomJS(desired_capabilities=dcap)
+		self.pjs_driver.set_window_size(1024, 768)
+
+	def _syncIntoWebDriver(self):
+		# TODO
+		pass
+	def _syncOutOfWebDriver(self):
+		for cookie in self.pjs_driver.get_cookies():
+			self.addSeleniumCookie(cookie)
+
 
 	def getItemPhantomJS(self, itemUrl):
 		self.log.info("Fetching page with PhantomJS")
 
 		if not self.pjs_driver:
-			dcap = dict(DesiredCapabilities.PHANTOMJS)
-			wgSettings = dict(self.browserHeaders)
-			# Install the headers from the WebGet class into phantomjs
-			dcap["phantomjs.page.settings.userAgent"] = wgSettings.pop('User-Agent')
-			for headerName in wgSettings:
-				if headerName != 'Accept-Encoding':
-					dcap['phantomjs.page.customHeaders.{header}'.format(header=headerName)] = wgSettings[headerName]
-
-			self.pjs_driver = selenium.webdriver.PhantomJS(desired_capabilities=dcap)
-			self.pjs_driver.set_window_size(1024, 768)
+			self._initWebDriver()
+		self._syncIntoWebDriver()
 
 		self.pjs_driver.get(itemUrl)
 		time.sleep(3)
@@ -584,8 +595,7 @@ class WebGetRobust:
 		fileN = urllib.parse.unquote(urllib.parse.urlparse(self.pjs_driver.current_url)[2].split("/")[-1])
 		fileN = bs4.UnicodeDammit(fileN).unicode_markup
 
-		for cookie in self.pjs_driver.get_cookies():
-			self.addSeleniumCookie(cookie)
+		self._syncOutOfWebDriver()
 
 		# Probably a bad assumption
 		mType = "text/html"
@@ -876,6 +886,21 @@ class WebGetRobust:
 				if x >= 3:
 					self.log.error("Failure fetching: %s", url)
 					raise e
+
+	def getHeadPhantomJS(self, url, referrer):
+		self.log.info("Getting HEAD with PhantomJS")
+
+		if not self.pjs_driver:
+			self._initWebDriver()
+		self._syncIntoWebDriver()
+
+		self.pjs_driver.get(referrer)
+		time.sleep(random.uniform(2, 6))
+		self.pjs_driver.get(url)
+
+		self._syncOutOfWebDriver()
+
+		return self.pjs_driver.current_url
 
 	def syncCookiesFromFile(self):
 		# self.log.info("Synchronizing cookies with cookieFile.")

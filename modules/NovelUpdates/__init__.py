@@ -18,6 +18,8 @@ class PluginInterface_NovelUpdates(WebGetRobust):
 
 	def getItemPhantomJS_Wrapper(self, url, *args, **kwargs):
 		return self.getItemPhantomJS(url, *args, **kwargs)
+	def getHeadPhantomJS(self, url, referer):
+		return self.getHeadPhantomJS(url, referer)
 
 	def getItem_Wrapper(self, url, *args, **kwargs):
 		try:
