@@ -5,7 +5,7 @@ set -e
 
 # This is just a very minimal script that starts the scraper.
 echo "Updating local git repo"
-# git fetch --allexi
+git fetch --allexi
 
 
 echo "Available branches:"
