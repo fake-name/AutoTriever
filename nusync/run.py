@@ -22,14 +22,16 @@ def go():
 	try:
 		from . import database as db
 		settings = load_settings()
-
-		fetcher = NUSeriesUpdateFilter.NUSeriesUpdateFilter(db.session(), settings)
+		db_sess = db.session()
+		fetcher = NUSeriesUpdateFilter.NUSeriesUpdateFilter(db_sess, settings)
 		print(fetcher.handlePage("https://www.novelupdates.com"))
 	except:
 		import traceback
 
 		print("ERROR: Failure when running job!")
 		traceback.print_exc()
+	finally:
+		db_sess.close()
 
 executors = {
 	'main_jobstore': ThreadPoolExecutor(5),
