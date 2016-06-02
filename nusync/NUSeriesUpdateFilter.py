@@ -236,6 +236,7 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 				self.log.error("Error when resolving outbound referrer!")
 				for line in traceback.format_exc().split("\n"):
 					self.log.error(line)
+
 				raise
 
 			if sleep:
@@ -254,9 +255,17 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 
 
 	def handlePage(self, url):
-		rawpg = self.fetchPage(url)
-		releases = self.processPage(url, rawpg)
-		fqreleases = self.qualifyLinks(releases)
+		try:
+			rawpg = self.fetchPage(url)
+			releases = self.processPage(url, rawpg)
+			fqreleases = self.qualifyLinks(releases)
+		finally:
+			try:
+				self.wg.pjs_driver.quit()
+			except Exception:
+				self.log.error("Issue when shutting down PhantomJS Instance.")
+				for line in traceback.format_exc().split("\n"):
+					self.log.error(line)
 
 		# print(releases)
 
