@@ -28,10 +28,10 @@ class RpcHandler(object):
 
 		# Require clientID in settings
 		assert 'clientid'     in settings
-		assert "RABBIT_LOGIN" in settings
-		assert "RABBIT_PASWD" in settings
-		assert "RABBIT_SRVER" in settings
-		assert "RABBIT_VHOST" in settings
+		assert "RPC_RABBIT_LOGIN" in settings
+		assert "RPC_RABBIT_PASWD" in settings
+		assert "RPC_RABBIT_SRVER" in settings
+		assert "RPC_RABBIT_VHOST" in settings
 
 		if not self.settings:
 			raise ValueError("The 'settings.json' file was not found!")
@@ -165,11 +165,12 @@ class RpcHandler(object):
 			while RUN_STATE and not self.die:
 				try:
 					if not connector:
-						connector = AmqpConnector.Connector(userid              = self.settings["RABBIT_LOGIN"],
-															password            = self.settings["RABBIT_PASWD"],
-															host                = self.settings["RABBIT_SRVER"],
-															virtual_host        = self.settings["RABBIT_VHOST"],
+						connector = AmqpConnector.Connector(userid              = self.settings["RPC_RABBIT_LOGIN"],
+															password            = self.settings["RPC_RABBIT_PASWD"],
+															host                = self.settings["RPC_RABBIT_SRVER"],
+															virtual_host        = self.settings["RPC_RABBIT_VHOST"],
 															ssl                 = sslopts,
+															task_exchange_type = "direct",
 															# session_fetch_limit = 1,
 															durable             = True,
 															)

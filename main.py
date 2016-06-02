@@ -10,6 +10,7 @@ import logging
 import os.path
 import os
 
+import nusync.run
 
 RUN_STATE = True
 
@@ -85,6 +86,10 @@ def go():
 	else:
 		print("Running in single thread mode.")
 
+
+	# Start the nusync components.
+	nusync.run.dump_db()
+	nusync.run.start_scheduler()
 
 
 	if threads == 1:

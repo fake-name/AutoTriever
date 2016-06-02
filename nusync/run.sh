@@ -5,8 +5,8 @@ set -e
 
 # This is just a very minimal script that starts the scraper.
 echo "Updating local git repo"
-# git fetch --all
-# git pull
+git fetch --all
+git pull
 
 
 echo "Available branches:"
@@ -31,7 +31,7 @@ else
 	# sudo apt-get install phantomjs -y
 	wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
 	tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2
-	sudo mv ./phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/
+	mv ./phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/
 	rm -rf phantomjs-2.1.1-linux-x86_64
 	echo "Creating venv."
 
@@ -57,4 +57,4 @@ else
 fi;
 
 echo "Launching executable."
-python3 ./main.py
+python3 ./run.py

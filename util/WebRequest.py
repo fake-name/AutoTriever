@@ -35,7 +35,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
 def as_soup(str):
-	return bs4.BeautifulSoup(str)
+	return bs4.BeautifulSoup(str, "lxml")
 
 
 def determine_json_encoding(json_bytes):
@@ -246,10 +246,10 @@ class WebGetRobust:
 	# if test=true, no resources are actually fetched (for testing)
 	# creds is a list of 3-tuples that gets inserted into the password manager.
 	# it is structured [(top_level_url1, username1, password1), (top_level_url2, username2, password2)]
-	def __init__(self, test=False, creds=None, logPath="Main.Web", cookie_lock=None):
+	def __init__(self, test=False, creds=None, logPath="Main.Web", cookie_lock=None, cloudflare=False):
 
 		self.rules = {}
-		self.rules['cloudflare'] = False
+		self.rules['cloudflare'] = cloudflare
 		if cookie_lock:
 			self.cookie_lock = cookie_lock
 		else:
@@ -577,6 +577,7 @@ class WebGetRobust:
 	def _syncIntoWebDriver(self):
 		# TODO
 		pass
+
 	def _syncOutOfWebDriver(self):
 		for cookie in self.pjs_driver.get_cookies():
 			self.addSeleniumCookie(cookie)
@@ -941,7 +942,7 @@ class WebGetRobust:
 				path               = cookieDict['path'],
 				path_specified     = False,
 				secure             = cookieDict['secure'],
-				expires            = cookieDict['expiry'],
+				expires            = cookieDict['expiry'] if 'expiry' in cookieDict else None,
 				discard            = False,
 				comment            = None,
 				comment_url        = None,
@@ -1009,7 +1010,7 @@ class WebGetRobust:
 		self.saveCookies(halting=True)
 
 		if self.pjs_driver != None:
-			driver.quit()
+			self.pjs_driver.quit()
 
 
 
