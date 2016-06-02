@@ -255,17 +255,23 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 
 
 	def handlePage(self, url):
+		if self.wg == None:
+			self.wg = WebRequest.WebGetRobust(cloudflare=True)
 		try:
 			rawpg = self.fetchPage(url)
 			releases = self.processPage(url, rawpg)
 			fqreleases = self.qualifyLinks(releases)
 		finally:
 			try:
+				self.log.info("Attempting to shut down PhantomJS")
+				self.log.info("PhantomJS instance closed.")
 				self.wg.pjs_driver.quit()
 			except Exception:
 				self.log.error("Issue when shutting down PhantomJS Instance.")
 				for line in traceback.format_exc().split("\n"):
 					self.log.error(line)
+			self.log.info("Dropping WebRequest.")
+			self.wg = None
 
 		# print(releases)
 
