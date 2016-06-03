@@ -193,7 +193,7 @@ class RpcHandler(object):
 
 						response, postDelay = self._process(message)
 
-						self.log.info("Response message size: %0.3fK. Sending", int(len(response)/1024))
+						self.log.info("Response message size: %0.3fK. Sending", len(response)/1024.0)
 						connector.putMessage(response)
 						break
 
