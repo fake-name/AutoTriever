@@ -258,7 +258,7 @@ class WebGetRobust:
 		self.pjs_driver = None
 
 		# Override the global default socket timeout, so hung connections will actually time out properly.
-		socket.setdefaulttimeout(30)
+		socket.setdefaulttimeout(15)
 
 		self.log = logging.getLogger(logPath)
 		# print("Webget init! Logpath = ", logPath)

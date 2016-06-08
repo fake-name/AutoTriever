@@ -68,8 +68,8 @@ def multithread(numThreads, settings):
 				time.sleep(1)
 		except KeyboardInterrupt:
 			print("Main thread interrupt!")
+			RUN_STATE = False
 
-		RUN_STATE = False
 
 	print("Main thread exited.")
 

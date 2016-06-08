@@ -165,6 +165,7 @@ class RpcHandler(object):
 			while RUN_STATE and not self.die:
 				try:
 					if not connector:
+						self.log.info("Initializing AMQP Connection!")
 						connector = AmqpConnector.Connector(userid              = self.settings["RPC_RABBIT_LOGIN"],
 															password            = self.settings["RPC_RABBIT_PASWD"],
 															host                = self.settings["RPC_RABBIT_SRVER"],
@@ -174,6 +175,7 @@ class RpcHandler(object):
 															# session_fetch_limit = 1,
 															durable             = True,
 															)
+						self.log.info("AMQP Connection initialized. Entering runloop!")
 				except IOError:
 					self.log.error("Error while connecting to server.")
 					self.log.error("Is the AMQP server not available?")

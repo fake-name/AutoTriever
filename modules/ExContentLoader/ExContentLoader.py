@@ -80,13 +80,13 @@ class ExContentLoader(object):
 		getPage = self.wg.getpage(r"https://forums.e-hentai.org/index.php?act=Login&CODE=01", postData=logondict)
 		if "You are now logged in as:" in getPage:
 			self.log.info("Logged in successfully!")
+			self.permuteCookies()
+			self.setSiteConfig()
+			self.wg.saveCookies()
 		else:
 			self.log.error("Login failed!")
 			raise LoginException("Login failed! Is your login data valid?")
 
-		self.permuteCookies()
-		self.setSiteConfig()
-		self.wg.saveCookies()
 
 	def setSiteConfig(self):
 
