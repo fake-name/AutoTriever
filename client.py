@@ -28,9 +28,9 @@ class RpcHandler(object):
 
 		# Require clientID in settings
 		assert 'clientid'     in settings
-		assert "RPC_RABBIT_LOGIN" in settings
-		assert "RPC_RABBIT_PASWD" in settings
-		assert "RPC_RABBIT_SRVER" in settings
+		assert "RABBIT_LOGIN" in settings
+		assert "RABBIT_PASWD" in settings
+		assert "RABBIT_SRVER" in settings
 		assert "RPC_RABBIT_VHOST" in settings
 
 		if not self.settings:
@@ -166,9 +166,9 @@ class RpcHandler(object):
 				try:
 					if not connector:
 						self.log.info("Initializing AMQP Connection!")
-						connector = AmqpConnector.Connector(userid              = self.settings["RPC_RABBIT_LOGIN"],
-															password            = self.settings["RPC_RABBIT_PASWD"],
-															host                = self.settings["RPC_RABBIT_SRVER"],
+						connector = AmqpConnector.Connector(userid              = self.settings["RABBIT_LOGIN"],
+															password            = self.settings["RABBIT_PASWD"],
+															host                = self.settings["RABBIT_SRVER"],
 															virtual_host        = self.settings["RPC_RABBIT_VHOST"],
 															ssl                 = sslopts,
 															task_exchange_type = "direct",

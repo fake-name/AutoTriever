@@ -19,16 +19,16 @@ class RabbitQueueHandler(object):
 
 
 		# Require clientID in settings
-		assert "NU_RABBIT_LOGIN"       in settings
-		assert "NU_RABBIT_PASWD"       in settings
-		assert "NU_RABBIT_SRVER"       in settings
+		assert "RABBIT_LOGIN"       in settings
+		assert "RABBIT_PASWD"       in settings
+		assert "RABBIT_SRVER"       in settings
 		assert "NU_RABBIT_VHOST"       in settings
 
 		sslopts = self.getSslOpts()
 
-		self.connector = AmqpConnector.Connector(userid            = settings["NU_RABBIT_LOGIN"],
-												password           = settings["NU_RABBIT_PASWD"],
-												host               = settings["NU_RABBIT_SRVER"],
+		self.connector = AmqpConnector.Connector(userid            = settings["RABBIT_LOGIN"],
+												password           = settings["RABBIT_PASWD"],
+												host               = settings["RABBIT_SRVER"],
 												virtual_host       = settings["NU_RABBIT_VHOST"],
 												ssl                = sslopts,
 												master             = is_master,
@@ -43,7 +43,7 @@ class RabbitQueueHandler(object):
 
 
 		self.log.info("Connected AMQP Interface: %s", self.connector)
-		self.log.info("Connection parameters: %s, %s, %s, %s", settings["NU_RABBIT_LOGIN"], settings["NU_RABBIT_PASWD"], settings["NU_RABBIT_SRVER"], settings["NU_RABBIT_VHOST"])
+		self.log.info("Connection parameters: %s, %s, %s, %s", settings["RABBIT_LOGIN"], settings["RABBIT_PASWD"], settings["RABBIT_SRVER"], settings["NU_RABBIT_VHOST"])
 
 	def getSslOpts(self):
 		'''

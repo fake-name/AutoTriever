@@ -6,3 +6,4 @@ __pycache__
 /venv
 linkwrappers.db
 ghostdriver.log
+/marshaller/settings.py

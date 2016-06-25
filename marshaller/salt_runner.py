@@ -4,6 +4,10 @@ import sys
 import pprint
 import random
 import logging
+import json
+import copy
+
+import settings
 
 import salt.cloud
 import salt.client
@@ -11,12 +15,52 @@ import salt.config
 
 import logSetup
 
+
+SETTINGS_BASE = {
+	"note1" : "Connection settings for the RabbitMQ server.",
+
+	"RABBIT_LOGIN" : None,
+	"RABBIT_PASWD" : None,
+	"RABBIT_SRVER" : None,
+
+	"clientid"     : None,
+
+	"note2" : "ExHentai/E-Hentai login",
+	"sadPanda" : {
+		"login"         : None,
+		"passWd"        : None
+	},
+
+	"NU_ENABLE"       : True,
+
+	"RPC_RABBIT_VHOST" : "/rpcsys",
+	"NU_RABBIT_VHOST"  : "/nu-feeds",
+
+}
+
+
 class VpsHerder(object):
 
 	def __init__(self):
 		self.log = logging.getLogger("Main.VpsHerder")
 		self.local = salt.client.LocalClient()
 		self.cc = salt.cloud.CloudClient('/etc/salt/cloud')
+
+	def __make_conf_file(self, client_id, client_idx):
+		assert client_idx < len(settings.mq_accts)
+
+		conf = copy.copy(SETTINGS_BASE)
+		conf['RABBIT_LOGIN'] = settings.mq_accts[client_idx]['login']
+		conf['RABBIT_PASWD'] = settings.mq_accts[client_idx]['passwd']
+		conf['RABBIT_SRVER'] = settings.RABBIT_SERVER
+
+		conf['clientid'] = client_id
+
+		conf['sadPanda']['login']  = settings.EX_LOGIN
+		conf['sadPanda']['passWd'] = settings.EX_PASSW
+
+		return json.dumps(conf)
+
 
 
 	def generate_do_conf(self):
@@ -68,6 +112,11 @@ class VpsHerder(object):
 			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=1024", ], {}],
 			['cmd.run', ["mkswap /swapfile", ], {}],
 			['cmd.run', ["swapon /swapfile", ], {}],
+
+			# Install settings
+			['file.managed', ["/scraper/settings.json", ], {"contents" : self.__make_conf_file("test-1", 0)}],
+
+			# Finally, run the thing
 			['cmd.run', ["./run.sh", ], {"cwd" : '/scraper'}],
 		]
 
@@ -108,5 +157,5 @@ if __name__ == '__main__':
 	if "destroy" in sys.argv:
 		herder.destroy_client("test-1")
 	else:
-		# herder.make_client("test-1")
+		herder.make_client("test-1")
 		herder.configure_client("test-1")
