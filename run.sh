@@ -28,10 +28,21 @@ else
 	sudo apt-get install libxml2 libxslt1-dev python3-dev libz-dev -y
 
 	# 16.04 phantomjs apt package is fucked, crashes on start.
+
+	# Remove phantomjs from last run (if present)
 	# sudo apt-get install phantomjs -y
-	wget http://cnpmjs.org/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
-	# wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
-	tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2
+	# wget http://cnpmjs.org/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
+	#
+	while [ -n "$(
+		rm -f phantomjs-2.1.1-linux-x86_64.tar.bz2 &&
+		rm -rf phantomjs-2.1.1-linux-x86_64 &&
+		wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2 &&
+		tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2
+	)" ]; do
+		sleep 0.1
+	done
+
+
 	sudo mv ./phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/
 	rm -rf phantomjs-2.1.1-linux-x86_64
 	echo "Creating venv."
