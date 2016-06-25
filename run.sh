@@ -33,12 +33,12 @@ else
 	# sudo apt-get install phantomjs -y
 	# wget http://cnpmjs.org/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
 	#
-	while [ -n "$(
-		rm -f phantomjs-2.1.1-linux-x86_64.tar.bz2 &&
-		rm -rf phantomjs-2.1.1-linux-x86_64 &&
-		wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2 &&
-		tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2
-	)" ]; do
+	while
+			rm -f phantomjs-2.1.1-linux-x86_64.tar.bz2 &&
+			rm -rf phantomjs-2.1.1-linux-x86_64 &&
+			wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2 &&
+			tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2
+		; do
 		sleep 0.1
 	done
 
