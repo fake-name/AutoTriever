@@ -29,7 +29,8 @@ else
 
 	# 16.04 phantomjs apt package is fucked, crashes on start.
 	# sudo apt-get install phantomjs -y
-	wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
+	wget http://cnpmjs.org/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
+	# wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
 	tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2
 	sudo mv ./phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/
 	rm -rf phantomjs-2.1.1-linux-x86_64
