@@ -6,6 +6,7 @@ import random
 import logging
 import json
 import copy
+import uuid
 
 import settings
 
@@ -55,6 +56,7 @@ class VpsHerder(object):
 		conf['RABBIT_SRVER'] = settings.RABBIT_SERVER
 
 		conf['clientid'] = client_id
+		conf['client_key'] = uuid.uuid4()
 
 		conf['sadPanda']['login']  = settings.EX_LOGIN
 		conf['sadPanda']['passWd'] = settings.EX_PASSW
