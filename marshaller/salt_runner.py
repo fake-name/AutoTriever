@@ -114,7 +114,7 @@ class VpsHerder(object):
 			['cmd.run', ["swapon /swapfile", ], {}],
 
 			# Install settings
-			['file.managed', ["/scraper/settings.json", ], {"contents" : self.__make_conf_file("test-1", 0)}],
+			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file("test-1", 0)), ], {}],
 
 			# Finally, run the thing
 			['cmd.run', ["./run.sh", ], {"cwd" : '/scraper'}],
