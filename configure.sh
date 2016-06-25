@@ -34,11 +34,18 @@ else
 	# wget http://cnpmjs.org/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
 	#
 	for i in {1..5}; do
+		# Disable ret checking since we're manually checking the return of tar
+		set +e
+
 		rm -f phantomjs-2.1.1-linux-x86_64.tar.bz2
 		rm -rf phantomjs-2.1.1-linux-x86_64
+
 		wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
-		echo Error downloading phantomjs!
 		tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2 && break
+
+		# re-enable return checking.
+		set -e
+		echo Error downloading phantomjs!
 		sleep 5
 	done
 
