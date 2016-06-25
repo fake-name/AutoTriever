@@ -78,6 +78,9 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 						'referrer'         : currentUrl,
 						'outbound_wrapper' : release.find('a', class_='chp-release')['href'],
 						'actual_target'    : None,
+
+						'client_id'  = self.settings['clientid'],
+						'client_key' = self.settings['client_key'],
 					}
 					releases.append(release)
 
@@ -216,18 +219,19 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		return True
 
 	def qualifyLinks(self, releaselist):
-		limit = 5
+		limit = random.random(4, 20)
+		releaselist = random.shuffle(releaselist)
 		for release in releaselist:
 
 			# Hash the series name, modulo number of clients,
 			# and pick the series that match the active client.
 			# This makes each client "picky" about what series
 			# it "reads".
-			chp_hash = mmh3.hash(release['seriesname'])
-			chp_hash = chp_hash % self.settings['client_count']
-			if chp_hash != self.settings['client_number']:
-				self.log.info("This client doesn't 'want' entries for series '%s'", release['seriesname'])
-				continue
+			# chp_hash = mmh3.hash(release['seriesname'])
+			# chp_hash = chp_hash % self.settings['client_count']
+			# if chp_hash != self.settings['client_number']:
+			# 	self.log.info("This client doesn't 'want' entries for series '%s'", release['seriesname'])
+			# 	continue
 
 			sleep = True
 			try:
