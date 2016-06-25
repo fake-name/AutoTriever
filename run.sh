@@ -11,5 +11,12 @@ git pull
 # Run the configure scrip
 bash ./configure.sh
 
-echo "Launching executable."
-python3 ./main.py
+if [ -d "venv" ]
+then
+	echo "Venv exists. Activating and starting up!"
+	source venv/bin/activate
+	python3 ./main.py
+else
+	echo "Venv is missing! Cannot start!"
+	exit -1;
+fi;
