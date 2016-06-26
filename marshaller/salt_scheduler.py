@@ -90,7 +90,7 @@ class VpsScheduler(object):
 		existing = self.sched.get_jobs()
 		tznow = datetime.datetime.now(tz=pytz.utc)
 		for job in existing:
-			self.log.info(" %s, %s, running in s, ", job, job.args)
+			self.log.info(" %s, %s", job, job.args)
 
 
 
