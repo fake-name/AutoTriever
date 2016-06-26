@@ -30,9 +30,12 @@ class VpsScheduler(object):
 
 
 	def create_vm(self, vm_name):
-		self.log.info("Creating VM named: %s", vm_name)
+
+		vm_idx = int(vm_name.split("-")[-1])-1
+
+		self.log.info("Creating VM named: %s, index: %s", vm_name, vm_idx)
 		self.interface.make_client(vm_name)
-		self.interface.configure_client(vm_name)
+		self.interface.configure_client(vm_name, vm_idx)
 		self.log.info("VM %s created.", vm_name)
 
 	def destroy_vm(self, vm_name):

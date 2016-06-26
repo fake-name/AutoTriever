@@ -102,7 +102,7 @@ class VpsHerder(object):
 
 
 
-	def configure_client(self, clientname):
+	def configure_client(self, clientname, client_idx):
 		assert "_" not in clientname, "VM names cannot contain _ on digital ocean, I think?"
 		self.log.info("Configuring client")
 
@@ -119,7 +119,7 @@ class VpsHerder(object):
 			['cmd.run', ["swapon /swapfile", ], {}],
 
 			# Install settings
-			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file("test-1", 0)), ], {}],
+			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}],
 
 			# Finally, run the thing
 			['cmd.run', ["./configure.sh", ], {"cwd" : '/scraper'}],
@@ -201,7 +201,7 @@ if __name__ == '__main__':
 	elif "list" in sys.argv:
 		herder.list_nodes()
 	elif "configure" in sys.argv:
-		herder.configure_client("test-1")
+		herder.configure_client("test-1", 0)
 	else:
 		herder.make_client("test-1")
-		herder.configure_client("test-1")
+		herder.configure_client("test-1", 0)
