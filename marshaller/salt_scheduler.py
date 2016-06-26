@@ -4,10 +4,17 @@ import pytz
 import logging
 import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
+import sys
 import settings
 
 import logSetup
-import salt_runner
+
+
+if "test" in sys.argv:
+	import salt_dummy as salt_runner
+else:
+	import salt_runner
+
 
 VPS_NAME_FORMAT = "scrape-worker-{number}"
 
@@ -26,7 +33,7 @@ class VpsScheduler(object):
 				'apscheduler.timezone': 'UTC',
 			})
 
-		self.sched.add_job(self.ensure_active_workers, 'interval', seconds=20)
+		self.sched.add_job(self.ensure_active_workers, 'interval', seconds=60)
 		self.install_destroyer_jobs()
 
 
@@ -83,7 +90,7 @@ class VpsScheduler(object):
 		existing = self.sched.get_jobs()
 		tznow = datetime.datetime.now(tz=pytz.utc)
 		for job in existing:
-			self.log.info("	%s, %s, running in %s, ", job, job.args, job.next_run_time - tznow)
+			self.log.info(" %s, %s, running in s, ", job, job.args)
 
 
 
@@ -94,7 +101,7 @@ class VpsScheduler(object):
 
 		restart_interval = settings.VPS_LIFETIME_HOURS / settings.VPS_ACTIVE_WORKERS
 		basetime = time.time()
-		basetime = basetime - (basetime % settings.VPS_LIFETIME_HOURS)
+		basetime = basetime - (basetime % hrs_to_sec(settings.VPS_LIFETIME_HOURS))
 
 		print(hours % settings.VPS_LIFETIME_HOURS, restart_interval, basetime)
 		for vm in vms:
