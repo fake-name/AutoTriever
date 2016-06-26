@@ -11,6 +11,7 @@ import uuid
 import settings
 
 import salt.cloud
+import salt.cloud.exceptions
 import salt.client
 import salt.config
 
@@ -39,6 +40,8 @@ SETTINGS_BASE = {
 
 }
 
+class VmInitError(RuntimeError):
+	pass
 
 class VpsHerder(object):
 
@@ -136,13 +139,21 @@ class VpsHerder(object):
 			else:
 				self.log.info("Received empty response")
 
+
+		if not resp[clientname].strip().endswith('Setup OK! System is configured for launch'):
+			raise VmInitError("Setup command did not return success!")
+
 		self.log.info("Node configured! Starting scraper client!")
-		jobid = self.local.cmd_async(command='cmd.run', arg=["./run.sh", ], kwarg={"cwd" : '/scraper'})
+		jobid = self.local.cmd_async(tgt=clientname, fun='cmd.run', arg=["./run.sh", ], kwarg={"cwd" : '/scraper'})
 		self.log.info("Job id: '%s'", jobid)
 
 
 	def destroy_client(self, clientname):
-		self.cc.destroy(clientname)
+		try:
+			self.cc.destroy(clientname)
+		except salt.cloud.exceptions.SaltCloudSystemExit:
+			pass
+
 		# images = cc.list_images()
 		# locs   = cc.list_locations()
 		# sizes  = cc.list_sizes()
@@ -169,7 +180,14 @@ class VpsHerder(object):
 		    }
 		}
 		'''
-		self.log.info("Active nodes: %s", self.cc.query())
+		nodes = []
+		nodelist = self.cc.query()
+		if 'do' in nodelist:
+			if 'digital_ocean' in nodelist['do']:
+				for key, nodedict in nodelist['do']['digital_ocean'].items():
+					nodes.append(nodedict['name'])
+		self.log.info("Active nodes: %s", nodes)
+		return nodes
 
 	def dump_minion_conf(self):
 		conf = salt.config.client_config('/etc/salt/minion')
@@ -182,6 +200,8 @@ if __name__ == '__main__':
 		herder.destroy_client("test-1")
 	elif "list" in sys.argv:
 		herder.list_nodes()
+	elif "configure" in sys.argv:
+		herder.configure_client("test-1")
 	else:
 		herder.make_client("test-1")
 		herder.configure_client("test-1")
