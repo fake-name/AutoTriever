@@ -55,7 +55,8 @@ class VpsScheduler(object):
 
 
 	def get_active_vms(self):
-		workers = ['scrape-worker-1', 'scrape-worker-2', 'scrape-worker-a', 'scrape-worker-5', 'utility']
+		# workers = ['scrape-worker-1', 'scrape-worker-2', 'scrape-worker-a', 'scrape-worker-5', 'utility']
+		workers = self.interface.list_nodes()
 		ret = [worker for worker in workers if worker.startswith('scrape-worker')]
 		assert len(set(ret)) == len(ret), "VPS instances with duplicate names!"
 		return set(ret)
