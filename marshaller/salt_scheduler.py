@@ -1,5 +1,6 @@
 
 import time
+import pytz
 import logging
 import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -79,6 +80,12 @@ class VpsScheduler(object):
 		for vm_name in missing:
 			self.create_vm(vm_name)
 
+		existing = self.sched.get_jobs()
+		tznow = datetime.datetime.now(tz=pytz.utc)
+		for job in existing:
+			self.log.info("	%s, %s, running in %s, ", job, job.args, job.next_run_time - tznow)
+
+
 
 	def install_destroyer_jobs(self):
 		# vms = self.get_active_vms()
@@ -98,7 +105,7 @@ class VpsScheduler(object):
 				trigger       = 'interval',
 				args          = (vm, ),
 				seconds       = hrs_to_sec(settings.VPS_LIFETIME_HOURS),
-				next_run_time = datetime.datetime.fromtimestamp(nextrun))
+				next_run_time = datetime.datetime.fromtimestamp(nextrun, tz=pytz.utc))
 			print("Item nextrun: ", nextrun, nextrun - time.time())
 
 	def run(self):
