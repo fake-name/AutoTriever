@@ -219,8 +219,8 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		return True
 
 	def qualifyLinks(self, releaselist):
-		limit = random.randint(4, 20)
-		releaselist = random.shuffle(releaselist)
+		limit = random.randint(5, 30)
+		random.shuffle(releaselist)
 		for release in releaselist:
 
 			# Hash the series name, modulo number of clients,
