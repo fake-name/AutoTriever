@@ -108,6 +108,11 @@ class VpsScheduler(object):
 			vm_num = int(vm.split("-")[-1])
 			start_offset = vm_num * restart_interval
 			nextrun = basetime + hrs_to_sec(start_offset)
+
+			# Don't schedule a destruction before we start the scheduler.
+			if nextrun+120 < time.time():
+				nextrun += hrs_to_sec(settings.VPS_LIFETIME_HOURS)
+
 			self.sched.add_job(self.destroy_vm,
 				trigger       = 'interval',
 				args          = (vm, ),

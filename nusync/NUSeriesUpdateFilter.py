@@ -219,7 +219,7 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		return True
 
 	def qualifyLinks(self, releaselist):
-		limit = random.random(4, 20)
+		limit = random.randint(4, 20)
 		releaselist = random.shuffle(releaselist)
 		for release in releaselist:
 
