@@ -65,17 +65,17 @@ def start_scheduler():
 
 	sched.start()
 
-def dump_db():
+# def dump_db():
 
-	from . import database as db
-	settings = load_settings()
-	amqp = AmqpInterface.RabbitQueueHandler(settings)
-	print(amqp)
+# 	from . import database as db
+# 	settings = load_settings()
+# 	amqp = AmqpInterface.RabbitQueueHandler(settings)
+# 	print(amqp)
 
-	sess = db.session()
-	rows = sess.query(db.LinkWrappers).all()
-	for row in rows:
-		amqp.putRow(row)
+# 	sess = db.session()
+# 	rows = sess.query(db.LinkWrappers).all()
+# 	for row in rows:
+# 		amqp.putRow(row)
 
 if __name__ == '__main__':
 	logSetup.initLogging()
