@@ -45,7 +45,7 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		super().__init__()
 
 		self.settings = settings
-		self.db_sess = db_sess
+		# self.db_sess = db_sess
 		self.amqp = AmqpInterface.RabbitQueueHandler(settings)
 		self.wg = WebRequest.WebGetRobust(cloudflare=True)
 
@@ -151,15 +151,15 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 
 	def qualifyLink(self, release):
 
-		have = self.db_sess.query(db.LinkWrappers)                                   \
-			.filter(db.LinkWrappers.outbound_wrapper == release['outbound_wrapper']) \
-			.filter(db.LinkWrappers.seriesname == release['seriesname'])             \
-			.scalar()
-		if have:
-			release['actual_target'] = have.actual_target
-			self.log.info("Have: %s (%s, %s)", have, release['outbound_wrapper'], release['seriesname'])
-			self.amqp.putRow(have)
-			return False  # Don't sleep, since we didn't do a remote fetch.
+		# have = self.db_sess.query(db.LinkWrappers)                                   \
+		# 	.filter(db.LinkWrappers.outbound_wrapper == release['outbound_wrapper']) \
+		# 	.filter(db.LinkWrappers.seriesname == release['seriesname'])             \
+		# 	.scalar()
+		# if have:
+		# 	release['actual_target'] = have.actual_target
+		# 	self.log.info("Have: %s (%s, %s)", have, release['outbound_wrapper'], release['seriesname'])
+		# 	self.amqp.putRow(have)
+		# 	return False  # Don't sleep, since we didn't do a remote fetch.
 
 		driver = self.wg.pjs_driver
 		basepage = release['referrer']
@@ -189,8 +189,8 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 			addtime          = datetime.datetime.now(),
 			)
 
-		self.db_sess.add(new)
-		self.db_sess.commit()
+		# self.db_sess.add(new)
+		# self.db_sess.commit()
 
 		self.amqp.putRow(new)
 

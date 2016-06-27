@@ -20,9 +20,9 @@ def load_settings():
 
 def go():
 	try:
-		from . import database as db
+		# from . import database as db
 		settings = load_settings()
-		db_sess = db.session()
+		db_sess = None
 		fetcher = NUSeriesUpdateFilter.NUSeriesUpdateFilter(db_sess, settings)
 		print(fetcher.handlePage("https://www.novelupdates.com"))
 	except:
