@@ -110,7 +110,7 @@ class VpsHerder(object):
 
 		commands = [
 			['cmd.run', ["mkdir -p /scraper", ],      {}],
-			['cmd.run', ["apt-get install -y build-essential git", ],      {}],
+			['cmd.run', ["apt-get install -y build-essential git screen", ],      {}],
 			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}],
 			['cmd.run', ["ls /scraper", ], {}],
 			['cmd.run', ["whoami", ], {}],
@@ -146,7 +146,7 @@ class VpsHerder(object):
 			raise VmInitError("Setup command did not return success!")
 
 		self.log.info("Node configured! Starting scraper client!")
-		jobid = self.local.cmd_async(tgt=clientname, fun='cmd.run', arg=["./run.sh", ], kwarg={"cwd" : '/scraper'})
+		jobid = self.local.cmd_async(tgt=clientname, fun='cmd.run', arg=["screen -d -m ./run.sh", ], kwarg={"cwd" : '/scraper'})
 		self.log.info("Job id: '%s'", jobid)
 
 
