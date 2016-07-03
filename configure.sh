@@ -33,9 +33,10 @@ else
 	# sudo apt-get install phantomjs -y
 	# wget http://cnpmjs.org/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
 	#
-	for i in {1..50000000000}; do
-		# Disable ret checking since we're manually checking the return of tar
-		set +e
+
+	# Disable ret checking since we're manually checking the return of tar
+	set +e
+	while true; do
 
 		rm -f phantomjs-2.1.1-linux-x86_64.tar.bz2
 		rm -rf phantomjs-2.1.1-linux-x86_64
@@ -44,10 +45,10 @@ else
 		tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2 && break
 
 		# re-enable return checking.
-		set -e
 		echo Error downloading phantomjs!
 		sleep 30
-	done
+	done;
+	set -e
 
 
 	sudo mv ./phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/
