@@ -87,51 +87,51 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		return releases
 
 
-	def extractSeriesReleases_wln(self, currentUrl, soup):
+	# def extractSeriesReleases_wln(self, currentUrl, soup):
 
-		# print("container: ", container)
+	# 	# print("container: ", container)
 
-		main, oel, dummy_rss = soup.find_all('table', class_='fullwidth')
+	# 	main, oel, dummy_rss = soup.find_all('table', class_='fullwidth')
 
-		# print("Release tables:", release_tables)
+	# 	# print("Release tables:", release_tables)
 
-		releases = []
-		for table_div in [main, oel]:
-			for item in table_div.find_all("tr", id='release-entry'):
-				tds = item.find_all('td')
+	# 	releases = []
+	# 	for table_div in [main, oel]:
+	# 		for item in table_div.find_all("tr", id='release-entry'):
+	# 			tds = item.find_all('td')
 
-				if len(tds) == 4:
-					link, series, chap, extra = tds
-					vol = None
-					group = None
-					tl_type = "oel"
-				elif len(tds) == 5:
-					if table_div == main:
-						link, series, chap, extra, group = tds
-						vol = None
-						tl_type = "translated"
-					elif table_div == oel:
-						link, series, vol, chap, extra = tds
-						group = None
-						tl_type = "oel"
+	# 			if len(tds) == 4:
+	# 				link, series, chap, extra = tds
+	# 				vol = None
+	# 				group = None
+	# 				tl_type = "oel"
+	# 			elif len(tds) == 5:
+	# 				if table_div == main:
+	# 					link, series, chap, extra, group = tds
+	# 					vol = None
+	# 					tl_type = "translated"
+	# 				elif table_div == oel:
+	# 					link, series, vol, chap, extra = tds
+	# 					group = None
+	# 					tl_type = "oel"
 
-				elif len(tds) == 6:
-					link, series, vol, chap, extra, group = tds
-					tl_type = "translated"
+	# 			elif len(tds) == 6:
+	# 				link, series, vol, chap, extra, group = tds
+	# 				tl_type = "translated"
 
-				release = {
-					'seriesname'       : series.get_text().strip(),
-					'releaseinfo'      : 'v' + str(vol.get_text().strip()   if vol and vol.get_text().strip()     else  0) +
-					                     'c' + str(chap.get_text().strip()  if chap and chap.get_text().strip()   else  0) +
-					                     ' ' + str(extra.get_text().strip() if extra and extra.get_text().strip() else ''),
-					'groupinfo'        : group.get_text().strip() if group else '',
-					'referrer'         : currentUrl,
-					'outbound_wrapper' : link.a['href'],
-					'actual_target'    : None,
-				}
-				releases.append(release)
+	# 			release = {
+	# 				'seriesname'       : series.get_text().strip(),
+	# 				'releaseinfo'      : 'v' + str(vol.get_text().strip()   if vol and vol.get_text().strip()     else  0) +
+	# 				                     'c' + str(chap.get_text().strip()  if chap and chap.get_text().strip()   else  0) +
+	# 				                     ' ' + str(extra.get_text().strip() if extra and extra.get_text().strip() else ''),
+	# 				'groupinfo'        : group.get_text().strip() if group else '',
+	# 				'referrer'         : currentUrl,
+	# 				'outbound_wrapper' : link.a['href'],
+	# 				'actual_target'    : None,
+	# 			}
+	# 			releases.append(release)
 
-		return releases
+	# 	return releases
 
 
 	def fetchPage(self, url):
@@ -179,20 +179,20 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 
 		time.sleep(3)
 
-		new = db.LinkWrappers(
-			seriesname       = release['seriesname'],
-			releaseinfo      = release['releaseinfo'],
-			groupinfo        = release['groupinfo'],
-			referrer         = release['referrer'],
-			outbound_wrapper = release['outbound_wrapper'],
-			actual_target    = driver.current_url,
-			addtime          = datetime.datetime.now(),
-			)
+		# new = db.LinkWrappers(
+		# 	seriesname       = release['seriesname'],
+		# 	releaseinfo      = release['releaseinfo'],
+		# 	groupinfo        = release['groupinfo'],
+		# 	referrer         = release['referrer'],
+		# 	outbound_wrapper = release['outbound_wrapper'],
+		# 	actual_target    = driver.current_url,
+		# 	addtime          = datetime.datetime.now(),
+		# 	)
 
 		# self.db_sess.add(new)
 		# self.db_sess.commit()
 
-		self.amqp.putRow(new)
+		self.amqp.putRow(release)
 
 		release['actual_target'] = driver.current_url
 

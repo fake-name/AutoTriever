@@ -96,18 +96,10 @@ class RabbitQueueHandler(object):
 			self.connector.stop()
 			self.connector = None
 
-	def putRow(self, row):
+	def putRow(self, data):
 
 		message = {
-			"nu_release" : {
-				"seriesname"       : row.seriesname,
-				"releaseinfo"      : row.releaseinfo,
-				"groupinfo"        : row.groupinfo,
-				"referrer"         : row.referrer,
-				"outbound_wrapper" : row.outbound_wrapper,
-				"actual_target"    : row.actual_target,
-				"addtime"          : row.addtime.isoformat(),
-			}
+			"nu_release" : data
 		}
 		msg = json.dumps(message)
 		self.put_item(msg)
