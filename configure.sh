@@ -33,7 +33,7 @@ else
 	# sudo apt-get install phantomjs -y
 	# wget http://cnpmjs.org/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
 	#
-	for true; do
+	for i in {1..50000000000}; do
 		# Disable ret checking since we're manually checking the return of tar
 		set +e
 
