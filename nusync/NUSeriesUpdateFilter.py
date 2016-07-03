@@ -179,6 +179,8 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 
 		time.sleep(3)
 
+		release['actual_target'] = driver.current_url
+
 		# new = db.LinkWrappers(
 		# 	seriesname       = release['seriesname'],
 		# 	releaseinfo      = release['releaseinfo'],
@@ -191,7 +193,6 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 
 		# self.db_sess.add(new)
 		# self.db_sess.commit()
-
 		self.amqp.putRow(release)
 
 		release['actual_target'] = driver.current_url
