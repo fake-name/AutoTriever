@@ -246,12 +246,12 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 
 			if sleep:
 
-				# Fetch 5 items per hour max
+				# Fetch n items per hour max
 				limit = limit - 1
 				if limit <= 0:
 					return
 
-				sleeptime = random.randint(15, 30*60)
+				sleeptime = random.randint(15, 10*60)
 				for x in range(sleeptime):
 					if x % 15 == 0:
 						self.log.info("Sleeping %s seconds (%s remaining)", sleeptime, sleeptime-x)

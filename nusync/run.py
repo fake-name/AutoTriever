@@ -55,7 +55,7 @@ def start_scheduler():
 	sched.add_job(go,
 				# args               = (callee.__name__, ),
 				trigger            = 'interval',
-				seconds            = 60*60*2,
+				seconds            = 60*60*1,
 				start_date         = startTime,
 				id                 = 0,
 				max_instances      = 1,
