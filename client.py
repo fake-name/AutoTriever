@@ -171,8 +171,9 @@ class RpcHandler(object):
 															host                = self.settings["RABBIT_SRVER"],
 															virtual_host        = self.settings["RPC_RABBIT_VHOST"],
 															ssl                 = sslopts,
-															task_exchange_type = "direct",
-															# session_fetch_limit = 1,
+															prefetch            = 1,
+															synchronous         = True,
+															task_exchange_type  = "direct",
 															durable             = True,
 															)
 						self.log.info("AMQP Connection initialized. Entering runloop!")
