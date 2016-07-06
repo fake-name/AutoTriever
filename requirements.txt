@@ -1,7 +1,7 @@
-git+https://github.com/fake-name/AmqpConnector.git
 git+https://github.com/jkehler/unshortenit.git
 
 apscheduler
+rabbitpy
 BeautifulSoup4 
 colorama
 fake-factory

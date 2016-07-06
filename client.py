@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import AmqpConnector
+import SyncAmqpConnector
 import msgpack
 import logging
 import os.path
@@ -166,7 +166,7 @@ class RpcHandler(object):
 				try:
 					if not connector:
 						self.log.info("Initializing AMQP Connection!")
-						connector = AmqpConnector.Connector(userid              = self.settings["RABBIT_LOGIN"],
+						connector = SyncAmqpConnector.Connector(userid              = self.settings["RABBIT_LOGIN"],
 															password            = self.settings["RABBIT_PASWD"],
 															host                = self.settings["RABBIT_SRVER"],
 															virtual_host        = self.settings["RPC_RABBIT_VHOST"],

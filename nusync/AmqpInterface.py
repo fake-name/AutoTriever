@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import traceback
 import json
-import AmqpConnector
+import SyncAmqpConnector
 import logging
 import os.path
 import ssl
@@ -26,7 +26,7 @@ class RabbitQueueHandler(object):
 
 		sslopts = self.getSslOpts()
 
-		self.connector = AmqpConnector.Connector(userid            = settings["RABBIT_LOGIN"],
+		self.connector = SyncAmqpConnector.Connector(userid            = settings["RABBIT_LOGIN"],
 												password           = settings["RABBIT_PASWD"],
 												host               = settings["RABBIT_SRVER"],
 												virtual_host       = settings["NU_RABBIT_VHOST"],
