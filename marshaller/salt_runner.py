@@ -134,7 +134,9 @@ class VpsHerder(object):
 				arg=args,
 				kwarg=kwargs
 				)
+			self.log.info("Command executed. Clientname in response: %s", clientname in resp)
 			assert clientname in resp
+
 			if resp[clientname]:
 				for line in resp[clientname].split("\n"):
 					self.log.info("	%s", line)
