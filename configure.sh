@@ -66,6 +66,7 @@ else
 fi;
 
 ./venv/bin/pip install --upgrade rabbitpy
+./venv/bin/pip install --upgrade pika
 ./venv/bin/pip install --upgrade -r requirements.txt
 
 # If we're in a docker instance, the credentials will have been passed in as a

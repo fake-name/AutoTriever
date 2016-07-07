@@ -30,8 +30,8 @@ def go():
 
 		print("ERROR: Failure when running job!")
 		traceback.print_exc()
-	finally:
-		db_sess.close()
+	# finally:
+	# 	db_sess.close()
 
 executors = {
 	'main_jobstore': ThreadPoolExecutor(5),

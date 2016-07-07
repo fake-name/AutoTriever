@@ -12,7 +12,7 @@ import os
 
 import nusync.run
 
-RUN_STATE = True
+from state import RUN_STATE
 
 
 def loadSettings():
@@ -55,7 +55,6 @@ def launchThread(settings):
 			time.sleep(60*3)
 
 def multithread(numThreads, settings):
-	global RUN_STATE
 
 	print("Launching {num} threads.".format(num=numThreads))
 
