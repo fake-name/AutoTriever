@@ -68,7 +68,7 @@ class ColourHandler(logging.Handler):
 			record.style = clr.Style.NORMAL
 
 		record.padding = ""
-		print((self.format(record)))
+		print((self.format(record).encode("utf-8", "replace")))
 
 class RobustFileHandler(logging.FileHandler):
 	"""
