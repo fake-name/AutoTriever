@@ -67,7 +67,7 @@ class ColourHandler(logging.Handler):
 		else:
 			record.style = clr.Style.NORMAL
 
-		record.args = [str(args).encode("utf-8", "replace").decode("utf-8") for argsf in record.args]
+		record.args = [str(argsf).encode("utf-8", "replace").decode("utf-8") for argsf in record.args]
 
 		record.padding = ""
 		print((self.format(record)))
