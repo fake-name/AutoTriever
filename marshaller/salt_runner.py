@@ -124,6 +124,7 @@ class VpsHerder(object):
 			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ], {}],
 			['cmd.run', ["dpkg-reconfigure locales", ], {}],
 			['cmd.run', ["locale", ], {}],
+			['cmd.run', ["bash -c locale", ], {}],
 
 			# Install settings
 			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}],
