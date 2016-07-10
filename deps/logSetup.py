@@ -70,16 +70,16 @@ class ColourHandler(logging.Handler):
 		if record.args:
 			if isinstance(record.args, (list, tuple)):
 				record.args = tuple(
-						str(argsf).encode("utf-8", "replace").decode("utf-8") if isinstance(argsf, (str)) else argsf
+						str(argsf).encode("ascii", "replace").decode("ascii") if isinstance(argsf, (str)) else argsf
 						for argsf in record.args
 					)
 			else:
-				record.args = str(record.args).encode("utf-8", "replace").decode("utf-8")
+				record.args = str(record.args).encode("ascii", "replace").decode("ascii")
 
-		record.msg = str(record.msg).encode("utf-8", "replace").decode("utf-8")
+		record.msg = str(record.msg).encode("ascii", "replace").decode("ascii")
 		record.padding = ""
 		msg = self.format(record)
-		msg = str(msg).encode("utf-8", "replace").decode("utf-8")
+		msg = str(msg).encode("ascii", "replace").decode("ascii")
 		print(msg)
 
 class RobustFileHandler(logging.FileHandler):
