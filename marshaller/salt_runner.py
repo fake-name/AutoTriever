@@ -119,6 +119,10 @@ class VpsHerder(object):
 			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=1024", ], {}],
 			['cmd.run', ["mkswap /swapfile", ], {}],
 			['cmd.run', ["swapon /swapfile", ], {}],
+			['cmd.run', ["dpkg-reconfigure locales", ], {}],
+			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ], {}],
+			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ], {}],
+			['cmd.run', ["dpkg-reconfigure locales", ], {}],
 
 			# Install settings
 			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}],
