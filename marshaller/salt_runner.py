@@ -134,14 +134,20 @@ class VpsHerder(object):
 		]
 
 		for command, args, kwargs in commands:
-			self.log.info("Executing command '%s', args: '%s', kwargs: '%s'", command, args, kwargs)
-			resp = self.local.cmd(clientname,
-				fun=command,
-				arg=args,
-				kwarg=kwargs
-				)
-			self.log.info("Command executed. Clientname in response: %s", clientname in resp)
-			assert clientname in resp
+			while True:
+				self.log.info("Executing command '%s', args: '%s', kwargs: '%s'", command, args, kwargs)
+				resp = self.local.cmd(clientname,
+					fun=command,
+					arg=args,
+					kwarg=kwargs
+					)
+				self.log.info("Command executed. Clientname in response: %s", clientname in resp)
+				if clientname in resp:
+					break
+				else:
+					self.log.error("Command failed!")
+					self.log.error("Response:")
+					self.log.error("%s", resp)
 
 			if resp[clientname]:
 				for line in resp[clientname].split("\n"):
