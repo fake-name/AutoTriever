@@ -220,7 +220,7 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		return True
 
 	def qualifyLinks(self, releaselist):
-		limit = random.randint(5, 30)
+		limit = random.randint(5, 40)
 		random.shuffle(releaselist)
 		for release in releaselist:
 
@@ -251,7 +251,7 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 				if limit <= 0:
 					return
 
-				sleeptime = random.randint(15, 10*60)
+				sleeptime = random.randint(15, 7*60)
 				for x in range(sleeptime):
 					if x % 15 == 0:
 						self.log.info("Sleeping %s seconds (%s remaining)", sleeptime, sleeptime-x)
