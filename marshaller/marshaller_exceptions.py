@@ -1,0 +1,3 @@
+
+class VmCreateFailed(Exception):
+	pass

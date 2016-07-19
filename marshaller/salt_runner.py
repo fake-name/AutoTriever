@@ -15,6 +15,7 @@ import salt.cloud.exceptions
 import salt.client
 import salt.config
 
+import marshaller_exceptions
 import logSetup
 
 
@@ -133,6 +134,8 @@ class VpsHerder(object):
 			['cmd.run', ["./configure.sh", ], {"cwd" : '/scraper'}],
 		]
 
+		failures = 0
+
 		for command, args, kwargs in commands:
 			while True:
 				self.log.info("Executing command '%s', args: '%s', kwargs: '%s'", command, args, kwargs)
@@ -143,11 +146,15 @@ class VpsHerder(object):
 					)
 				self.log.info("Command executed. Clientname in response: %s", clientname in resp)
 				if clientname in resp:
+					failures = 0
 					break
 				else:
+					failures += 1
 					self.log.error("Command failed!")
 					self.log.error("Response:")
 					self.log.error("%s", resp)
+					if failures > 25:
+						raise marshaller_exceptions.VmCreateFailed("Failed to create VM!")
 
 			if resp[clientname]:
 				for line in resp[clientname].split("\n"):

@@ -8,6 +8,7 @@ import sys
 import settings
 
 import logSetup
+import marshaller_exceptions
 
 
 if "test" in sys.argv:
@@ -42,9 +43,13 @@ class VpsScheduler(object):
 		vm_idx = int(vm_name.split("-")[-1])-1
 
 		self.log.info("Creating VM named: %s, index: %s", vm_name, vm_idx)
-		self.interface.make_client(vm_name)
-		self.interface.configure_client(vm_name, vm_idx)
-		self.log.info("VM %s created.", vm_name)
+		try:
+			self.interface.make_client(vm_name)
+			self.interface.configure_client(vm_name, vm_idx)
+			self.log.info("VM %s created.", vm_name)
+		except marshaller_exceptions.VmCreateFailed:
+			self.log.info("Failure instantiating VM %s.", vm_name)
+			self.destroy_vm(vm_name)
 
 	def destroy_vm(self, vm_name):
 		self.log.info("Destroying VM named: %s", vm_name)
