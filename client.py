@@ -346,7 +346,20 @@ class RpcHandler(object):
 
 		self.log.info("Returning")
 
-		return msgpack.packb(ret, use_bin_type=True), delay
+		retb = msgpack.packb(ret, use_bin_type=True)
+		if len(retb) < 10 * 1024 * 1024:
+			return retb, delay
+		else:
+			ret = {
+				'success'     : False,
+				'error'       : "response_too_large",
+				'traceback'   : "Response too large! Response size in bytes: %s." % len(retb),
+				'cancontinue' : True
+			}
+			if 'jobid' in body:
+				ret['jobid'] = body['jobid']
+			return msgpack.packb(ret, use_bin_type=True), delay
+
 		# return json.dumps(ret), delay
 
 	def successDelay(self, sleeptime):
