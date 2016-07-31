@@ -3,6 +3,7 @@ import msgpack
 import rabbitpy
 import urllib.parse
 import logging
+import uuid
 import os.path
 import threading
 import ssl
@@ -10,6 +11,12 @@ import time
 import traceback
 from state import RUN_STATE
 
+# CHUNK_SIZE_BYTES = 250 * 1024
+CHUNK_SIZE_BYTES = 100 * 1024
+
+def chunk_input(inval, chunk_size):
+	for i in range(0, len(inval), chunk_size):
+		yield inval[i:i+chunk_size]
 
 class Connector:
 	def __init__(self, *args, **kwargs):
@@ -346,19 +353,8 @@ class RpcHandler(object):
 
 		self.log.info("Returning")
 
-		retb = msgpack.packb(ret, use_bin_type=True)
-		if len(retb) < 10 * 1024 * 1024:
-			return retb, delay
-		else:
-			ret = {
-				'success'     : False,
-				'error'       : "response_too_large",
-				'traceback'   : "Response too large! Response size in bytes: %s." % len(retb),
-				'cancontinue' : True
-			}
-			if 'jobid' in body:
-				ret['jobid'] = body['jobid']
-			return msgpack.packb(ret, use_bin_type=True), delay
+
+		return ret, delay
 
 		# return json.dumps(ret), delay
 
@@ -380,6 +376,35 @@ class RpcHandler(object):
 					self.log.info( "Breaking due to exit flag being set")
 					break
 
+	def put_message_chunked(self, message, connector):
+
+		message_bytes = msgpack.packb(message, use_bin_type=True)
+		if len(message_bytes) < CHUNK_SIZE_BYTES:
+
+			message = {
+				'chunk-type'         : "complete-message",
+				'data'         : message,
+			}
+			bmessage = msgpack.packb(message, use_bin_type=True)
+
+			self.log.info("Response message size: %0.3fK. Sending", len(bmessage)/1024.0)
+			connector.put_response(bmessage)
+		else:
+			chunked_id = "chunk-merge-key-"+uuid.uuid4().hex
+			chunkl = list(enumerate(chunk_input(message_bytes, CHUNK_SIZE_BYTES)))
+			for idx, chunk in chunkl:
+				message = {
+					'chunk-type'   : "chunked-message",
+					'chunk-num'    : idx,
+					'total-chunks' : len(chunkl),
+					'data'         : chunk,
+					'merge-key'    : chunked_id,
+				}
+				bmessage = msgpack.packb(message, use_bin_type=True)
+				self.log.info("Response chunk message size: %0.3fK. Sending", len(bmessage)/1024.0)
+				connector.put_response(bmessage)
+
+
 
 	def process_messages(self, connector, loops):
 
@@ -393,8 +418,9 @@ class RpcHandler(object):
 				self.log.info("Processing message. (%s of %s before connection reset)", msg_count, loops)
 
 				response, postDelay = self._process(message.body)
-				self.log.info("Response message size: %0.3fK. Sending", len(response)/1024.0)
-				connector.put_response(response)
+
+				self.put_message_chunked(response, connector)
+				# connector.put_response(response)
 
 				# Ack /after/ we've done the task.
 				message.ack()
