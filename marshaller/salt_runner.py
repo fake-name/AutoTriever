@@ -46,6 +46,8 @@ SETTINGS_BASE = {
 class VmInitError(RuntimeError):
 	pass
 
+dirmake_oneliner = 'python -c \'import os.path, sys, os; os.makedirs("/scraper") if not os.path.exists("/scraper") else None; print("Dir exists and is dir: ", os.path.isdir("/scraper"));sys.exit(1 if os.path.isdir("/scraper") else 0);\''
+
 class VpsHerder(object):
 
 	def __init__(self):
@@ -105,12 +107,13 @@ class VpsHerder(object):
 
 
 
+
 	def configure_client(self, clientname, client_idx):
 		assert "_" not in clientname, "VM names cannot contain _ on digital ocean, I think?"
 		self.log.info("Configuring client")
 
 		commands = [
-			['cmd.run', ["mkdir -p /scraper", ],      {}],
+			['cmd.run', [dirmake_oneliner, ],      {}],
 			['cmd.run', ["apt-get install -y build-essential git screen", ],      {}],
 			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}],
 			['cmd.run', ["ls /scraper", ], {}],
