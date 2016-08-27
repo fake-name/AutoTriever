@@ -153,10 +153,11 @@ class VpsHerder(object):
 					break
 				else:
 					failures += 1
-					self.log.error("Command failed!")
+					tries = 8
+					self.log.error("Command failed (attempt %s of %s)!", failures, tries)
 					self.log.error("Response:")
 					self.log.error("%s", resp)
-					if failures > 25:
+					if failures > tries:
 						raise marshaller_exceptions.VmCreateFailed("Failed to create VM!")
 
 			if resp[clientname]:
