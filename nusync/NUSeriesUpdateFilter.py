@@ -112,18 +112,6 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 
 	def qualifyLink(self, release):
 
-		print("Qualifying: '%s'" % release)
-
-		# have = self.db_sess.query(db.LinkWrappers)                                   \
-		# 	.filter(db.LinkWrappers.outbound_wrapper == release['outbound_wrapper']) \
-		# 	.filter(db.LinkWrappers.seriesname == release['seriesname'])             \
-		# 	.scalar()
-		# if have:
-		# 	release['actual_target'] = have.actual_target
-		# 	self.log.info("Have: %s (%s, %s)", have, release['outbound_wrapper'], release['seriesname'])
-		# 	self.amqp.putRow(have)
-		# 	return False  # Don't sleep, since we didn't do a remote fetch.
-
 		basepage = release['referrer']
 		if not self.wg.pjs_driver:
 			self.wg.getItemPhantomJS(basepage)

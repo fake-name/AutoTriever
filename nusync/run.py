@@ -32,6 +32,7 @@ def go():
 
 			print("ERROR: Failure when running job!")
 			traceback.print_exc()
+			time.sleep(30)
 	# finally:
 	# 	db_sess.close()
 
