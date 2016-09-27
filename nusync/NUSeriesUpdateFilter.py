@@ -238,7 +238,7 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 				if limit <= 0:
 					return
 
-				sleeptime = random.triangular(15, 20*60, 45)
+				sleeptime = random.triangular(15, 20*60, 3*60)
 				for x in range(sleeptime):
 					if x % 15 == 0:
 						self.log.info("Sleeping %s seconds (%s remaining)", sleeptime, sleeptime-x)
