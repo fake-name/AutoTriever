@@ -19,17 +19,19 @@ def load_settings():
 
 
 def go():
-	try:
-		# from . import database as db
-		settings = load_settings()
-		db_sess = None
-		fetcher = NUSeriesUpdateFilter.NUSeriesUpdateFilter(db_sess, settings)
-		print(fetcher.handlePage("https://www.novelupdates.com"))
-	except:
-		import traceback
+	while 1:
+		try:
+			# from . import database as db
+			settings = load_settings()
+			db_sess = None
+			fetcher = NUSeriesUpdateFilter.NUSeriesUpdateFilter(db_sess, settings)
+			print(fetcher.handlePage("https://www.novelupdates.com"))
+			return
+		except:
+			import traceback
 
-		print("ERROR: Failure when running job!")
-		traceback.print_exc()
+			print("ERROR: Failure when running job!")
+			traceback.print_exc()
 	# finally:
 	# 	db_sess.close()
 
@@ -79,7 +81,7 @@ def start_scheduler():
 
 if __name__ == '__main__':
 	logSetup.initLogging()
-	dump_db()
+	# dump_db()
 	start_scheduler()
 	while 1:
 		time.sleep(1)

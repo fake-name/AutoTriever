@@ -584,7 +584,7 @@ class WebGetRobust:
 
 
 	def getItemPhantomJS(self, itemUrl):
-		self.log.info("Fetching page with PhantomJS")
+		self.log.info("Fetching page for URL: '%s' with PhantomJS" % itemUrl)
 
 		if not self.pjs_driver:
 			self._initWebDriver()
@@ -603,6 +603,9 @@ class WebGetRobust:
 
 		# So, self.pjs_driver.page_source appears to be the *compressed* page source as-rendered. Because reasons.
 		source = self.pjs_driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML")
+
+		assert source != '<head></head><body></body>'
+
 		source = "<html>"+source+"</html>"
 		return source, fileN, mType
 

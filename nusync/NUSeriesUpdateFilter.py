@@ -46,7 +46,10 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 
 		self.settings = settings
 		# self.db_sess = db_sess
-		self.amqp = AmqpInterface.RabbitQueueHandler(settings)
+		if settings and 'RABBIT_LOGIN' in settings:
+			self.amqp = AmqpInterface.RabbitQueueHandler(settings)
+		else:
+			self.amqp = None
 		self.wg = WebRequest.WebGetRobust(cloudflare=True)
 
 
@@ -58,7 +61,8 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 	def extractSeriesReleases(self, currentUrl, soup):
 
 		container = soup.find('div', class_='l-content')
-		# print("container: ", container)
+
+		assert container is not None
 
 		release_tables = container.find_all('table', class_='tablesorter')
 
@@ -70,68 +74,26 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 				tds = item.find_all('td')
 				if len(tds) == 3:
 					series, release, group = tds
+					linkas = release.find_all('a', class_='chp-release')
+					sname = series.get_text().strip()
+					rname = release.get_text().strip()
+					gname = group.get_text().strip()
+					for link in linkas:
+						release = {
+							'seriesname'       : sname,
+							'releaseinfo'      : rname,
+							'groupinfo'        : gname,
+							'referrer'         : currentUrl,
+							'outbound_wrapper' : link['href'],
+							'actual_target'    : None,
 
-					release = {
-						'seriesname'       : series.get_text().strip(),
-						'releaseinfo'      : release.get_text().strip(),
-						'groupinfo'        : group.get_text().strip(),
-						'referrer'         : currentUrl,
-						'outbound_wrapper' : release.find('a', class_='chp-release')['href'],
-						'actual_target'    : None,
-
-						'client_id'        : self.settings['clientid'],
-						'client_key'       : self.settings['client_key'],
-					}
-					releases.append(release)
+							'client_id'        : self.settings['clientid'],
+							'client_key'       : self.settings['client_key'],
+						}
+						# print("Link: ", link['href'])
+						releases.append(release)
 
 		return releases
-
-
-	# def extractSeriesReleases_wln(self, currentUrl, soup):
-
-	# 	# print("container: ", container)
-
-	# 	main, oel, dummy_rss = soup.find_all('table', class_='fullwidth')
-
-	# 	# print("Release tables:", release_tables)
-
-	# 	releases = []
-	# 	for table_div in [main, oel]:
-	# 		for item in table_div.find_all("tr", id='release-entry'):
-	# 			tds = item.find_all('td')
-
-	# 			if len(tds) == 4:
-	# 				link, series, chap, extra = tds
-	# 				vol = None
-	# 				group = None
-	# 				tl_type = "oel"
-	# 			elif len(tds) == 5:
-	# 				if table_div == main:
-	# 					link, series, chap, extra, group = tds
-	# 					vol = None
-	# 					tl_type = "translated"
-	# 				elif table_div == oel:
-	# 					link, series, vol, chap, extra = tds
-	# 					group = None
-	# 					tl_type = "oel"
-
-	# 			elif len(tds) == 6:
-	# 				link, series, vol, chap, extra, group = tds
-	# 				tl_type = "translated"
-
-	# 			release = {
-	# 				'seriesname'       : series.get_text().strip(),
-	# 				'releaseinfo'      : 'v' + str(vol.get_text().strip()   if vol and vol.get_text().strip()     else  0) +
-	# 				                     'c' + str(chap.get_text().strip()  if chap and chap.get_text().strip()   else  0) +
-	# 				                     ' ' + str(extra.get_text().strip() if extra and extra.get_text().strip() else ''),
-	# 				'groupinfo'        : group.get_text().strip() if group else '',
-	# 				'referrer'         : currentUrl,
-	# 				'outbound_wrapper' : link.a['href'],
-	# 				'actual_target'    : None,
-	# 			}
-	# 			releases.append(release)
-
-	# 	return releases
 
 
 	def fetchPage(self, url):
@@ -151,6 +113,8 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 
 	def qualifyLink(self, release):
 
+		print("Qualifying: '%s'" % release)
+
 		# have = self.db_sess.query(db.LinkWrappers)                                   \
 		# 	.filter(db.LinkWrappers.outbound_wrapper == release['outbound_wrapper']) \
 		# 	.filter(db.LinkWrappers.seriesname == release['seriesname'])             \
@@ -161,25 +125,46 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		# 	self.amqp.putRow(have)
 		# 	return False  # Don't sleep, since we didn't do a remote fetch.
 
-		driver = self.wg.pjs_driver
 		basepage = release['referrer']
-		if driver.current_url.rstrip("/") != basepage.rstrip("/"):
-			self.log.info("Need to resolve '%s' (current URL: '%s')",
-					basepage.rstrip("/"),
-					driver.current_url.rstrip("/")
-				)
-			driver.get(basepage)
+		if not self.wg.pjs_driver:
+			self.wg.getItemPhantomJS(basepage)
 			time.sleep(random.randint(3, 9))
+		elif self.wg.pjs_driver.current_url.rstrip("/") != basepage.rstrip("/"):
+				self.log.info("Need to resolve '%s' (current URL: '%s')",
+						basepage.rstrip("/"),
+						self.wg.pjs_driver.current_url.rstrip("/")
+					)
+				self.wg.pjs_driver.get(basepage)
+				time.sleep(random.randint(3, 9))
+		else:
+			print("already navigated to the correct page.")
+
 		selector = "a[href*='" + release['outbound_wrapper'] + "']"
-		linkbutton = driver.find_element_by_css_selector(selector)
+		print("Selector: ", selector)
+
+		content = self.wg.pjs_driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML")
+		print(release['outbound_wrapper'] + " in page:", release['outbound_wrapper'] in content)
+
+		linkbutton = self.wg.pjs_driver.find_element_by_css_selector(selector)
 		if not linkbutton:
 			self.log.error("Can't find link to release with selector '%s'", selector)
+
+		print("Linkbutton:", linkbutton)
+		# Ignore the non-visible elements. Nice try tho, guy!
+		try:
+			visible = linkbutton.is_displayed()
+		except selenium.common.exceptions.WebDriverException:
+			print("Wut?")
+			raise
+		if not visible:
+			return None
+
 
 		linkbutton.click()
 
 		time.sleep(3)
 
-		release['actual_target'] = driver.current_url
+		release['actual_target'] = self.wg.pjs_driver.current_url
 
 		# new = db.LinkWrappers(
 		# 	seriesname       = release['seriesname'],
@@ -187,15 +172,16 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		# 	groupinfo        = release['groupinfo'],
 		# 	referrer         = release['referrer'],
 		# 	outbound_wrapper = release['outbound_wrapper'],
-		# 	actual_target    = driver.current_url,
+		# 	actual_target    = self.wg.pjs_driver.current_url,
 		# 	addtime          = datetime.datetime.now(),
 		# 	)
 
 		# self.db_sess.add(new)
 		# self.db_sess.commit()
-		self.amqp.putRow(release)
+		if self.amqp:
+			self.amqp.putRow(release)
 
-		release['actual_target'] = driver.current_url
+		release['actual_target'] = self.wg.pjs_driver.current_url
 
 		self.log.info("New entry!")
 		self.log.info("	Series:   '%s'", release['seriesname'])
@@ -203,16 +189,16 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		self.log.info("	Group:    '%s'", release['groupinfo'])
 		self.log.info("	Outbound: '%s'", release['outbound_wrapper'])
 		self.log.info("	Referrer: '%s'", release['referrer'])
-		self.log.info("	Real:     '%s'", driver.current_url)
+		self.log.info("	Real:     '%s'", self.wg.pjs_driver.current_url)
 
-		# driver.execute_script("window.history.go(-1)")
+		# self.wg.pjs_driver.execute_script("window.history.go(-1)")
 		self.log.info("Attempting to go back to source page")
 		for dummy_x in range(5):
-			if driver.current_url.rstrip("/") != basepage.rstrip("/"):
-				driver.back()
+			if self.wg.pjs_driver.current_url.rstrip("/") != basepage.rstrip("/"):
+				self.wg.pjs_driver.back()
 				time.sleep(2)
-				self.log.info("	%s -> %s", driver.current_url.rstrip("/"), basepage.rstrip("/"))
-		if driver.current_url.rstrip("/") == basepage.rstrip("/"):
+				self.log.info("	%s -> %s", self.wg.pjs_driver.current_url.rstrip("/"), basepage.rstrip("/"))
+		if self.wg.pjs_driver.current_url.rstrip("/") == basepage.rstrip("/"):
 			self.log.info("Returned back to base-page.")
 		else:
 			self.log.error("Could not use back nav control to return to base-page!")
@@ -258,7 +244,6 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 					time.sleep(1)
 
 
-
 	def handlePage(self, url):
 		if self.wg == None:
 			self.wg = WebRequest.WebGetRobust(cloudflare=True)
@@ -278,24 +263,38 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 			self.log.info("Dropping WebRequest.")
 			self.wg = None
 
-		# print(releases)
-
-
-
 
 def test():
 	print("Test mode!")
-	import logSetup
+	import deps.logSetup
 	import multiprocessing
-	logSetup.initLogging()
+	deps.logSetup.initLogging()
 
-	c_lok = cookie_lock = multiprocessing.Lock()
-	engine = WebMirror.Engine.SiteArchiver(cookie_lock=c_lok)
+	# c_lok = cookie_lock = multiprocessing.Lock()
+	# engine = WebMirror.Engine.SiteArchiver(cookie_lock=c_lok)
+	settings = {
+		'clientid'   : "Wat",
+		'client_key' : "Wat",
+	}
 
+	test = {
+		'actual_target': None,
+		'client_id': 'scrape-worker-2',
+		'client_key': 'urn:uuid:d1fb79da-66a6-4deb-9af1-c5309fa51b59',
+		'seriesname': 'Kumo Desu ga, Nani ka?',
+		'referrer': 'https://www.novelupdates.com',
+		'groupinfo': 'Raising the Dead',
+		'releaseinfo': 'situation of blowsituation of blow',
+		'outbound_wrapper': 'http://www.novelupdates.com/extnu/279638/'}
+
+	uf = NUSeriesUpdateFilter(None, settings)
+	print(uf)
+	uf.handlePage("http://www.novelupdates.com/")
+	# uf.qualifyLink(test)
 	# engine.dispatchRequest(testJobFromUrl('http://www.novelupdates.com/'))
 
-	for x in range(0, 180):
-		engine.dispatchRequest(testJobFromUrl('http://www.novelupdates.com/?pg={num}'.format(num=x)))
+	# for x in range(0, 180):
+	# 	engine.dispatchRequest(testJobFromUrl('http://www.novelupdates.com/?pg={num}'.format(num=x)))
 
 	# engine.dispatchRequest(testJobFromUrl('http://www.novelupdates.com/?pg=1'))
 	# engine.dispatchRequest(testJobFromUrl('http://www.novelupdates.com/?pg=2'))
