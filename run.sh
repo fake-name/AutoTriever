@@ -8,7 +8,7 @@ echo "Updating local git repo"
 git fetch --all
 git pull
 
-# Run the configure scrip
+# Run the configure script
 bash ./configure.sh
 
 if [ -d "venv" ]

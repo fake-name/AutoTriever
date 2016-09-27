@@ -76,12 +76,11 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 					series, release, group = tds
 					linkas = release.find_all('a', class_='chp-release')
 					sname = series.get_text().strip()
-					rname = release.get_text().strip()
 					gname = group.get_text().strip()
 					for link in linkas:
 						release = {
 							'seriesname'       : sname,
-							'releaseinfo'      : rname,
+							'releaseinfo'      : link.get_text().strip(),
 							'groupinfo'        : gname,
 							'referrer'         : currentUrl,
 							'outbound_wrapper' : link['href'],
@@ -237,7 +236,7 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 				if limit <= 0:
 					return
 
-				sleeptime = random.randint(15, 7*60)
+				sleeptime = random.triangular(30, 20*60, 15)
 				for x in range(sleeptime):
 					if x % 15 == 0:
 						self.log.info("Sleeping %s seconds (%s remaining)", sleeptime, sleeptime-x)
