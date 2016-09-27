@@ -49,6 +49,11 @@ class RabbitQueueHandler(object):
 		'''
 		Verify the SSL cert exists in the proper place.
 		'''
+
+		caCert = None
+		keyf   = None
+		cert   = None
+
 		certpaths = ['./rabbit_pub_cert/', '../rabbit_pub_cert/', './deps/']
 		for certpath in certpaths:
 
@@ -60,19 +65,22 @@ class RabbitQueueHandler(object):
 				assert os.path.exists(caCert), "No certificates found on path '%s'" % caCert
 				assert os.path.exists(cert), "No certificates found on path '%s'" % cert
 				assert os.path.exists(keyf), "No certificates found on path '%s'" % keyf
-				print("Found certificates on path: ", certpath)
+				self.log.info("Found certificates on path: %s", certpath)
 				break
 			except AssertionError:
-				traceback.print_exc()
-				print("No certificates on path: ", certpath)
+				self.log.warning("No certificates on path: %s", certpath)
 
+		if not all([caCert, keyf, cert]):
+			self.log.error("Could not find certificates for RabbitMQ interface!")
+			self.log.error("Cannot continue!")
+			raise RuntimeError("No certs available!")
 
 		ret = {"cert_reqs"  : ssl.CERT_REQUIRED,
 				"ca_certs"  : caCert,
 				"keyfile"   : keyf,
 				"certfile"  : cert,
 			}
-		print("Certificate config: ", ret)
+		self.log.info("Certificate config: %s", ret)
 
 		return ret
 
