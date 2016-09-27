@@ -135,25 +135,27 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 					)
 				self.wg.pjs_driver.get(basepage)
 				time.sleep(random.randint(3, 9))
-		else:
-			print("already navigated to the correct page.")
+		# else:
+		# 	print("already navigated to the correct page.")
 
 		selector = "a[href*='" + release['outbound_wrapper'] + "']"
-		print("Selector: ", selector)
+		# print("Selector: ", selector)
 
 		content = self.wg.pjs_driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML")
-		print(release['outbound_wrapper'] + " in page:", release['outbound_wrapper'] in content)
+		if not release['outbound_wrapper'] in content:
+			return None
+		# print(release['outbound_wrapper'] + " in page:", release['outbound_wrapper'] in content)
 
 		linkbutton = self.wg.pjs_driver.find_element_by_css_selector(selector)
 		if not linkbutton:
 			self.log.error("Can't find link to release with selector '%s'", selector)
 
-		print("Linkbutton:", linkbutton)
+		# print("Linkbutton:", linkbutton)
 		# Ignore the non-visible elements. Nice try tho, guy!
 		try:
 			visible = linkbutton.is_displayed()
 		except selenium.common.exceptions.WebDriverException:
-			print("Wut?")
+			# print("Wut?")
 			raise
 		if not visible:
 			return None
@@ -236,7 +238,7 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 				if limit <= 0:
 					return
 
-				sleeptime = random.triangular(30, 20*60, 15)
+				sleeptime = random.triangular(15, 20*60, 45)
 				for x in range(sleeptime):
 					if x % 15 == 0:
 						self.log.info("Sleeping %s seconds (%s remaining)", sleeptime, sleeptime-x)
