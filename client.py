@@ -317,6 +317,9 @@ class RpcHandler(object):
 			if 'jobid' in body:
 				ret['jobid'] = body['jobid']
 
+			if 'jobmeta' in body:
+				ret['jobmeta'] = body['jobmeta']
+
 			if not 'success' in ret:
 				ret['success'] = True
 			if not 'cancontinue' in ret:
