@@ -337,6 +337,9 @@ class RpcHandler(object):
 			if 'jobid' in body:
 				ret['jobid'] = body['jobid']
 
+			if 'jobmeta' in body:
+				ret['jobmeta'] = body['jobmeta']
+
 			self.log.error("Had exception?")
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
