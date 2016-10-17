@@ -52,7 +52,7 @@ class VpsHerder(object):
 
 	def __init__(self):
 		self.log = logging.getLogger("Main.VpsHerder")
-		self.local = salt.client.LocalClient()
+		# self.local = salt.client.LocalClient()
 		self.cc = salt.cloud.CloudClient('/etc/salt/cloud')
 
 	def __make_conf_file(self, client_id, client_idx):
@@ -87,6 +87,31 @@ class VpsHerder(object):
 		}
 		return provider, kwargs
 
+
+	def get_512_meta(self):
+		self.log.info("Vultr test")
+		sizes = self.cc.list_sizes(provider='vultr')['vultr']['vultr']
+		for name, size_meta in sizes.items():
+			if int(size_meta['ram']) == 768:
+				return size_meta['VPSPLANID'], size_meta['available_locations']
+
+
+	def generate_vultr_conf(self):
+
+		provider = "vultr"
+
+		planid, places = self.get_512_meta()
+
+		kwargs = {
+			'image'              : 'Ubuntu 16.04 x64',
+			'private_networking' : False,
+			'size'               : planid,
+			'location'           : random.choice(places),
+
+
+		}
+		return provider, kwargs
+
 	def generate_conf(self):
 		# TODO: Vultr goes here too
 		return random.choice([self.generate_do_conf])()
@@ -102,10 +127,6 @@ class VpsHerder(object):
 		self.log.info("Instance created!")
 		# instance = cc.create(names=['test-1'], provider=provider, **kwargs)
 		# print(ret)
-
-
-
-
 
 
 	def configure_client(self, clientname, client_idx):
@@ -220,15 +241,53 @@ class VpsHerder(object):
 		conf = salt.config.client_config('/etc/salt/minion')
 		self.log.info(conf)
 
+	def list_vultr_options(self):
+		self.log.info("Vultr test")
+		images = self.cc.list_images(provider='vultr')
+		sizes = self.cc.list_sizes(provider='vultr')['vultr']['vultr']
+		pprint.pprint(images)
+		pprint.pprint(sizes)
+		for name, size in sizes.items():
+			print(int(size['ram']) == 768)
+
+	def list_do_options(self):
+		self.log.info("DO test")
+		images = self.cc.list_images(provider='do')
+		sizes = self.cc.list_sizes(provider='do')
+		pprint.pprint(images)
+		pprint.pprint(sizes)
+		pass
+
+
+# So.... vultur support is currently fucked.
+# Waiting on https://github.com/saltstack/salt/issues/37040
+
 if __name__ == '__main__':
 	logSetup.initLogging()
 	herder = VpsHerder()
-	if "destroy" in sys.argv:
-		herder.destroy_client("test-1")
-	elif "list" in sys.argv:
-		herder.list_nodes()
-	elif "configure" in sys.argv:
-		herder.configure_client("test-1", 0)
-	else:
-		herder.make_client("test-1")
-		herder.configure_client("test-1", 0)
+
+	herder.list_vultr_options()
+	# herder.list_do_options()
+	#
+	#
+
+	clientname = "test-1"
+
+	provider, kwargs = herder.generate_vultr_conf()
+	herder.log.info("Creating instance...")
+	herder.log.info("	Client name: '%s'", clientname)
+	herder.log.info("	using provider: '%s'", provider)
+	herder.log.info("	kwargs: '%s'", kwargs)
+	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
+	herder.log.info("Instance created!")
+
+	# if "destroy" in sys.argv:
+	# 	herder.destroy_client("test-1")
+	# elif "list" in sys.argv:
+	# 	herder.list_nodes()
+	# elif "configure" in sys.argv:
+	# 	herder.configure_client("test-1", 0)
+	# else:
+	# 	herder.make_client("test-1")
+	# 	herder.configure_client("test-1", 0)
+

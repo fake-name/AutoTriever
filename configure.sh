@@ -3,11 +3,6 @@
 # Halt on errors.
 set -e
 
-# This is just a very minimal script that starts the scraper.
-echo "Updating local git repo"
-git fetch --all
-git pull
-
 
 echo "Available branches:"
 git --no-pager branch -a | cat

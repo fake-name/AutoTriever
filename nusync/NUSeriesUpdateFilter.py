@@ -148,12 +148,12 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		if not visible:
 			return None
 
-
 		linkbutton.click()
 
-		time.sleep(3)
+		time.sleep(5)
 
 		release['actual_target'] = self.wg.pjs_driver.current_url
+		release['page_title']    = self.wg.pjs_driver.title
 
 		# new = db.LinkWrappers(
 		# 	seriesname       = release['seriesname'],
@@ -170,15 +170,15 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		if self.amqp:
 			self.amqp.putRow(release)
 
-		release['actual_target'] = self.wg.pjs_driver.current_url
 
 		self.log.info("New entry!")
-		self.log.info("	Series:   '%s'", release['seriesname'])
-		self.log.info("	Release:  '%s'", release['releaseinfo'])
-		self.log.info("	Group:    '%s'", release['groupinfo'])
-		self.log.info("	Outbound: '%s'", release['outbound_wrapper'])
-		self.log.info("	Referrer: '%s'", release['referrer'])
-		self.log.info("	Real:     '%s'", self.wg.pjs_driver.current_url)
+		self.log.info("	Series:    '%s'", release['seriesname'])
+		self.log.info("	Release:   '%s'", release['releaseinfo'])
+		self.log.info("	Group:     '%s'", release['groupinfo'])
+		self.log.info("	Outbound:  '%s'", release['outbound_wrapper'])
+		self.log.info("	Referrer:  '%s'", release['referrer'])
+		self.log.info("	Real:      '%s'", self.wg.pjs_driver.current_url)
+		self.log.info("	PageTitle: '%s'", self.wg.pjs_driver.title)
 
 		# self.wg.pjs_driver.execute_script("window.history.go(-1)")
 		self.log.info("Attempting to go back to source page")
