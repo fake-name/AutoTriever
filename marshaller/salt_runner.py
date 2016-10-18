@@ -17,7 +17,7 @@ import salt.config
 
 import marshaller_exceptions
 import logSetup
-
+import os.path
 
 SETTINGS_BASE = {
 	"note1" : "Connection settings for the RabbitMQ server.",
@@ -52,7 +52,11 @@ class VpsHerder(object):
 
 	def __init__(self):
 		self.log = logging.getLogger("Main.VpsHerder")
-		# self.local = salt.client.LocalClient()
+		try:
+			self.local = salt.client.LocalClient()
+		except ImportError:
+			print("No local salt.client.LocalClient. Running without, may cause errors!")
+
 		self.cc = salt.cloud.CloudClient('/etc/salt/cloud')
 
 	def __make_conf_file(self, client_id, client_idx):
@@ -101,11 +105,17 @@ class VpsHerder(object):
 
 		planid, places = self.get_512_meta()
 
+		scriptname = "bootstrap-salt-delay.sh"
+		scriptdir  = os.path.dirname(os.path.realpath(__file__))
+		fqscript = os.path.join(scriptdir, scriptname)
+
 		kwargs = {
 			'image'              : 'Ubuntu 16.04 x64',
 			'private_networking' : False,
 			'size'               : planid,
 			'location'           : random.choice(places),
+			'script'             : fqscript,
+			'script_args'        : "-D",
 
 
 		}
@@ -269,17 +279,21 @@ if __name__ == '__main__':
 	# herder.list_vultr_options()
 	# herder.list_do_options()
 
-	# clientname = "test-1"
+	if "vtest" in sys.argv:
+		clientname = "test-1"
 
-	# provider, kwargs = herder.generate_vultr_conf()
-	# herder.log.info("Creating instance...")
-	# herder.log.info("	Client name: '%s'", clientname)
-	# herder.log.info("	using provider: '%s'", provider)
-	# herder.log.info("	kwargs: '%s'", kwargs)
-	# ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	# print("Create response:", ret)
-	# herder.log.info("Instance created!")
-	if "destroy" in sys.argv:
+		provider, kwargs = herder.generate_vultr_conf()
+		herder.log.info("Creating instance...")
+		herder.log.info("	Client name: '%s'", clientname)
+		herder.log.info("	using provider: '%s'", provider)
+		herder.log.info("	kwargs: '%s'", kwargs)
+		ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
+		print("Create response:", ret)
+
+		herder.configure_client(clientname, 0)
+		herder.log.info("Instance created!")
+
+	elif "destroy" in sys.argv:
 		herder.destroy_client("test-1")
 	elif "list" in sys.argv:
 		herder.list_nodes()
