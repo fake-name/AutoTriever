@@ -2270,8 +2270,9 @@ __enable_universe_repository() {
 }
 
 __wait_for_dpkg_done() {
+    i = 0
     while fuser /var/lib/dpkg/lock >/dev/null 2>&1 ; do
-        echo "Waiting on another DPKG process to complete!"
+        echo "Waiting on another DPKG process to complete ($i)!"
         sleep 0.5
     done
 

@@ -123,8 +123,8 @@ class VpsHerder(object):
 
 	def generate_conf(self):
 		# TODO: Vultr goes here too
-		# return random.choice([self.generate_do_conf, self.generate_vultr_conf])()
-		return random.choice([self.generate_do_conf])()
+		return random.choice([self.generate_do_conf, self.generate_vultr_conf])()
+		# return random.choice([self.generate_do_conf])()
 
 	def make_client(self, clientname):
 
@@ -184,7 +184,7 @@ class VpsHerder(object):
 					break
 				else:
 					failures += 1
-					tries = 8
+					tries = 3
 					self.log.error("Command failed (attempt %s of %s)!", failures, tries)
 					self.log.error("Response:")
 					self.log.error("%s", resp)
