@@ -7,3 +7,4 @@ __pycache__
 linkwrappers.db
 ghostdriver.log
 /marshaller/settings.py
+*.pyc

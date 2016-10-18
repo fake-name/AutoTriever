@@ -82,9 +82,8 @@ class VpsHerder(object):
 			'vm_size': '512mb',
 			'private_networking' : False,
 			'location' : random.choice(['ams2', 'ams3', 'blr1', 'fra1', 'lon1', 'nyc1', 'nyc2', 'nyc3', 'sfo1', 'sgp1', 'tor1']),
-
-
 		}
+
 		return provider, kwargs
 
 
@@ -114,6 +113,7 @@ class VpsHerder(object):
 
 	def generate_conf(self):
 		# TODO: Vultr goes here too
+		# return random.choice([self.generate_do_conf, self.generate_vultr_conf])()
 		return random.choice([self.generate_do_conf])()
 
 	def make_client(self, clientname):
@@ -266,28 +266,26 @@ if __name__ == '__main__':
 	logSetup.initLogging()
 	herder = VpsHerder()
 
-	herder.list_vultr_options()
+	# herder.list_vultr_options()
 	# herder.list_do_options()
-	#
-	#
 
-	clientname = "test-1"
+	# clientname = "test-1"
 
-	provider, kwargs = herder.generate_vultr_conf()
-	herder.log.info("Creating instance...")
-	herder.log.info("	Client name: '%s'", clientname)
-	herder.log.info("	using provider: '%s'", provider)
-	herder.log.info("	kwargs: '%s'", kwargs)
-	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	herder.log.info("Instance created!")
-
-	# if "destroy" in sys.argv:
-	# 	herder.destroy_client("test-1")
-	# elif "list" in sys.argv:
-	# 	herder.list_nodes()
-	# elif "configure" in sys.argv:
-	# 	herder.configure_client("test-1", 0)
-	# else:
-	# 	herder.make_client("test-1")
-	# 	herder.configure_client("test-1", 0)
+	# provider, kwargs = herder.generate_vultr_conf()
+	# herder.log.info("Creating instance...")
+	# herder.log.info("	Client name: '%s'", clientname)
+	# herder.log.info("	using provider: '%s'", provider)
+	# herder.log.info("	kwargs: '%s'", kwargs)
+	# ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
+	# print("Create response:", ret)
+	# herder.log.info("Instance created!")
+	if "destroy" in sys.argv:
+		herder.destroy_client("test-1")
+	elif "list" in sys.argv:
+		herder.list_nodes()
+	elif "configure" in sys.argv:
+		herder.configure_client("test-1", 0)
+	else:
+		herder.make_client("test-1")
+		herder.configure_client("test-1", 0)
 
