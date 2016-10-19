@@ -210,6 +210,7 @@ class VpsHerder(object):
 		try:
 			self.cc.destroy(clientname)
 		except salt.cloud.exceptions.SaltCloudSystemExit:
+			self.log.error("Failed to destroy: %s", clientname)
 			pass
 
 		# images = cc.list_images()
@@ -243,6 +244,10 @@ class VpsHerder(object):
 		if 'do' in nodelist:
 			if 'digital_ocean' in nodelist['do']:
 				for key, nodedict in nodelist['do']['digital_ocean'].items():
+					nodes.append(nodedict['name'])
+		if 'vultr' in nodelist:
+			if 'vultr' in nodelist['vultr']:
+				for key, nodedict in nodelist['vultr']['vultr'].items():
 					nodes.append(nodedict['name'])
 		self.log.info("Active nodes: %s", nodes)
 		return nodes
@@ -293,6 +298,9 @@ if __name__ == '__main__':
 		herder.configure_client(clientname, 0)
 		herder.log.info("Instance created!")
 
+	elif "destroy-all" in sys.argv:
+		for node in herder.list_nodes():
+			herder.destroy_client(node)
 	elif "destroy" in sys.argv:
 		herder.destroy_client("test-1")
 	elif "list" in sys.argv:
