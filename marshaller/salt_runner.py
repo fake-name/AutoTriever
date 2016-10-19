@@ -248,7 +248,8 @@ class VpsHerder(object):
 		if 'vultr' in nodelist:
 			if 'vultr' in nodelist['vultr']:
 				for key, nodedict in nodelist['vultr']['vultr'].items():
-					nodes.append(nodedict['name'])
+					if key:
+						nodes.append(key)
 		self.log.info("Active nodes: %s", nodes)
 		return nodes
 
