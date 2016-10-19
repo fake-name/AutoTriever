@@ -207,11 +207,16 @@ class VpsHerder(object):
 
 
 	def destroy_client(self, clientname):
-		try:
-			self.cc.destroy(clientname)
-		except salt.cloud.exceptions.SaltCloudSystemExit:
-			self.log.error("Failed to destroy: %s", clientname)
-			pass
+		self.log.info("Destroying client named: '%s'", clientname)
+		loops = 1
+		while clientname in self.list_nodes():
+			try:
+				self.log.info("Destroying.... %s", loops)
+				self.cc.destroy(clientname)
+			except salt.cloud.exceptions.SaltCloudSystemExit:
+				self.log.error("Failed to destroy: %s", clientname)
+				pass
+			loops += 1
 
 		# images = cc.list_images()
 		# locs   = cc.list_locations()
