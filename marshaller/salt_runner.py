@@ -244,12 +244,12 @@ class VpsHerder(object):
 		if 'do' in nodelist:
 			if 'digital_ocean' in nodelist['do']:
 				for key, nodedict in nodelist['do']['digital_ocean'].items():
-					nodes.append(nodedict['name'])
+					nodes.append(nodedict['name'].encode("ascii"))
 		if 'vultr' in nodelist:
 			if 'vultr' in nodelist['vultr']:
 				for key, nodedict in nodelist['vultr']['vultr'].items():
 					if key:
-						nodes.append(key)
+						nodes.append(key.encode("ascii"))
 		self.log.info("Active nodes: %s", nodes)
 		return nodes
 
