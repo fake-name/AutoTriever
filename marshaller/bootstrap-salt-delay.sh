@@ -319,7 +319,7 @@ __usage() {
     -i  Pass the salt-minion id. This will be stored under
         \${BS_SALT_ETC_DIR}/minion_id
     -p  Extra-package to install while installing Salt dependencies. One package
-        per -p flag. You're responsible for providing the proper package name.
+        per -p flag. You\'re responsible for providing the proper package name.
     -H  Use the specified HTTP proxy for all download URLs (including https://).
         For example: http://myproxy.example.com:3128
     -Z  Enable additional package repository for newer ZeroMQ

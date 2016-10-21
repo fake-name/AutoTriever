@@ -14,6 +14,7 @@ import salt.cloud
 import salt.cloud.exceptions
 import salt.client
 import salt.config
+import salt.exceptions
 
 import marshaller_exceptions
 import logSetup
@@ -56,6 +57,10 @@ class VpsHerder(object):
 			self.local = salt.client.LocalClient()
 		except ImportError:
 			print("No local salt.client.LocalClient. Running without, may cause errors!")
+		except salt.exceptions.SaltClientError:
+			print("Cannot load salt master configuration!")
+		except IOError:
+			print("Cannot load salt master configuration!")
 
 		self.cc = salt.cloud.CloudClient('/etc/salt/cloud')
 
@@ -212,7 +217,8 @@ class VpsHerder(object):
 		while clientname in self.list_nodes():
 			try:
 				self.log.info("Destroying.... %s", loops)
-				self.cc.destroy(clientname)
+				ret = self.cc.destroy(clientname)
+				print(ret)
 			except salt.cloud.exceptions.SaltCloudSystemExit:
 				self.log.error("Failed to destroy: %s", clientname)
 				pass
@@ -283,6 +289,35 @@ class VpsHerder(object):
 # So.... vultur support is currently fucked.
 # Waiting on https://github.com/saltstack/salt/issues/37040
 
+def vtest():
+	clientname = "test-1"
+	provider, kwargs = herder.generate_vultr_conf()
+	herder.log.info("Creating instance...")
+	herder.log.info("	Client name: '%s'", clientname)
+	herder.log.info("	using provider: '%s'", provider)
+	herder.log.info("	kwargs: '%s'", kwargs)
+	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
+	print("Create response:", ret)
+
+	# herder.configure_client(clientname, 0)
+	herder.log.info("Instance created!")
+
+
+def dtest():
+	clientname = "test-1"
+	provider, kwargs = herder.generate_do_conf()
+	herder.log.info("Creating instance...")
+	herder.log.info("	Client name: '%s'", clientname)
+	herder.log.info("	using provider: '%s'", provider)
+	herder.log.info("	kwargs: '%s'", kwargs)
+	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
+	print("Create response:", ret)
+
+	# herder.configure_client(clientname, 0)
+	herder.log.info("Instance created!")
+
+
+
 if __name__ == '__main__':
 	logSetup.initLogging()
 	herder = VpsHerder()
@@ -291,24 +326,21 @@ if __name__ == '__main__':
 	# herder.list_do_options()
 
 	if "vtest" in sys.argv:
-		clientname = "test-1"
-
-		provider, kwargs = herder.generate_vultr_conf()
-		herder.log.info("Creating instance...")
-		herder.log.info("	Client name: '%s'", clientname)
-		herder.log.info("	using provider: '%s'", provider)
-		herder.log.info("	kwargs: '%s'", kwargs)
-		ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-		print("Create response:", ret)
-
-		herder.configure_client(clientname, 0)
-		herder.log.info("Instance created!")
+		vtest()
 
 	elif "destroy-all" in sys.argv:
 		for node in herder.list_nodes():
 			herder.destroy_client(node)
 	elif "destroy" in sys.argv:
 		herder.destroy_client("test-1")
+	elif "brute-vtest" in sys.argv:
+		while 1:
+			vtest()
+			herder.destroy_client("test-1")
+	elif "brute-dtest" in sys.argv:
+		while 1:
+			dtest()
+			herder.destroy_client("test-1")
 	elif "list" in sys.argv:
 		herder.list_nodes()
 	elif "configure" in sys.argv:
