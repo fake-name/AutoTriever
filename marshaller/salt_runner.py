@@ -11,7 +11,7 @@ import uuid
 import settings
 
 import salt.cloud
-import salt.cloud.exceptions
+import salt.exceptions
 import salt.client
 import salt.config
 import salt.exceptions
@@ -219,7 +219,7 @@ class VpsHerder(object):
 				self.log.info("Destroying.... %s", loops)
 				ret = self.cc.destroy(clientname)
 				print(ret)
-			except salt.cloud.exceptions.SaltCloudSystemExit:
+			except salt.exceptions.SaltCloudSystemExit:
 				self.log.error("Failed to destroy: %s", clientname)
 				pass
 			loops += 1
