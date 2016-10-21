@@ -219,6 +219,7 @@ class VpsHerder(object):
 				self.log.info("Destroying.... %s", loops)
 				ret = self.cc.destroy(clientname)
 				print(ret)
+				return
 			except salt.exceptions.SaltCloudSystemExit:
 				self.log.error("Failed to destroy: %s", clientname)
 				pass
