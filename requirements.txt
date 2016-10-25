@@ -13,3 +13,4 @@ msgpack-python
 requests
 selenium
 SQLAlchemy
+cchardet
