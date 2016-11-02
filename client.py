@@ -356,6 +356,7 @@ class RpcHandler(object):
 
 
 		ret['user'] = self.settings['clientid']
+		ret['user_uuid'] = self.settings['client_key']
 
 		self.log.info("Returning")
 
