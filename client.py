@@ -18,6 +18,11 @@ def chunk_input(inval, chunk_size):
 	for i in range(0, len(inval), chunk_size):
 		yield inval[i:i+chunk_size]
 
+class SeenMessageError(Exception):
+	pass
+
+INSTANCE_SEEN_MESSAGE_IDS = set()
+
 class Connector:
 	def __init__(self, *args, **kwargs):
 
@@ -239,7 +244,7 @@ class Connector:
 class RpcHandler(object):
 	die = False
 
-	def __init__(self, settings):
+	def __init__(self, settings, seen_lock):
 
 		thName = threading.current_thread().name
 		if "-" in thName:
@@ -250,7 +255,8 @@ class RpcHandler(object):
 		self.log = logging.getLogger(logPath)
 		self.log.info("RPC Management class instantiated.")
 
-		self.settings = settings
+		self.seen_lock = seen_lock
+		self.settings  = settings
 
 		# Require clientID in settings
 		assert 'clientid'     in settings
@@ -300,6 +306,17 @@ class RpcHandler(object):
 		body = msgpack.unpackb(body, use_list=True, encoding='utf-8')
 
 		assert isinstance(body, dict) == True, 'The message must decode to a dict!'
+
+		if "unique_id" in body:
+			with self.seen_lock:
+				mid = body['unique_id']
+				if mid in INSTANCE_SEEN_MESSAGE_IDS:
+					self.log.info("Seen unique message ID: %s. Not fetching again", mid)
+					raise SeenMessageError
+				else:
+					self.log.info("New unique message ID: %s. Fetching.", mid)
+					INSTANCE_SEEN_MESSAGE_IDS.add(mid)
+
 
 		delay = None
 
@@ -424,16 +441,20 @@ class RpcHandler(object):
 				msg_count += 1
 				self.log.info("Processing message. (%s of %s before connection reset)", msg_count, loops)
 
-				response, postDelay = self._process(message.body)
+				try:
+					response, postDelay = self._process(message.body)
 
-				self.put_message_chunked(response, connector)
-				# connector.put_response(response)
+					self.put_message_chunked(response, connector)
+					# connector.put_response(response)
 
-				# Ack /after/ we've done the task.
-				message.ack()
+					# Ack /after/ we've done the task.
+					message.ack()
 
-
-				self.successDelay(postDelay)
+					self.successDelay(postDelay)
+				except SeenMessageError:
+					self.log.warn("Message has uniqueID that has been seen. Returning to processing queue")
+					message.nack(requeue=True)
+					time.sleep(1)
 
 			if msg_count > loops:
 				return

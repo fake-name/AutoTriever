@@ -2,6 +2,7 @@
 
 import dispatcher
 import time
+import threading
 import traceback
 import concurrent.futures
 import json
@@ -38,13 +39,12 @@ def loadSettings():
 	return settings
 
 
-def launchThread(settings):
-	print("Launching scraper in single-threaded mode.")
+def launchThread(settings, seen_lock):
 	rpc = None
 	while 1:
 		try:
 			if not rpc:
-				rpc = dispatcher.RpcCallDispatcher(settings)
+				rpc = dispatcher.RpcCallDispatcher(settings, seen_lock)
 			rpc.processEvents()
 		except KeyboardInterrupt:
 			break
@@ -54,14 +54,14 @@ def launchThread(settings):
 			rpc = None
 			time.sleep(60*3)
 
-def multithread(numThreads, settings):
+def multithread(numThreads, settings, seen_lock):
 
 	print("Launching {num} threads.".format(num=numThreads))
 
 	with concurrent.futures.ThreadPoolExecutor(max_workers=numThreads) as executor:
 		for thnum in range(numThreads):
 			print("Launching thread {num}".format(num=thnum))
-			executor.submit(launchThread, settings)
+			executor.submit(launchThread, settings, seen_lock)
 		try:
 			while 1:
 				time.sleep(1)
@@ -92,11 +92,12 @@ def go():
 		print("Enabling NovelUpdates sync component.")
 		nusync.run.start_scheduler()
 
+	seen_lock = threading.Lock()
 
 	if threads == 1:
-		launchThread(settings)
+		launchThread(settings, seen_lock)
 	else:
-		multithread(threads, settings)
+		multithread(threads, settings, seen_lock)
 
 if __name__ == "__main__":
 	go()
