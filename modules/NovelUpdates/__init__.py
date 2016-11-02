@@ -12,14 +12,16 @@ class PluginInterface_NovelUpdates(WebGetRobust):
 		self.calls = {
 			'getItem'               : self.getItem_Wrapper,
 			'getItemPhantomJS'      : self.getItemPhantomJS_Wrapper,
+			'getHeadPhantomJS'      : self.getHeadPhantomJS_wrapper,
 			'getHead'               : self.getHead_Wrapper,
 			'stepThroughCloudFlare' : self.stepThroughCloudFlare,
 		}
 
 	def getItemPhantomJS_Wrapper(self, url, *args, **kwargs):
 		return self.getItemPhantomJS(url, *args, **kwargs)
-	def getHeadPhantomJS(self, url, referer):
-		return self.getHeadPhantomJS(url, referer)
+
+	def getHeadPhantomJS_wrapper(self, url, referer, *args, **kwargs):
+		return self.getHeadPhantomJS(url, referer, *args, **kwargs)
 
 	def getItem_Wrapper(self, url, *args, **kwargs):
 		try:

@@ -946,6 +946,7 @@ class WebGetRobust:
 		self.pjs_driver.get(referrer)
 		time.sleep(random.uniform(2, 6))
 		self.pjs_driver.get(url)
+		time.sleep(random.uniform(2, 6))
 
 		self._syncOutOfWebDriver()
 

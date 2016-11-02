@@ -155,18 +155,6 @@ class NUSeriesUpdateFilter(LogBase.LoggerMixin):
 		release['actual_target'] = self.wg.pjs_driver.current_url
 		release['page_title']    = self.wg.pjs_driver.title
 
-		# new = db.LinkWrappers(
-		# 	seriesname       = release['seriesname'],
-		# 	releaseinfo      = release['releaseinfo'],
-		# 	groupinfo        = release['groupinfo'],
-		# 	referrer         = release['referrer'],
-		# 	outbound_wrapper = release['outbound_wrapper'],
-		# 	actual_target    = self.wg.pjs_driver.current_url,
-		# 	addtime          = datetime.datetime.now(),
-		# 	)
-
-		# self.db_sess.add(new)
-		# self.db_sess.commit()
 		if self.amqp:
 			self.amqp.putRow(release)
 
