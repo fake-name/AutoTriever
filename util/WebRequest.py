@@ -943,10 +943,19 @@ class WebGetRobust:
 			self._initWebDriver()
 		self._syncIntoWebDriver()
 
-		self.pjs_driver.get(referrer)
-		time.sleep(random.uniform(2, 6))
-		self.pjs_driver.get(url)
-		time.sleep(random.uniform(2, 6))
+		def try_get(loc_url):
+			tries = 3
+			for x in range(9999):
+				try:
+					self.pjs_driver.get(loc_url)
+					time.sleep(random.uniform(2, 6))
+					return
+				except socket.timeout as e:
+					if x > tries:
+						raise e
+
+		try_get(referrer)
+		try_get(url)
 
 		self._syncOutOfWebDriver()
 
