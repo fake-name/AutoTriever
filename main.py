@@ -88,9 +88,9 @@ def go():
 
 	# Start the nusync components.
 	# nusync.run.dump_db()
-	if 'NU_ENABLE' in settings and settings['NU_ENABLE']:
-		print("Enabling NovelUpdates sync component.")
-		nusync.run.start_scheduler()
+	# if 'NU_ENABLE' in settings and settings['NU_ENABLE']:
+	# 	print("Enabling NovelUpdates sync component.")
+	# 	nusync.run.start_scheduler()
 
 	seen_lock = threading.Lock()
 
