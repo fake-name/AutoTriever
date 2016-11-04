@@ -25,7 +25,7 @@ def go():
 			settings = load_settings()
 			db_sess = None
 			fetcher = NUSeriesUpdateFilter.NUSeriesUpdateFilter(db_sess, settings)
-			print(fetcher.handlePage("https://www.novelupdates.com"))
+			print(fetcher.handlePage("http://www.novelupdates.com"))
 			return
 		except:
 			import traceback

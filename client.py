@@ -345,6 +345,11 @@ class RpcHandler(object):
 
 			self.log.info("Processing complete. Submitting job with id '%s'.", ret['jobid'])
 		except Exception:
+
+			if "unique_id" in body:
+				with self.seen_lock:
+					INSTANCE_SEEN_MESSAGE_IDS.discard(body['unique_id'])
+
 			ret = {
 				'success'     : False,
 				'error'       : "unknown",

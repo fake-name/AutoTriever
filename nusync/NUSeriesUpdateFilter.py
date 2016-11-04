@@ -259,7 +259,7 @@ def test():
 		'client_id': 'scrape-worker-2',
 		'client_key': 'urn:uuid:d1fb79da-66a6-4deb-9af1-c5309fa51b59',
 		'seriesname': 'Kumo Desu ga, Nani ka?',
-		'referrer': 'https://www.novelupdates.com',
+		'referrer': 'http://www.novelupdates.com',
 		'groupinfo': 'Raising the Dead',
 		'releaseinfo': 'situation of blowsituation of blow',
 		'outbound_wrapper': 'http://www.novelupdates.com/extnu/279638/'}
