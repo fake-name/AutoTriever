@@ -11,6 +11,35 @@ git --no-pager branch -a | cat
 echo "Current release:"
 git --no-pager log -1 | cat
 
+
+function setup_phantomjs() {
+	set +e
+
+
+	# Use our local phantomjs if it appears to be intact and valid.
+	tar tf phantomjs-2.1.1-linux-x86_64.tar.bz2
+	if [ $? -eq 0 ]
+	then
+		echo Have pre-downloaded phantomjs. Using that.
+		tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2
+	else
+		while true; do
+
+			rm -f phantomjs-2.1.1-linux-x86_64.tar.bz2
+			rm -rf phantomjs-2.1.1-linux-x86_64
+
+			wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
+			tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2 && break
+
+			# re-enable return checking.
+			echo Error downloading phantomjs!
+			sleep 30
+		done;
+		set -e
+	fi;
+}
+
+
 if [ -d "venv" ]
 then
 	echo "Venv exists. Activating!"
@@ -20,6 +49,7 @@ else
 	sudo apt-get update
 	sudo apt-get install build-essential -y
 	sudo apt-get install libfontconfig -y
+	sudo apt-get install wget -y
 	sudo apt-get install libxml2 libxslt1-dev python3-dev libz-dev -y
 
 	# 16.04 phantomjs apt package is fucked, crashes on start.
@@ -27,23 +57,11 @@ else
 	# Remove phantomjs from last run (if present)
 	# sudo apt-get install phantomjs -y
 	# wget http://cnpmjs.org/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
-	#
 
 	# Disable ret checking since we're manually checking the return of tar
-	set +e
-	while true; do
 
-		rm -f phantomjs-2.1.1-linux-x86_64.tar.bz2
-		rm -rf phantomjs-2.1.1-linux-x86_64
+	setup_phantomjs
 
-		wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
-		tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2 && break
-
-		# re-enable return checking.
-		echo Error downloading phantomjs!
-		sleep 30
-	done;
-	set -e
 
 
 	sudo mv ./phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/
