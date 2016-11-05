@@ -11,7 +11,6 @@ import logging
 import os.path
 import os
 
-import nusync.run
 
 from state import RUN_STATE
 
@@ -85,12 +84,6 @@ def go():
 	else:
 		print("Running in single thread mode.")
 
-
-	# Start the nusync components.
-	# nusync.run.dump_db()
-	# if 'NU_ENABLE' in settings and settings['NU_ENABLE']:
-	# 	print("Enabling NovelUpdates sync component.")
-	# 	nusync.run.start_scheduler()
 
 	seen_lock = threading.Lock()
 
