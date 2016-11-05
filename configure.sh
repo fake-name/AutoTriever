@@ -17,11 +17,11 @@ function setup_phantomjs() {
 
 
 	# Use our local phantomjs if it appears to be intact and valid.
-	tar tf phantomjs-2.1.1-linux-x86_64.tar.bz2
+	tar tf ./vendored/phantomjs-2.1.1-linux-x86_64.tar.bz2
 	if [ $? -eq 0 ]
 	then
 		echo Have pre-downloaded phantomjs. Using that.
-		tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2
+		tar -xvf ./vendored/phantomjs-2.1.1-linux-x86_64.tar.bz2
 	else
 		while true; do
 
