@@ -49,7 +49,7 @@ function setup_headless_chrome() {
 	tar tf ./vendored/MinimalHeadless.tar.gz
 	if [ $? -eq 0 ]
 	then
-		echo Have pre-downloaded phantomjs. Using that.
+		echo Have Headless Chromium. Extracting.
 		tar -xvf ./vendored/MinimalHeadless.tar.gz
 	fi;
 	set -e

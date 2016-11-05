@@ -8,3 +8,6 @@ linkwrappers.db
 ghostdriver.log
 /marshaller/settings.py
 *.pyc
+/Headless
+/vendored/out/Headless
+/vendored/ChromeHeadless.tar.gz
