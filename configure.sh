@@ -35,10 +35,25 @@ function setup_phantomjs() {
 			echo Error downloading phantomjs!
 			sleep 30
 		done;
-		set -e
 	fi;
+	set -e
 }
 
+
+function setup_headless_chrome() {
+
+	set +e
+
+
+	# Use our local phantomjs if it appears to be intact and valid.
+	tar tf ./vendored/MinimalHeadless.tar.gz
+	if [ $? -eq 0 ]
+	then
+		echo Have pre-downloaded phantomjs. Using that.
+		tar -xvf ./vendored/MinimalHeadless.tar.gz
+	fi;
+	set -e
+}
 
 if [ -d "venv" ]
 then
@@ -65,7 +80,7 @@ else
 	# Disable ret checking since we're manually checking the return of tar
 
 	setup_phantomjs
-
+	setup_headless_chrome
 
 
 	sudo mv ./phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/
