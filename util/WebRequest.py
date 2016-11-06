@@ -72,11 +72,15 @@ import random
 random.seed()
 
 
+import selenium.webdriver.chrome.service
+import selenium.webdriver.chrome.options
 import selenium.webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+
 
 
 def as_soup(str):
@@ -95,11 +99,11 @@ def determine_json_encoding(json_bytes):
 	   stream is UTF-8, UTF-16 (BE or LE), or UTF-32 (BE or LE) by looking
 	   at the pattern of nulls in the first four octets.
 
-	           00 00 00 xx  UTF-32BE
-	           00 xx 00 xx  UTF-16BE
-	           xx 00 00 00  UTF-32LE
-	           xx 00 xx 00  UTF-16LE
-	           xx xx xx xx  UTF-8
+			   00 00 00 xx  UTF-32BE
+			   00 xx 00 xx  UTF-16BE
+			   xx 00 00 00  UTF-32LE
+			   xx 00 xx 00  UTF-16LE
+			   xx xx xx xx  UTF-8
 	'''
 	assert(isinstance(json_bytes, bytes))
 	if len(json_bytes) > 4:
@@ -146,7 +150,31 @@ class title_not_contains(object):
 
 #pylint: disable-msg=E1101, C0325, R0201, W0702, W0703
 
+def wait_for(condition_function):
+	start_time = time.time()
+	while time.time() < start_time + 3:
+		if condition_function():
+			return True
+		else:
+			time.sleep(0.1)
+	raise Exception(
+		'Timeout waiting for {}'.format(condition_function.__name__)
+	)
 
+class load_delay_context_manager(object):
+
+	def __init__(self, browser):
+		self.browser = browser
+
+	def __enter__(self):
+		self.old_page = self.browser.find_element_by_tag_name('html')
+
+	def page_has_loaded(self):
+		new_page = self.browser.find_element_by_tag_name('html')
+		return new_page.id != self.old_page.id
+
+	def __exit__(self, *_):
+		wait_for(self.page_has_loaded)
 
 
 class HeadRequest(urllib.request.Request):
@@ -301,6 +329,7 @@ class WebGetRobust:
 			self.cookie_lock = COOKIEWRITELOCK
 
 		self.pjs_driver = None
+		self.cr_driver = None
 
 		# Override the global default socket timeout, so hung connections will actually time out properly.
 		socket.setdefaulttimeout(15)
@@ -607,7 +636,9 @@ class WebGetRobust:
 		return content, fileN, mType
 
 
-	def _initWebDriver(self):
+	def _initPjsWebDriver(self):
+		if self.pjs_driver:
+			self.pjs_driver.quit()
 		dcap = dict(DesiredCapabilities.PHANTOMJS)
 		wgSettings = dict(self.browserHeaders)
 		# Install the headers from the WebGet class into phantomjs
@@ -619,11 +650,43 @@ class WebGetRobust:
 		self.pjs_driver = selenium.webdriver.PhantomJS(desired_capabilities=dcap)
 		self.pjs_driver.set_window_size(1024, 768)
 
-	def _syncIntoWebDriver(self):
+	def _initCrWebDriver(self):
+		if self.cr_driver:
+			self.cr_driver.quit()
+		dcap = dict(DesiredCapabilities.CHROME)
+		wgSettings = dict(self.browserHeaders)
+		# Install the headers from the WebGet class into phantomjs
+		user_agent = wgSettings.pop('User-Agent')
+		dcap["chrome.page.settings.userAgent"] = user_agent
+		for headerName in wgSettings:
+			if headerName != 'Accept-Encoding':
+				dcap['chrome.page.customHeaders.{header}'.format(header=headerName)] = wgSettings[headerName]
+
+		dcap["chrome.switches"] = ["--user-agent="+user_agent]
+
+
+		chromedriver = r'./venv/bin/chromedriver'
+		chrome       = r'./Headless/headless_shell'
+
+		chrome_options = selenium.webdriver.chrome.options.Options()
+		chrome_options.binary_location = chrome
+		chrome_options.add_argument('--load-component-extension')
+		chrome_options.add_argument("--user-agent=\"{}\"".format(user_agent))
+		chrome_options.add_argument('--verbose')
+		chrome_options.add_argument('--no-sandbox')
+		chrome_options.add_argument('--disable-extension')
+
+		self.cr_driver = selenium.webdriver.Chrome(chrome_options=chrome_options, desired_capabilities=dcap)
+		# We can't set the chrome desired capabilities, since headless chrome
+		# doesn't allow extensions.
+
+		self.cr_driver.set_page_load_timeout(30)
+
+	def _syncIntoPjsWebDriver(self):
 		# TODO
 		pass
 
-	def _syncOutOfWebDriver(self):
+	def _syncOutOfPjsWebDriver(self):
 		for cookie in self.pjs_driver.get_cookies():
 			self.addSeleniumCookie(cookie)
 
@@ -632,16 +695,17 @@ class WebGetRobust:
 		self.log.info("Fetching page for URL: '%s' with PhantomJS" % itemUrl)
 
 		if not self.pjs_driver:
-			self._initWebDriver()
-		self._syncIntoWebDriver()
+			self._initPjsWebDriver()
+		self._syncIntoPjsWebDriver()
 
-		self.pjs_driver.get(itemUrl)
+		with load_delay_context_manager(self.pjs_driver):
+			self.pjs_driver.get(itemUrl)
 		time.sleep(3)
 
 		fileN = urllib.parse.unquote(urllib.parse.urlparse(self.pjs_driver.current_url)[2].split("/")[-1])
 		fileN = bs4.UnicodeDammit(fileN).unicode_markup
 
-		self._syncOutOfWebDriver()
+		self._syncOutOfPjsWebDriver()
 
 		# Probably a bad assumption
 		mType = "text/html"
@@ -940,8 +1004,8 @@ class WebGetRobust:
 		self.log.info("Getting HEAD with PhantomJS")
 
 		if not self.pjs_driver:
-			self._initWebDriver()
-		self._syncIntoWebDriver()
+			self._initPjsWebDriver()
+		self._syncIntoPjsWebDriver()
 
 		def try_get(loc_url):
 			tries = 3
@@ -957,7 +1021,7 @@ class WebGetRobust:
 		try_get(referrer)
 		try_get(url)
 
-		self._syncOutOfWebDriver()
+		self._syncOutOfPjsWebDriver()
 
 		return self.pjs_driver.current_url
 
