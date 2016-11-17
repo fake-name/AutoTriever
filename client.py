@@ -240,7 +240,7 @@ class Connector:
 		if self.config['durable']:
 			# Is this supposed to be a hyphen or a underscore?
 			msg_prop["delivery_mode"] = 2
-			msg_prop["delivery-mode"] = 2
+			# msg_prop["delivery-mode"] = 2
 
 			# # Dead-Letter if dead for more then 15 minutes
 			# msg_prop["expiration "] = 15 * 60 * 1000
