@@ -1000,6 +1000,10 @@ class WebGetRobust:
 					self.log.error("Failure fetching: %s", url)
 					raise e
 
+	def getHeadTitlePhantomJS(self, url, referrer):
+		self.getHeadPhantomJS(url, referrer)
+		return self.pjs_driver.current_url, self.pjs_driver.title
+
 	def getHeadPhantomJS(self, url, referrer):
 		self.log.info("Getting HEAD with PhantomJS")
 
@@ -1565,7 +1569,7 @@ def getUserAgent():
 
 
 if __name__ == "__main__":
-	import logSetup
+	from deps import logSetup
 	import sys
 	logSetup.initLogging()
 	print("Oh HAI")
@@ -1587,9 +1591,10 @@ if __name__ == "__main__":
 			fp.write(out)
 
 
-
-	wg.getHead("http://www.novelupdates.com/extnu/125399/", addlHeaders={"Referer" : "http://www.novelupdates.com/series/limitless-sword-god/"})
-
+	print("Working")
+	ret = wg.getHeadTitlePhantomJS("http://www.google.com/", referrer="http://www.google.com/")
+	print("Ret:")
+	print(ret)
 	# # content, handle = wg.getpage("http://japtem.com/wp-content/uploads/2014/07/Arifureta.png", returnMultiple = True)
 	# # print((handle.headers.get('Content-Encoding')))
 	# # print(len(content))

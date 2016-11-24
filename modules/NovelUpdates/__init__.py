@@ -13,6 +13,7 @@ class PluginInterface_NovelUpdates(WebGetRobust):
 			'getItem'               : self.getItem_Wrapper,
 			'getItemPhantomJS'      : self.getItemPhantomJS_Wrapper,
 			'getHeadPhantomJS'      : self.getHeadPhantomJS_wrapper,
+			'getHeadTitlePhantomJS' : self.getHeadTitlePhantomJS_wrapper,
 			'getHead'               : self.getHead_Wrapper,
 			'stepThroughCloudFlare' : self.stepThroughCloudFlare,
 		}
@@ -22,6 +23,9 @@ class PluginInterface_NovelUpdates(WebGetRobust):
 
 	def getHeadPhantomJS_wrapper(self, url, referer, *args, **kwargs):
 		return self.getHeadPhantomJS(url, referer, *args, **kwargs)
+
+	def getHeadTitlePhantomJS_wrapper(self, url, referer, *args, **kwargs):
+		return self.getHeadTitlePhantomJS(url, referer, *args, **kwargs)
 
 	def getItem_Wrapper(self, url, *args, **kwargs):
 		try:
