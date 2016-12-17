@@ -4,7 +4,7 @@ apscheduler
 rabbitpy
 BeautifulSoup4 
 colorama
-fake-factory
+faker
 feedparser
 ftfy
 lxml

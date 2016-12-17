@@ -10,7 +10,7 @@ random.seed()
 import time
 import logging
 import hashlib
-from faker import Faker
+import faker
 
 SUFFIXES = [
 	'@sogetthis.com',
@@ -33,11 +33,11 @@ class MailinatorClient(object):
 	def __init__(self, override=None):
 		self.log = logging.getLogger("Main.Mailinator")
 
-		self.faker = Faker()
+		self.fake = faker.Factory()
 		if override:
 			self.prefix = override
 		else:
-			self.prefix = self.fake.user_name()
+			self.prefix = self.fake.create().user_name()
 
 		self.postfix = random.choice(SUFFIXES)
 		self.log.info("email: '%s%s'" % (self.prefix, self.postfix))
