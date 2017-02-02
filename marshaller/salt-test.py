@@ -1,7 +1,10 @@
 
 import salt.cloud
+import logSetup
 
 def testf():
+
+	logSetup.initLogging()
 	print("Doing testing!")
 
 	cc = salt.cloud.CloudClient('/etc/salt/cloud')
