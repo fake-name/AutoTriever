@@ -138,8 +138,11 @@ class VpsHerder(object):
 		self.log.info("	Client name: '%s'", clientname)
 		self.log.info("	using provider: '%s'", provider)
 		self.log.info("	kwargs: '%s'", kwargs)
-		ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
-		self.log.info("Instance created!")
+		try:
+			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
+			self.log.info("Instance created!")
+		except Exception as e:
+			raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
 		# instance = cc.create(names=['test-1'], provider=provider, **kwargs)
 		# print(ret)
 
