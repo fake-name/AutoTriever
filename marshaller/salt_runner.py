@@ -330,8 +330,9 @@ if __name__ == '__main__':
 		vtest()
 
 	elif "destroy-all" in sys.argv:
-		for node in herder.list_nodes():
-			herder.destroy_client(node)
+		while herder.list_nodes():
+			for node in herder.list_nodes():
+				herder.destroy_client(node)
 	elif "destroy" in sys.argv:
 		herder.destroy_client("test-1")
 	elif "brute-vtest" in sys.argv:
