@@ -648,7 +648,7 @@ class WebGetRobust:
 				dcap['phantomjs.page.customHeaders.{header}'.format(header=headerName)] = wgSettings[headerName]
 
 		self.pjs_driver = selenium.webdriver.PhantomJS(desired_capabilities=dcap)
-		self.pjs_driver.set_window_size(1024, 768)
+		self.pjs_driver.set_window_size(1280, 1024)
 
 	def _initCrWebDriver(self):
 		if self.cr_driver:
@@ -1002,7 +1002,11 @@ class WebGetRobust:
 
 	def getHeadTitlePhantomJS(self, url, referrer):
 		self.getHeadPhantomJS(url, referrer)
-		return self.pjs_driver.current_url, self.pjs_driver.title
+		ret = {
+			'url'   : self.pjs_driver.current_url,
+			'title' : self.pjs_driver.title,
+		}
+		return ret
 
 	def getHeadPhantomJS(self, url, referrer):
 		self.log.info("Getting HEAD with PhantomJS")
