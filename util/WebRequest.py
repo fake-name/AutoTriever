@@ -2,13 +2,59 @@
 import sys
 import codecs
 
-try:
-	import cchardet as chardet
-except ImportError:
-	import chardet as chardet
-
 import http.client
 import email.parser
+
+cchardet = False
+
+try:
+	import cchardet
+except ImportError:
+	pass
+
+def isUTF8Strict(data):
+	'''
+	Check if all characters in a bytearray are decodable
+	using UTF-8.
+	'''
+	try:
+		decoded = data.decode('UTF-8')
+	except UnicodeDecodeError:
+		return False
+	else:
+		for ch in decoded:
+			if 0xD800 <= ord(ch) <= 0xDFFF:
+				return False
+		return True
+
+def decode_headers(header_list):
+	'''
+	Decode a list of headers.
+
+	Takes a list of bytestrings, returns a list of unicode strings.
+	The character set for each bytestring is individually decoded.
+	'''
+
+	decoded_headers = []
+	for header in header_list:
+		if cchardet:
+			inferred = cchardet.detect(header)
+			if inferred and inferred['confidence'] > 0.8:
+				print("Parsing headers!", header)
+				decoded_headers.append(header.decode(inferred['encoding']))
+			else:
+				decoded_headers.append(header.decode('iso-8859-1'))
+		else:
+			# All bytes are < 127 (e.g. ASCII)
+			if all([char & 0x80 == 0 for char in header]):
+				decoded_headers.append(header.decode("us-ascii"))
+			elif isUTF8Strict(header):
+				decoded_headers.append(header.decode("utf-8"))
+			else:
+				decoded_headers.append(header.decode('iso-8859-1'))
+
+	return decoded_headers
+
 
 def parse_headers(fp, _class=http.client.HTTPMessage):
 	"""Parses only RFC2822 headers from a file pointer.
@@ -34,14 +80,9 @@ def parse_headers(fp, _class=http.client.HTTPMessage):
 		if line in (b'\r\n', b'\n', b''):
 			break
 
+	decoded_headers = decode_headers(headers)
 
-	hstring = b''.join(headers)
-	inferred = chardet.detect(hstring)
-	if inferred and inferred['confidence'] > 0.8:
-		print("Parsing headers!", hstring)
-		hstring = hstring.decode(inferred['encoding'])
-	else:
-		hstring = hstring.decode('iso-8859-1')
+	hstring = ''.join(decoded_headers)
 
 	return email.parser.Parser(_class=_class).parsestr(hstring)
 
@@ -50,6 +91,10 @@ http.client.parse_headers = parse_headers
 import urllib.request
 import urllib.parse
 import urllib.error
+import socks
+from sockshandler import SocksiPyHandler
+
+
 import os.path
 
 import time
@@ -316,10 +361,9 @@ class WebGetRobust:
 
 	data = None
 
-	# if test=true, no resources are actually fetched (for testing)
 	# creds is a list of 3-tuples that gets inserted into the password manager.
 	# it is structured [(top_level_url1, username1, password1), (top_level_url2, username2, password2)]
-	def __init__(self, test=False, creds=None, logPath="Main.Web", cookie_lock=None, cloudflare=False):
+	def __init__(self, test=False, creds=None, logPath="Main.Web", cookie_lock=None,  cloudflare=False, use_socks=False, alt_cookiejar=None):
 
 		self.rules = {}
 		self.rules['cloudflare'] = cloudflare
@@ -330,7 +374,7 @@ class WebGetRobust:
 
 		self.pjs_driver = None
 		self.cr_driver = None
-
+		self.use_socks = use_socks
 		# Override the global default socket timeout, so hung connections will actually time out properly.
 		socket.setdefaulttimeout(15)
 
@@ -338,17 +382,10 @@ class WebGetRobust:
 		# print("Webget init! Logpath = ", logPath)
 		if creds:
 			print("Have creds for a domain")
-		if test:
-			self.log.warning("-----------------------------------------------------------------------------------------------")
-			self.log.warning("WARNING: WebGet in testing mode!")
-			self.log.warning("-----------------------------------------------------------------------------------------------")
 
 		# Due to general internet people douchebaggyness, I've basically said to hell with it and decided to spoof a whole assortment of browsers
 		# It should keep people from blocking this scraper *too* easily
 		self.browserHeaders = getUserAgent()
-
-		self.testMode = test		# if we don't want to actually contact the remote server, you pass a string containing
-									# pagecontent for testing purposes as test. It will get returned for any calls of getpage()
 
 		self.data = urllib.parse.urlencode(self.browserHeaders)
 
@@ -362,11 +399,16 @@ class WebGetRobust:
 		else:
 			self.credHandler = None
 
+		self.alt_cookiejar = alt_cookiejar
 		self.loadCookies()
 
 	def loadCookies(self):
 
-		self.cj = http.cookiejar.LWPCookieJar()		# This is a subclass of FileCookieJar
+		if self.alt_cookiejar is not None:
+			self.alt_cookiejar.init_agent(new_headers=self.browserHeaders)
+			self.cj = self.alt_cookiejar
+		else:
+			self.cj = http.cookiejar.LWPCookieJar()		# This is a subclass of FileCookieJar
 												# that has useful load and save methods
 		if self.cj is not None:
 			if os.path.isfile(self.COOKIEFILE):
@@ -383,12 +425,15 @@ class WebGetRobust:
 				# self.log.info("Installing CookieJar")
 				self.log.debug(self.cj)
 				cookieHandler = urllib.request.HTTPCookieProcessor(self.cj)
+				args = (cookieHandler, HTTPRedirectHandler)
 				if self.credHandler:
 					print("Have cred handler. Building opener using it")
-					self.opener = urllib.request.build_opener(cookieHandler, self.credHandler, HTTPRedirectHandler())
-				else:
-					# print("No cred handler")
-					self.opener = urllib.request.build_opener(cookieHandler, HTTPRedirectHandler())
+					args += (self.credHandler, )
+				if self.use_socks:
+					print("Using Socks handler")
+					args = (SocksiPyHandler(socks.SOCKS5, "127.0.0.1", 9050), ) + args
+
+				self.opener = urllib.request.build_opener(*args)
 				#self.opener.addheaders = [('User-Agent', 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)')]
 				self.opener.addheaders = self.browserHeaders
 				#urllib2.install_opener(self.opener)
@@ -442,7 +487,7 @@ class WebGetRobust:
 		if isinstance(page, bytes):
 			raise ValueError("Received content not decoded! Cannot parse!")
 
-		soup = bs4.BeautifulSoup(page, "lxml")
+		soup = as_soup(page)
 		return soup
 
 	def getJson(self, *args, **kwargs):
@@ -470,6 +515,9 @@ class WebGetRobust:
 
 					# Scramble our current UA
 					self.browserHeaders = getUserAgent()
+					if self.alt_cookiejar:
+						self.cj.init_agent(new_headers=self.browserHeaders)
+
 					time.sleep(self.retryDelay)
 				else:
 					self.log.error("JSON Parsing issue, and retries exhausted!")
@@ -498,7 +546,33 @@ class WebGetRobust:
 			hName = ''
 		else:
 			hName = info['Content-Disposition'].split('filename=')[1]
+
+
 		return pgctnt, hName
+
+	def getFileNameMime(self, *args, **kwargs):
+		if 'returnMultiple' in kwargs:
+			raise ValueError("getFileAndName cannot be called with 'returnMultiple'")
+
+		if 'soup' in kwargs and kwargs['soup']:
+			raise ValueError("getFileAndName contradicts the 'soup' directive!")
+
+		kwargs["returnMultiple"] = True
+
+		pgctnt, pghandle = self.getpage(*args, **kwargs)
+
+		info = pghandle.info()
+		if not 'Content-Disposition' in info:
+			hName = ''
+		elif not 'filename=' in info['Content-Disposition']:
+			hName = ''
+		else:
+			hName = info['Content-Disposition'].split('filename=')[1]
+
+		mime = info.get_content_type()
+
+		return pgctnt, hName, mime
+
 
 	def buildRequest(self, pgreq, postData, addlHeaders, binaryForm, req_class = urllib.request.Request):
 		# Encode Unicode URL's properly
@@ -748,6 +822,7 @@ class WebGetRobust:
 
 				if "text/html" in cType or \
 					'text/javascript' in cType or    \
+					'text/css' in cType or    \
 					'application/xml' in cType or    \
 					'application/atom+xml' in cType:				# If this is a html/text page, we want to decode it using the local encoding
 
@@ -837,7 +912,7 @@ class WebGetRobust:
 
 		# If we have 'soup' as a param, just pop it, and call `getSoup()`.
 		if 'soup' in kwargs and kwargs['soup']:
-			self.log.warn("'soup' kwarg is depreciated. Please use the `getSoup()` call instead.")
+			self.log.warning("'soup' kwarg is depreciated. Please use the `getSoup()` call instead.")
 			kwargs.pop('soup')
 
 			return self.getSoup(requestedUrl, **kwargs)
@@ -858,106 +933,104 @@ class WebGetRobust:
 
 		requestedUrl = iri2uri(requestedUrl)
 
+		retryCount = 0
+		while 1:
 
-		if not self.testMode:
-			retryCount = 0
-			while 1:
+			pgctnt = None
+			pghandle = None
 
+			pgreq = self.buildRequest(requestedUrl, postData, addlHeaders, binaryForm)
+
+			errored = False
+			lastErr = ""
+
+			retryCount = retryCount + 1
+
+			if (retryQuantity and retryCount > retryQuantity) or (not retryQuantity and retryCount > self.errorOutCount):
+				self.log.error("Failed to retrieve Website : %s at %s All Attempts Exhausted", pgreq.get_full_url(), time.ctime(time.time()))
 				pgctnt = None
-				pghandle = None
-
-				pgreq = self.buildRequest(requestedUrl, postData, addlHeaders, binaryForm)
-
-				errored = False
-				lastErr = ""
-
-				retryCount = retryCount + 1
-
-				if (retryQuantity and retryCount > retryQuantity) or (not retryQuantity and retryCount > self.errorOutCount):
-					self.log.error("Failed to retrieve Website : %s at %s All Attempts Exhausted", pgreq.get_full_url(), time.ctime(time.time()))
-					pgctnt = None
-					try:
-						self.log.critical("Critical Failure to retrieve page! %s at %s, attempt %s", pgreq.get_full_url(), time.ctime(time.time()), retryCount)
-						self.log.critical("Error: %s", lastErr)
-						self.log.critical("Exiting")
-					except:
-						self.log.critical("And the URL could not be printed due to an encoding error")
-					break
-
-				#print "execution", retryCount
 				try:
-					# print("Getpage!", requestedUrl, kwargs)
-					pghandle = self.opener.open(pgreq, timeout=30)					# Get Webpage
-					# print("Gotpage")
+					self.log.critical("Critical Failure to retrieve page! %s at %s, attempt %s", pgreq.get_full_url(), time.ctime(time.time()), retryCount)
+					self.log.critical("Error: %s", lastErr)
+					self.log.critical("Exiting")
+				except:
+					self.log.critical("And the URL could not be printed due to an encoding error")
+				break
 
-				except urllib.error.HTTPError as e:								# Lotta logging
-					self.log.warning("Error opening page: %s at %s On Attempt %s.", pgreq.get_full_url(), time.ctime(time.time()), retryCount)
-					self.log.warning("Error Code: %s", e)
+			#print "execution", retryCount
+			try:
+				# print("Getpage!", requestedUrl, kwargs)
+				pghandle = self.opener.open(pgreq, timeout=30)					# Get Webpage
+				# print("Gotpage")
 
-					#traceback.print_exc()
-					lastErr = e
-					try:
+			except urllib.error.HTTPError as e:								# Lotta logging
+				self.log.warning("Error opening page: %s at %s On Attempt %s.", pgreq.get_full_url(), time.ctime(time.time()), retryCount)
+				self.log.warning("Error Code: %s", e)
 
-						self.log.warning("Original URL: %s", requestedUrl)
-						errored = True
-					except:
-						self.log.warning("And the URL could not be printed due to an encoding error")
+				#traceback.print_exc()
+				lastErr = e
+				try:
 
-					if e.code == 404:
-						#print "Unrecoverable - Page not found. Breaking"
-						self.log.critical("Unrecoverable - Page not found. Breaking")
-						break
+					self.log.warning("Original URL: %s", requestedUrl)
+					errored = True
+				except:
+					self.log.warning("And the URL could not be printed due to an encoding error")
 
-					time.sleep(self.retryDelay)
-					if e.code == 503:
-						errcontent = e.read()
-						if b'This process is automatic. Your browser will redirect to your requested content shortly.' in errcontent:
-							self.log.warn("Cloudflare failure! Doing automatic step-through.")
-							self.stepThroughCloudFlare(requestedUrl, titleNotContains="Just a moment...")
-				except UnicodeEncodeError:
-					self.log.critical("Unrecoverable Unicode issue retreiving page - %s", requestedUrl)
-					for line in traceback.format_exc().split("\n"):
-						self.log.critical("%s", line.rstrip())
-					self.log.critical("Parameters:")
-					self.log.critical("	requestedUrl: '%s'", requestedUrl)
-					self.log.critical("	postData:     '%s'", postData)
-					self.log.critical("	addlHeaders:  '%s'", addlHeaders)
-					self.log.critical("	binaryForm:   '%s'", binaryForm)
-
-
+				if e.code == 404:
+					#print "Unrecoverable - Page not found. Breaking"
+					self.log.critical("Unrecoverable - Page not found. Breaking")
 					break
 
+				time.sleep(self.retryDelay)
+				if e.code == 503:
+					errcontent = e.read()
+					if b'This process is automatic. Your browser will redirect to your requested content shortly.' in errcontent:
+						self.log.warn("Cloudflare failure! Doing automatic step-through.")
+						self.stepThroughCloudFlare(requestedUrl, titleNotContains="Just a moment...")
+			except UnicodeEncodeError:
+				self.log.critical("Unrecoverable Unicode issue retreiving page - %s", requestedUrl)
+				for line in traceback.format_exc().split("\n"):
+					self.log.critical("%s", line.rstrip())
+				self.log.critical("Parameters:")
+				self.log.critical("	requestedUrl: '%s'", requestedUrl)
+				self.log.critical("	postData:     '%s'", postData)
+				self.log.critical("	addlHeaders:  '%s'", addlHeaders)
+				self.log.critical("	binaryForm:   '%s'", binaryForm)
+
+
+				break
 
 
 
 
-				except Exception:
-					errored = True
-					#traceback.print_exc()
-					lastErr = sys.exc_info()
-					self.log.warning("Retreival failed. Traceback:")
-					self.log.warning(lastErr)
-					self.log.warning(traceback.format_exc())
 
-					self.log.warning("Error Retrieving Page! - Trying again - Waiting %s seconds", self.retryDelay)
+			except Exception:
+				errored = True
+				#traceback.print_exc()
+				lastErr = sys.exc_info()
+				self.log.warning("Retreival failed. Traceback:")
+				self.log.warning(lastErr)
+				self.log.warning(traceback.format_exc())
 
-					try:
-						self.log.critical("Error on page - %s", requestedUrl)
-					except:
-						self.log.critical("And the URL could not be printed due to an encoding error")
+				self.log.warning("Error Retrieving Page! - Trying again - Waiting %s seconds", self.retryDelay)
 
-					time.sleep(self.retryDelay)
+				try:
+					self.log.critical("Error on page - %s", requestedUrl)
+				except:
+					self.log.critical("And the URL could not be printed due to an encoding error")
+
+				time.sleep(self.retryDelay)
 
 
-					continue
+				continue
 
-				if pghandle != None:
-					self.log.info("Request for URL: %s succeeded at %s On Attempt %s. Recieving...", pgreq.get_full_url(), time.ctime(time.time()), retryCount)
-					pgctnt = self.retreiveContent(pgreq, pghandle, callBack)
+			if pghandle != None:
+				self.log.info("Request for URL: %s succeeded at %s On Attempt %s. Recieving...", pgreq.get_full_url(), time.ctime(time.time()), retryCount)
+				pgctnt = self.retreiveContent(pgreq, pghandle, callBack)
 
-					# if retreiveContent did not return false, it managed to fetch valid results, so break
-					if pgctnt != False:
-						break
+				# if retreiveContent did not return false, it managed to fetch valid results, so break
+				if pgctnt != False:
+					break
 
 		if errored and pghandle != None:
 			print(("Later attempt succeeded %s" % pgreq.get_full_url()))
@@ -1134,6 +1207,21 @@ class WebGetRobust:
 		if not halting:
 			self.syncCookiesFromFile()
 		# print "Have %d cookies after reloading cookiejar" % len(self.cj)
+
+	def getCookies(self):
+
+		locked = self.cookie_lock.acquire(timeout=5)
+		if not locked:
+			raise RuntimeError("Could not acquire lock on cookiejar")
+
+		try:
+			# self.log.info("Trying to save cookies!")
+			if self.cj is not None:							# If cookies were used
+				self.syncCookiesFromFile()
+		finally:
+			self.cookie_lock.release()
+
+		return self.cj
 
 	def __del__(self):
 		# print "WGH Destructor called!"
@@ -1573,7 +1661,7 @@ def getUserAgent():
 
 
 if __name__ == "__main__":
-	from deps import logSetup
+	import logSetup
 	import sys
 	logSetup.initLogging()
 	print("Oh HAI")
@@ -1595,10 +1683,9 @@ if __name__ == "__main__":
 			fp.write(out)
 
 
-	print("Working")
-	ret = wg.getHeadTitlePhantomJS("http://www.google.com/", referrer="http://www.google.com/")
-	print("Ret:")
-	print(ret)
+
+	wg.getHead("http://www.novelupdates.com/extnu/125399/", addlHeaders={"Referer" : "http://www.novelupdates.com/series/limitless-sword-god/"})
+
 	# # content, handle = wg.getpage("http://japtem.com/wp-content/uploads/2014/07/Arifureta.png", returnMultiple = True)
 	# # print((handle.headers.get('Content-Encoding')))
 	# # print(len(content))
