@@ -117,7 +117,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 
 	# creds is a list of 3-tuples that gets inserted into the password manager.
 	# it is structured [(top_level_url1, username1, password1), (top_level_url2, username2, password2)]
-	def __init__(self, test=False, creds=None, logPath="Main.Web", cookie_lock=None,  cloudflare=False, use_socks=False, alt_cookiejar=None):
+	def __init__(self, creds=None, logPath="Main.Web", cookie_lock=None,  cloudflare=False, use_socks=False, alt_cookiejar=None):
 		super().__init__()
 
 		self.rules = {}
@@ -327,7 +327,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 		return pgctnt, hName, mime
 
 
-	def buildRequest(self, pgreq, postData, addlHeaders, binaryForm, req_class = None):
+	def __buildRequest(self, pgreq, postData, addlHeaders, binaryForm, req_class = None):
 		if req_class is None:
 			req_class = urllib.request.Request
 
@@ -606,7 +606,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 			pgctnt = None
 			pghandle = None
 
-			pgreq = self.buildRequest(requestedUrl, postData, addlHeaders, binaryForm)
+			pgreq = self.__buildRequest(requestedUrl, postData, addlHeaders, binaryForm)
 
 			errored = False
 			lastErr = ""
@@ -714,7 +714,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 		for x in range(9999):
 			try:
 				self.log.info("Doing HTTP HEAD request for '%s'", url)
-				pgreq = self.buildRequest(url, None, addlHeaders, None, req_class=Handlers.HeadRequest)
+				pgreq = self.__buildRequest(url, None, addlHeaders, None, req_class=Handlers.HeadRequest)
 				pghandle = self.opener.open(pgreq, timeout=30)
 				returl = pghandle.geturl()
 				if returl != url:

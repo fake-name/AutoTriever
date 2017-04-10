@@ -1,4 +1,4 @@
 
 from . import WebRequestClass
 
-WebRequest = WebRequestClass.WebRequest
+WebGetRobust = WebRequestClass.WebGetRobust
