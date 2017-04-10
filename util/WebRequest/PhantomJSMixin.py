@@ -248,7 +248,7 @@ class WebGetPjsMixin(object):
 			self.addSeleniumCookie(cookie)
 			#print cookie[u"value"]
 
-		self.syncCookiesFromFile()
+		self.__syncCookiesFromFile()
 
 		return success
 

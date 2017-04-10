@@ -112,7 +112,6 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 	# retryDelay = 0.1
 	retryDelay = 0.0
 
-
 	data = None
 
 	# creds is a list of 3-tuples that gets inserted into the password manager.
@@ -154,49 +153,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 			self.credHandler = None
 
 		self.alt_cookiejar = alt_cookiejar
-		self.loadCookies()
-
-	def loadCookies(self):
-
-		if self.alt_cookiejar is not None:
-			self.alt_cookiejar.init_agent(new_headers=self.browserHeaders)
-			self.cj = self.alt_cookiejar
-		else:
-			self.cj = http.cookiejar.LWPCookieJar()		# This is a subclass of FileCookieJar
-												# that has useful load and save methods
-		if self.cj is not None:
-			if os.path.isfile(self.COOKIEFILE):
-				try:
-					self.cj.load(self.COOKIEFILE)
-					# self.log.info("Loading CookieJar")
-				except:
-					self.log.critical("Cookie file is corrupt/damaged?")
-					try:
-						os.remove(self.COOKIEFILE)
-					except FileNotFoundError:
-						pass
-			if http.cookiejar is not None:
-				# self.log.info("Installing CookieJar")
-				self.log.debug(self.cj)
-				cookieHandler = urllib.request.HTTPCookieProcessor(self.cj)
-				args = (cookieHandler, Handlers.HTTPRedirectHandler)
-				if self.credHandler:
-					print("Have cred handler. Building opener using it")
-					args += (self.credHandler, )
-				if self.use_socks:
-					print("Using Socks handler")
-					args = (SocksiPyHandler(socks.SOCKS5, "127.0.0.1", 9050), ) + args
-
-				self.opener = urllib.request.build_opener(*args)
-				#self.opener.addheaders = [('User-Agent', 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)')]
-				self.opener.addheaders = self.browserHeaders
-				#urllib2.install_opener(self.opener)
-
-		for cookie in self.cj:
-			self.log.debug(cookie)
-			#print cookie
-
-
+		self.__loadCookies()
 	def chunkReport(self, bytesSoFar, totalSize):
 		if totalSize:
 			percent = float(bytesSoFar) / totalSize
@@ -205,8 +162,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 		else:
 			self.log.info("Downloaded %d bytes" % (bytesSoFar))
 
-
-	def chunkRead(self, response, chunkSize=2 ** 18, reportHook=None):
+	def __chunkRead(self, response, chunkSize=2 ** 18, reportHook=None):
 		contentLengthHeader = response.info().getheader('Content-Length')
 		if contentLengthHeader:
 			totalSize = contentLengthHeader.strip()
@@ -227,8 +183,6 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 				reportHook(bytesSoFar, chunkSize, totalSize)
 
 		return pgContent
-
-
 
 	def getSoup(self, *args, **kwargs):
 		if 'returnMultiple' in kwargs and kwargs['returnMultiple']:
@@ -326,40 +280,6 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 
 		return pgctnt, hName, mime
 
-
-	def __buildRequest(self, pgreq, postData, addlHeaders, binaryForm, req_class = None):
-		if req_class is None:
-			req_class = urllib.request.Request
-
-		pgreq = iri2uri.iri2uri(pgreq)
-
-		try:
-			params = {}
-			headers = {}
-			if postData != None:
-				self.log.info("Making a post-request! Params: '%s'", postData)
-				params['data'] = urllib.parse.urlencode(postData).encode("utf-8")
-			if addlHeaders != None:
-				self.log.info("Have additional GET parameters!")
-				for key, parameter in addlHeaders.items():
-					self.log.info("	Item: '%s' -> '%s'", key, parameter)
-				headers = addlHeaders
-			if binaryForm:
-				self.log.info("Binary form submission!")
-				if 'data' in params:
-					raise ValueError("You cannot make a binary form post and a plain post request at the same time!")
-
-				params['data']            = binaryForm.make_result()
-				headers['Content-type']   =  binaryForm.get_content_type()
-				headers['Content-length'] =  len(params['data'])
-
-			return req_class(pgreq, headers=headers, **params)
-
-		except:
-			self.log.critical("Invalid header or url")
-			raise
-
-
 	def decodeHtml(self, pageContent, cType):
 
 		# this *should* probably be done using a parser.
@@ -400,189 +320,15 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 
 		return pageContent
 
-	def decompressContent(self, coding, pgctnt):
-		#preLen = len(pgctnt)
-		if coding == 'deflate':
-			compType = "deflate"
-
-			pgctnt = zlib.decompress(pgctnt, -zlib.MAX_WBITS)
-
-		elif coding == 'gzip':
-			compType = "gzip"
-
-			buf = io.BytesIO(pgctnt)
-			f = gzip.GzipFile(fileobj=buf)
-			pgctnt = f.read()
-
-		elif coding == "sdch":
-			raise ValueError("Wait, someone other then google actually supports SDCH compression?")
-
-		else:
-			compType = "none"
-
-		return compType, pgctnt
-
-
-	def getItem(self, itemUrl):
-
-		try:
-			content, handle = self.getpage(itemUrl, returnMultiple=True)
-		except:
-			print("Failure?")
-			if self.rules['cloudflare']:
-				if not self.stepThroughCloudFlare(itemUrl, titleNotContains='Just a moment...'):
-					raise ValueError("Could not step through cloudflare!")
-				# Cloudflare cookie set, retrieve again
-				content, handle = self.getpage(itemUrl, returnMultiple=True)
-			else:
-				raise
-
-		if not content or not handle:
-			raise urllib.error.URLError("Failed to retreive file from page '%s'!" % itemUrl)
-
-		fileN = urllib.parse.unquote(urllib.parse.urlparse(handle.geturl())[2].split("/")[-1])
-		fileN = bs4.UnicodeDammit(fileN).unicode_markup
-		mType = handle.info()['Content-Type']
-
-		# If there is an encoding in the content-type (or any other info), strip it out.
-		# We don't care about the encoding, since WebFunctions will already have handled that,
-		# and returned a decoded unicode object.
-		if mType and ";" in mType:
-			mType = mType.split(";")[0].strip()
-
-		# *sigh*. So minus.com is fucking up their http headers, and apparently urlencoding the
-		# mime type, because apparently they're shit at things.
-		# Anyways, fix that.
-		if '%2F' in  mType:
-			mType = mType.replace('%2F', '/')
-
-		self.log.info("Retreived file of type '%s', name of '%s' with a size of %0.3f K", mType, fileN, len(content)/1000.0)
-		return content, fileN, mType
-
-
-
-	def decodeTextContent(self, pgctnt, cType):
-
-		if cType:
-			if (";" in cType) and ("=" in cType):
-				# the server is reporting an encoding. Now we use it to decode the content
-				# Some wierdos put two charsets in their headers:
-				# `text/html;Charset=UTF-8;charset=UTF-8`
-				# Split, and take the first two entries.
-				docType, charset = cType.split(";")[:2]
-				charset = charset.split("=")[-1]
-
-				# Only decode content marked as text (yeah, google is serving zip files
-				# with the content-disposition charset header specifying "UTF-8") or
-				# specifically allowed other content types I know are really text.
-				decode = ['application/atom+xml', 'application/xml', "application/json", 'text']
-				if any([item in docType for item in decode]):
-					try:
-						pgctnt = str(pgctnt, charset)
-					except UnicodeDecodeError:
-						self.log.error("Encoding Error! Stripping invalid chars.")
-						pgctnt = pgctnt.decode('utf-8', errors='ignore')
-
-			else:
-				# The server is not reporting an encoding in the headers.
-				# Use content-aware mechanisms for determing the content encoding.
-
-
-				if "text/html" in cType or \
-					'text/javascript' in cType or    \
-					'text/css' in cType or    \
-					'application/xml' in cType or    \
-					'application/atom+xml' in cType:				# If this is a html/text page, we want to decode it using the local encoding
-
-					pgctnt = self.decodeHtml(pgctnt, cType)
-
-				elif "text/plain" in cType or "text/xml" in cType:
-					pgctnt = bs4.UnicodeDammit(pgctnt).unicode_markup
-
-				# Assume JSON is utf-8. Probably a bad idea?
-				elif "application/json" in cType:
-					pgctnt = pgctnt.decode('utf-8')
-
-				elif "text" in cType:
-					self.log.critical("Unknown content type!")
-					self.log.critical(cType)
-
-		else:
-			self.log.critical("No content disposition header!")
-			self.log.critical("Cannot guess content type!")
-
-		return pgctnt
-
-	def retreiveContent(self, pgreq, pghandle, callBack):
-		try:
-			# If we have a progress callback, call it for chunked read.
-			# Otherwise, just read in the entire content.
-			if callBack:
-				pgctnt = self.chunkRead(pghandle, 2 ** 17, reportHook=callBack)
-			else:
-				pgctnt = pghandle.read()
-
-
-			if pgctnt is None:
-				return False
-
-			self.log.info("URL fully retrieved.")
-
-			preDecompSize = len(pgctnt)/1000.0
-
-			encoded = pghandle.headers.get('Content-Encoding')
-			compType, pgctnt = self.decompressContent(encoded, pgctnt)
-
-
-			decompSize = len(pgctnt)/1000.0
-			# self.log.info("Page content type = %s", type(pgctnt))
-			cType = pghandle.headers.get("Content-Type")
-			if compType == 'none':
-				self.log.info("Compression type = %s. Content Size = %0.3fK. File type: %s.", compType, decompSize, cType)
-			else:
-				self.log.info("Compression type = %s. Content Size compressed = %0.3fK. Decompressed = %0.3fK. File type: %s.", compType, preDecompSize, decompSize, cType)
-
-			pgctnt = self.decodeTextContent(pgctnt, cType)
-
-			return pgctnt
-
-		except:
-			print("pghandle = ", pghandle)
-
-			self.log.error(sys.exc_info())
-			traceback.print_exc()
-			self.log.error("Error Retrieving Page! - Transfer failed. Waiting %s seconds before retrying", self.retryDelay)
-
-			try:
-				self.log.critical("Critical Failure to retrieve page! %s at %s", pgreq.get_full_url(), time.ctime(time.time()))
-				self.log.critical("Exiting")
-			except:
-				self.log.critical("And the URL could not be printed due to an encoding error")
-			print()
-			self.log.error(pghandle)
-			time.sleep(self.retryDelay)
-
-		return False
-
-
-		# HUGE GOD-FUNCTION.
-		# OH GOD FIXME.
-
-		# postData expects a dict
-		# addlHeaders also expects a dict
 	def getpage(self, requestedUrl, **kwargs):
-		# pgreq = fixurl(pgreq)
 
 		# strip trailing and leading spaces.
 		requestedUrl = requestedUrl.strip()
-
-		# addlHeaders = None, returnMultiple = False, callBack=None, postData=None, soup=False, retryQuantity=None, nativeError=False, binaryForm=False
 
 		# If we have 'soup' as a param, just pop it, and call `getSoup()`.
 		if 'soup' in kwargs and kwargs['soup']:
 			self.log.warning("'soup' kwarg is depreciated. Please use the `getSoup()` call instead.")
 			kwargs.pop('soup')
-
 			return self.getSoup(requestedUrl, **kwargs)
 
 		# Decode the kwargs values
@@ -688,15 +434,14 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 
 			if pghandle != None:
 				self.log.info("Request for URL: %s succeeded at %s On Attempt %s. Recieving...", pgreq.get_full_url(), time.ctime(time.time()), retryCount)
-				pgctnt = self.retreiveContent(pgreq, pghandle, callBack)
+				pgctnt = self.__retreiveContent(pgreq, pghandle, callBack)
 
-				# if retreiveContent did not return false, it managed to fetch valid results, so break
+				# if __retreiveContent did not return false, it managed to fetch valid results, so break
 				if pgctnt != False:
 					break
 
 		if errored and pghandle != None:
 			print(("Later attempt succeeded %s" % pgreq.get_full_url()))
-			#print len(pgctnt)
 		elif errored and pghandle == None:
 
 			if lastErr and nativeError:
@@ -706,9 +451,43 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 		if returnMultiple:
 			return pgctnt, pghandle
 		else:
-			if pghandle:
-				pghandle.close()
 			return pgctnt
+
+	def getItem(self, itemUrl):
+
+		try:
+			content, handle = self.getpage(itemUrl, returnMultiple=True)
+		except:
+			print("Failure?")
+			if self.rules['cloudflare']:
+				if not self.stepThroughCloudFlare(itemUrl, titleNotContains='Just a moment...'):
+					raise ValueError("Could not step through cloudflare!")
+				# Cloudflare cookie set, retrieve again
+				content, handle = self.getpage(itemUrl, returnMultiple=True)
+			else:
+				raise
+
+		if not content or not handle:
+			raise urllib.error.URLError("Failed to retreive file from page '%s'!" % itemUrl)
+
+		fileN = urllib.parse.unquote(urllib.parse.urlparse(handle.geturl())[2].split("/")[-1])
+		fileN = bs4.UnicodeDammit(fileN).unicode_markup
+		mType = handle.info()['Content-Type']
+
+		# If there is an encoding in the content-type (or any other info), strip it out.
+		# We don't care about the encoding, since WebFunctions will already have handled that,
+		# and returned a decoded unicode object.
+		if mType and ";" in mType:
+			mType = mType.split(";")[0].strip()
+
+		# *sigh*. So minus.com is fucking up their http headers, and apparently urlencoding the
+		# mime type, because apparently they're shit at things.
+		# Anyways, fix that.
+		if '%2F' in  mType:
+			mType = mType.replace('%2F', '/')
+
+		self.log.info("Retreived file of type '%s', name of '%s' with a size of %0.3f K", mType, fileN, len(content)/1000.0)
+		return content, fileN, mType
 
 	def getHead(self, url, addlHeaders):
 		for x in range(9999):
@@ -735,8 +514,217 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 					self.log.error("Failure fetching: %s", url)
 					raise e
 
+	######################################################################################################################################################
+	######################################################################################################################################################
 
-	def syncCookiesFromFile(self):
+	def __buildRequest(self, pgreq, postData, addlHeaders, binaryForm, req_class = None):
+		if req_class is None:
+			req_class = urllib.request.Request
+
+		pgreq = iri2uri.iri2uri(pgreq)
+
+		try:
+			params = {}
+			headers = {}
+			if postData != None:
+				self.log.info("Making a post-request! Params: '%s'", postData)
+				params['data'] = urllib.parse.urlencode(postData).encode("utf-8")
+			if addlHeaders != None:
+				self.log.info("Have additional GET parameters!")
+				for key, parameter in addlHeaders.items():
+					self.log.info("	Item: '%s' -> '%s'", key, parameter)
+				headers = addlHeaders
+			if binaryForm:
+				self.log.info("Binary form submission!")
+				if 'data' in params:
+					raise ValueError("You cannot make a binary form post and a plain post request at the same time!")
+
+				params['data']            = binaryForm.make_result()
+				headers['Content-type']   =  binaryForm.get_content_type()
+				headers['Content-length'] =  len(params['data'])
+
+			return req_class(pgreq, headers=headers, **params)
+
+		except:
+			self.log.critical("Invalid header or url")
+			raise
+
+	def __decompressContent(self, coding, pgctnt):
+		#preLen = len(pgctnt)
+		if coding == 'deflate':
+			compType = "deflate"
+
+			pgctnt = zlib.decompress(pgctnt, -zlib.MAX_WBITS)
+
+		elif coding == 'gzip':
+			compType = "gzip"
+
+			buf = io.BytesIO(pgctnt)
+			f = gzip.GzipFile(fileobj=buf)
+			pgctnt = f.read()
+
+		elif coding == "sdch":
+			raise ValueError("Wait, someone other then google actually supports SDCH compression?")
+
+		else:
+			compType = "none"
+
+		return compType, pgctnt
+
+	def __decodeTextContent(self, pgctnt, cType):
+
+		if cType:
+			if (";" in cType) and ("=" in cType):
+				# the server is reporting an encoding. Now we use it to decode the content
+				# Some wierdos put two charsets in their headers:
+				# `text/html;Charset=UTF-8;charset=UTF-8`
+				# Split, and take the first two entries.
+				docType, charset = cType.split(";")[:2]
+				charset = charset.split("=")[-1]
+
+				# Only decode content marked as text (yeah, google is serving zip files
+				# with the content-disposition charset header specifying "UTF-8") or
+				# specifically allowed other content types I know are really text.
+				decode = ['application/atom+xml', 'application/xml', "application/json", 'text']
+				if any([item in docType for item in decode]):
+					try:
+						pgctnt = str(pgctnt, charset)
+					except UnicodeDecodeError:
+						self.log.error("Encoding Error! Stripping invalid chars.")
+						pgctnt = pgctnt.decode('utf-8', errors='ignore')
+
+			else:
+				# The server is not reporting an encoding in the headers.
+				# Use content-aware mechanisms for determing the content encoding.
+
+
+				if "text/html" in cType or \
+					'text/javascript' in cType or    \
+					'text/css' in cType or    \
+					'application/xml' in cType or    \
+					'application/atom+xml' in cType:				# If this is a html/text page, we want to decode it using the local encoding
+
+					pgctnt = self.decodeHtml(pgctnt, cType)
+
+				elif "text/plain" in cType or "text/xml" in cType:
+					pgctnt = bs4.UnicodeDammit(pgctnt).unicode_markup
+
+				# Assume JSON is utf-8. Probably a bad idea?
+				elif "application/json" in cType:
+					pgctnt = pgctnt.decode('utf-8')
+
+				elif "text" in cType:
+					self.log.critical("Unknown content type!")
+					self.log.critical(cType)
+
+		else:
+			self.log.critical("No content disposition header!")
+			self.log.critical("Cannot guess content type!")
+
+		return pgctnt
+
+	def __retreiveContent(self, pgreq, pghandle, callBack):
+		try:
+			# If we have a progress callback, call it for chunked read.
+			# Otherwise, just read in the entire content.
+			if callBack:
+				pgctnt = self.__chunkRead(pghandle, 2 ** 17, reportHook=callBack)
+			else:
+				pgctnt = pghandle.read()
+
+
+			if pgctnt is None:
+				return False
+
+			self.log.info("URL fully retrieved.")
+
+			preDecompSize = len(pgctnt)/1000.0
+
+			encoded = pghandle.headers.get('Content-Encoding')
+			compType, pgctnt = self.__decompressContent(encoded, pgctnt)
+
+
+			decompSize = len(pgctnt)/1000.0
+			# self.log.info("Page content type = %s", type(pgctnt))
+			cType = pghandle.headers.get("Content-Type")
+			if compType == 'none':
+				self.log.info("Compression type = %s. Content Size = %0.3fK. File type: %s.", compType, decompSize, cType)
+			else:
+				self.log.info("Compression type = %s. Content Size compressed = %0.3fK. Decompressed = %0.3fK. File type: %s.", compType, preDecompSize, decompSize, cType)
+
+			pgctnt = self.__decodeTextContent(pgctnt, cType)
+
+			return pgctnt
+
+		except:
+			print("pghandle = ", pghandle)
+
+			self.log.error(sys.exc_info())
+			traceback.print_exc()
+			self.log.error("Error Retrieving Page! - Transfer failed. Waiting %s seconds before retrying", self.retryDelay)
+
+			try:
+				self.log.critical("Critical Failure to retrieve page! %s at %s", pgreq.get_full_url(), time.ctime(time.time()))
+				self.log.critical("Exiting")
+			except:
+				self.log.critical("And the URL could not be printed due to an encoding error")
+			print()
+			self.log.error(pghandle)
+			time.sleep(self.retryDelay)
+
+		return False
+
+
+		# HUGE GOD-FUNCTION.
+		# OH GOD FIXME.
+
+		# postData expects a dict
+		# addlHeaders also expects a dict
+
+	######################################################################################################################################################
+	######################################################################################################################################################
+
+	def __loadCookies(self):
+
+		if self.alt_cookiejar is not None:
+			self.alt_cookiejar.init_agent(new_headers=self.browserHeaders)
+			self.cj = self.alt_cookiejar
+		else:
+			self.cj = http.cookiejar.LWPCookieJar()		# This is a subclass of FileCookieJar
+												# that has useful load and save methods
+		if self.cj is not None:
+			if os.path.isfile(self.COOKIEFILE):
+				try:
+					self.__updateCookiesFromFile()
+					# self.log.info("Loading CookieJar")
+				except:
+					self.log.critical("Cookie file is corrupt/damaged?")
+					try:
+						os.remove(self.COOKIEFILE)
+					except FileNotFoundError:
+						pass
+			if http.cookiejar is not None:
+				# self.log.info("Installing CookieJar")
+				self.log.debug(self.cj)
+				cookieHandler = urllib.request.HTTPCookieProcessor(self.cj)
+				args = (cookieHandler, Handlers.HTTPRedirectHandler)
+				if self.credHandler:
+					print("Have cred handler. Building opener using it")
+					args += (self.credHandler, )
+				if self.use_socks:
+					print("Using Socks handler")
+					args = (SocksiPyHandler(socks.SOCKS5, "127.0.0.1", 9050), ) + args
+
+				self.opener = urllib.request.build_opener(*args)
+				#self.opener.addheaders = [('User-Agent', 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)')]
+				self.opener.addheaders = self.browserHeaders
+				#urllib2.install_opener(self.opener)
+
+		for cookie in self.cj:
+			self.log.debug(cookie)
+			#print cookie
+
+	def __syncCookiesFromFile(self):
 		# self.log.info("Synchronizing cookies with cookieFile.")
 		if os.path.isfile(self.COOKIEFILE):
 			self.cj.save("cookietemp.lwp")
@@ -747,7 +735,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 		# the cookies in memory to a temp-file, then load the cookiefile, and finally overwrite the loaded cookies with the ones from the
 		# temp file
 
-	def updateCookiesFromFile(self):
+	def __updateCookiesFromFile(self):
 		if os.path.exists(self.COOKIEFILE):
 			# self.log.info("Synchronizing cookies with cookieFile.")
 			self.cj.load(self.COOKIEFILE)
@@ -756,18 +744,6 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 	def addCookie(self, inCookie):
 		self.log.info("Updating cookie!")
 		self.cj.set_cookie(inCookie)
-
-
-
-	def initLogging(self):
-		print("WARNING - Webget logging re-initialized?")
-		mainLogger = logging.getLogger("Main")			# Main logger
-		mainLogger.setLevel(logging.DEBUG)
-
-		ch = logging.StreamHandler(sys.stdout)
-		formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-		ch.setFormatter(formatter)
-		mainLogger.addHandler(ch)
 
 	def saveCookies(self, halting=False):
 
@@ -781,7 +757,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 			# self.log.info("Trying to save cookies!")
 			if self.cj is not None:							# If cookies were used
 
-				self.syncCookiesFromFile()
+				self.__syncCookiesFromFile()
 
 				# self.log.info("Have cookies to save")
 				for cookie in self.cj:
@@ -809,7 +785,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 
 		# print("Have %d cookies after saving cookiejar" % len(self.cj))
 		if not halting:
-			self.syncCookiesFromFile()
+			self.__syncCookiesFromFile()
 		# print "Have %d cookies after reloading cookiejar" % len(self.cj)
 
 	def getCookies(self):
@@ -821,11 +797,14 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 		try:
 			# self.log.info("Trying to save cookies!")
 			if self.cj is not None:							# If cookies were used
-				self.syncCookiesFromFile()
+				self.__syncCookiesFromFile()
 		finally:
 			self.cookie_lock.release()
 
 		return self.cj
+
+	######################################################################################################################################################
+	######################################################################################################################################################
 
 	def __del__(self):
 		# print "WGH Destructor called!"

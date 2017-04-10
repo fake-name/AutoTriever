@@ -1,6 +1,9 @@
 
 import unittest
 import socket
+import json
+import zlib
+import gzip
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 
@@ -36,6 +39,37 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 			self.end_headers()
 			self.wfile.write(b"Root OK?")
 
+		elif self.path == "/compressed/deflate":
+			self.send_response(200)
+			self.send_header('Content-Encoding', 'deflate')
+			self.send_header('Content-type',"text/html")
+			self.end_headers()
+
+			inb = b"Root OK?"
+			cobj = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+			t1 = cobj.compress(inb) + cobj.flush()
+			self.wfile.write(t1)
+
+		elif self.path == "/compressed/gzip":
+			self.send_response(200)
+			self.send_header('Content-Encoding', 'gzip')
+			self.send_header('Content-type',"text/html")
+			self.end_headers()
+			self.wfile.write(gzip.compress(b"Root OK?"))
+
+
+		elif self.path == "/json/invalid":
+			self.send_response(200)
+			self.send_header('Content-type',"text/html")
+			self.end_headers()
+			self.wfile.write(b"LOLWAT")
+
+		elif self.path == "/json/valid":
+			self.send_response(200)
+			self.send_header('Content-type',"text/html")
+			self.end_headers()
+			self.wfile.write(b'{"oh" : "hai"}')
+
 
 
 
@@ -64,11 +98,26 @@ class TestSimpleFetch(unittest.TestCase):
 		self.mock_server.shutdown()
 
 	def test_fetch_1(self):
-
 		page = self.wg.getpage("http://localhost:{}".format(self.mock_server_port))
 		self.assertEqual(page, b'Root OK?')
 
 	def test_fetch_decode_1(self):
 		# text/html content should be decoded automatically.
 		page = self.wg.getpage("http://localhost:{}/html-decode".format(self.mock_server_port))
+		self.assertEqual(page, 'Root OK?')
+
+	def test_fetch_decode_json(self):
+		# text/html content should be decoded automatically.
+		page = self.wg.getJson("http://localhost:{}/json/valid".format(self.mock_server_port))
+		self.assertEqual(page, {'oh': 'hai'})
+
+		with self.assertRaises(json.decoder.JSONDecodeError):
+			page = self.wg.getJson("http://localhost:{}/json/invalid".format(self.mock_server_port))
+
+	def test_fetch_compressed(self):
+
+		page = self.wg.getpage("http://localhost:{}/compressed/gzip".format(self.mock_server_port))
+		self.assertEqual(page, 'Root OK?')
+
+		page = self.wg.getpage("http://localhost:{}/compressed/deflate".format(self.mock_server_port))
 		self.assertEqual(page, 'Root OK?')
