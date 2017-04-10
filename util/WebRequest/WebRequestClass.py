@@ -33,6 +33,7 @@ from . import PhantomJSMixin
 from . import Handlers
 from . import iri2uri
 from . import Constants
+from . import Exceptions
 
 #pylint: disable-msg=E1101, C0325, R0201, W0702, W0703
 
@@ -78,7 +79,7 @@ def determine_json_encoding(json_bytes):
 		elif b1 != 0 and b2 != 0 and b3 != 0 and b4 != 0:
 			return "UTF-8"
 		else:
-			raise ValueError("Unknown encoding!")
+			raise Exceptions.ContentTypeError("Unknown encoding!")
 
 	elif len(json_bytes) > 2:
 		b1, b2 = json_bytes[0], json_bytes[1]
@@ -87,13 +88,13 @@ def determine_json_encoding(json_bytes):
 		elif b1 == 0 and b2 != 0:
 			return "UTF-16BE"
 		elif b1 != 0 and b2 == 0:
-			raise ValueError("Json string too short to definitively infer encoding.")
+			raise Exceptions.ContentTypeError("Json string too short to definitively infer encoding.")
 		elif b1 != 0 and b2 != 0:
 			return "UTF-8"
 		else:
-			raise ValueError("Unknown encoding!")
+			raise Exceptions.ContentTypeError("Unknown encoding!")
 
-	raise ValueError("Input string too short to guess encoding!")
+	raise Exceptions.ContentTypeError("Input string too short to guess encoding!")
 
 
 # A urllib2 wrapper that provides error handling and logging, as well as cookie management. It's a bit crude, but it works.
@@ -186,21 +187,21 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 
 	def getSoup(self, *args, **kwargs):
 		if 'returnMultiple' in kwargs and kwargs['returnMultiple']:
-			raise ValueError("getSoup cannot be called with 'returnMultiple' being true")
+			raise Exceptions.ArgumentError("getSoup cannot be called with 'returnMultiple' being true")
 
 		if 'soup' in kwargs and kwargs['soup']:
-			raise ValueError("getSoup contradicts the 'soup' directive!")
+			raise Exceptions.ArgumentError("getSoup contradicts the 'soup' directive!")
 
 		page = self.getpage(*args, **kwargs)
 		if isinstance(page, bytes):
-			raise ValueError("Received content not decoded! Cannot parse!")
+			raise Exceptions.ContentTypeError("Received content not decoded! Cannot parse!")
 
 		soup = as_soup(page)
 		return soup
 
 	def getJson(self, *args, **kwargs):
 		if 'returnMultiple' in kwargs and kwargs['returnMultiple']:
-			raise ValueError("getSoup cannot be called with 'returnMultiple' being true")
+			raise Exceptions.ArgumentError("getSoup cannot be called with 'returnMultiple' being true")
 
 		attempts = 0
 		while 1:
@@ -237,10 +238,10 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 
 	def getFileAndName(self, *args, **kwargs):
 		if 'returnMultiple' in kwargs:
-			raise ValueError("getFileAndName cannot be called with 'returnMultiple'")
+			raise Exceptions.ArgumentError("getFileAndName cannot be called with 'returnMultiple'")
 
 		if 'soup' in kwargs and kwargs['soup']:
-			raise ValueError("getFileAndName contradicts the 'soup' directive!")
+			raise Exceptions.ArgumentError("getFileAndName contradicts the 'soup' directive!")
 
 		kwargs["returnMultiple"] = True
 
@@ -259,10 +260,10 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 
 	def getFileNameMime(self, *args, **kwargs):
 		if 'returnMultiple' in kwargs:
-			raise ValueError("getFileAndName cannot be called with 'returnMultiple'")
+			raise Exceptions.ArgumentError("getFileAndName cannot be called with 'returnMultiple'")
 
 		if 'soup' in kwargs and kwargs['soup']:
-			raise ValueError("getFileAndName contradicts the 'soup' directive!")
+			raise Exceptions.ArgumentError("getFileAndName contradicts the 'soup' directive!")
 
 		kwargs["returnMultiple"] = True
 
@@ -279,46 +280,6 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 		mime = info.get_content_type()
 
 		return pgctnt, hName, mime
-
-	def decodeHtml(self, pageContent, cType):
-
-		# this *should* probably be done using a parser.
-		# However, it seems to be grossly overkill to shove the whole page (which can be quite large) through a parser just to pull out a tag that
-		# should be right near the page beginning anyways.
-		# As such, it's a regular expression for the moment
-
-		# Regex is of bytes type, since we can't convert a string to unicode until we know the encoding the
-		# bytes string is using, and we need the regex to get that encoding
-		coding = re.search(rb"charset=[\'\"]?([a-zA-Z0-9\-]*)[\'\"]?", pageContent, flags=re.IGNORECASE)
-
-		cType = b""
-		charset = None
-		try:
-			if coding:
-				cType = coding.group(1)
-				codecs.lookup(cType.decode("ascii"))
-				charset = cType.decode("ascii")
-
-		except LookupError:
-
-			# I'm actually not sure what I was thinking when I wrote this if statement. I don't think it'll ever trigger.
-			if (b";" in cType) and (b"=" in cType): 		# the server is reporting an encoding. Now we use it to decode the
-
-				dummy_docType, charset = cType.split(b";")
-				charset = charset.split(b"=")[-1]
-
-		if not charset:
-			self.log.warning("Could not find encoding information on page - Using default charset. Shit may break!")
-			charset = "iso-8859-1"
-
-		try:
-			pageContent = str(pageContent, charset)
-
-		except UnicodeDecodeError:
-			self.log.error("Encoding Error! Stripping invalid chars.")
-			pageContent = pageContent.decode('utf-8', errors='ignore')
-
-		return pageContent
 
 	def getpage(self, requestedUrl, **kwargs):
 
@@ -461,7 +422,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 			print("Failure?")
 			if self.rules['cloudflare']:
 				if not self.stepThroughCloudFlare(itemUrl, titleNotContains='Just a moment...'):
-					raise ValueError("Could not step through cloudflare!")
+					raise Exceptions.FetchFailureError("Could not step through cloudflare!")
 				# Cloudflare cookie set, retrieve again
 				content, handle = self.getpage(itemUrl, returnMultiple=True)
 			else:
@@ -489,7 +450,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 		self.log.info("Retreived file of type '%s', name of '%s' with a size of %0.3f K", mType, fileN, len(content)/1000.0)
 		return content, fileN, mType
 
-	def getHead(self, url, addlHeaders):
+	def getHead(self, url, addlHeaders=None):
 		for x in range(9999):
 			try:
 				self.log.info("Doing HTTP HEAD request for '%s'", url)
@@ -517,6 +478,46 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 	######################################################################################################################################################
 	######################################################################################################################################################
 
+	def __decodeHtml(self, pageContent, cType):
+
+		# this *should* probably be done using a parser.
+		# However, it seems to be grossly overkill to shove the whole page (which can be quite large) through a parser just to pull out a tag that
+		# should be right near the page beginning anyways.
+		# As such, it's a regular expression for the moment
+
+		# Regex is of bytes type, since we can't convert a string to unicode until we know the encoding the
+		# bytes string is using, and we need the regex to get that encoding
+		coding = re.search(rb"charset=[\'\"]?([a-zA-Z0-9\-]*)[\'\"]?", pageContent, flags=re.IGNORECASE)
+
+		cType = b""
+		charset = None
+		try:
+			if coding:
+				cType = coding.group(1)
+				codecs.lookup(cType.decode("ascii"))
+				charset = cType.decode("ascii")
+
+		except LookupError:
+
+			# I'm actually not sure what I was thinking when I wrote this if statement. I don't think it'll ever trigger.
+			if (b";" in cType) and (b"=" in cType): 		# the server is reporting an encoding. Now we use it to decode the
+
+				dummy_docType, charset = cType.split(b";")
+				charset = charset.split(b"=")[-1]
+
+		if not charset:
+			self.log.warning("Could not find encoding information on page - Using default charset. Shit may break!")
+			charset = "iso-8859-1"
+
+		try:
+			pageContent = str(pageContent, charset)
+
+		except UnicodeDecodeError:
+			self.log.error("Encoding Error! Stripping invalid chars.")
+			pageContent = pageContent.decode('utf-8', errors='ignore')
+
+		return pageContent
+
 	def __buildRequest(self, pgreq, postData, addlHeaders, binaryForm, req_class = None):
 		if req_class is None:
 			req_class = urllib.request.Request
@@ -537,7 +538,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 			if binaryForm:
 				self.log.info("Binary form submission!")
 				if 'data' in params:
-					raise ValueError("You cannot make a binary form post and a plain post request at the same time!")
+					raise Exceptions.ArgumentError("You cannot make a binary form post and a plain post request at the same time!")
 
 				params['data']            = binaryForm.make_result()
 				headers['Content-type']   =  binaryForm.get_content_type()
@@ -564,7 +565,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 			pgctnt = f.read()
 
 		elif coding == "sdch":
-			raise ValueError("Wait, someone other then google actually supports SDCH compression?")
+			raise Exceptions.ContentTypeError("Wait, someone other then google actually supports SDCH compression?")
 
 		else:
 			compType = "none"
@@ -604,7 +605,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 					'application/xml' in cType or    \
 					'application/atom+xml' in cType:				# If this is a html/text page, we want to decode it using the local encoding
 
-					pgctnt = self.decodeHtml(pgctnt, cType)
+					pgctnt = self.__decodeHtml(pgctnt, cType)
 
 				elif "text/plain" in cType or "text/xml" in cType:
 					pgctnt = bs4.UnicodeDammit(pgctnt).unicode_markup
