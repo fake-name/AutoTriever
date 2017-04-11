@@ -465,7 +465,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 				self.log.info("Timeout, retrying....")
 				if x >= 3:
 					self.log.error("Failure fetching: %s", url)
-					raise e
+					raise Exceptions.FetchFailureError("Timout when fetching %s. Error: %s" % (url, e))
 			except urllib.error.URLError as e:
 				# Continue even in the face of cloudflare crapping it's pants
 				if e.code == 500 and e.geturl():
@@ -473,7 +473,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
 				self.log.info("URLError, retrying....")
 				if x >= 3:
 					self.log.error("Failure fetching: %s", url)
-					raise e
+					raise Exceptions.FetchFailureError("URLError when fetching %s. Error: %s" % (url, e))
 
 	######################################################################################################################################################
 	######################################################################################################################################################

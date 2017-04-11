@@ -5,14 +5,6 @@ import codecs
 import http.client
 import email.parser
 
-cchardet = False
-
-try:
-	import cchardet
-except ImportError:
-	pass
-
-
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -46,7 +38,7 @@ class HeadRequest(urllib.request.Request):
 		return "GET"
 		# return "HEAD"
 
-class HTTPRedirectBlockerErrorHandler(urllib.request.HTTPErrorProcessor):
+class HTTPRedirectBlockerErrorHandler(urllib.request.HTTPErrorProcessor):    # pragma: no cover
 
 	def http_response(self, request, response):
 		code, msg, hdrs = response.code, response.msg, response.info()
@@ -100,6 +92,7 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
 		if not urlparts.path:
 			urlparts = list(urlparts)
 			urlparts[2] = "/"
+
 		newurl = urllib.parse.urlunparse(urlparts)
 
 		# http.client.parse_headers() decodes as ISO-8859-1.  Recover the
@@ -113,7 +106,7 @@ class HTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
 		# request, although that might interact poorly with other
 		# handlers that also use handler-specific request attributes
 		new = self.redirect_request(req, fp, code, msg, headers, newurl)
-		if new is None:
+		if new is None:    # pragma: no cover
 			return
 
 		# loop detection
