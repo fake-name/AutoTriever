@@ -78,6 +78,11 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 			self.end_headers()
 			self.wfile.write(b'{"oh" : "hai"}')
 
+		elif self.path == "/json/no-coding":
+			self.send_response(200)
+			self.end_headers()
+			self.wfile.write(b'{"oh" : "hai"}')
+
 		elif self.path == "/filename/path-only.txt":
 			self.send_response(200)
 			self.end_headers()
@@ -222,6 +227,9 @@ class TestSimpleFetch(unittest.TestCase):
 	def test_fetch_decode_json(self):
 		# text/html content should be decoded automatically.
 		page = self.wg.getJson("http://localhost:{}/json/valid".format(self.mock_server_port))
+		self.assertEqual(page, {'oh': 'hai'})
+
+		page = self.wg.getJson("http://localhost:{}/json/no-coding".format(self.mock_server_port))
 		self.assertEqual(page, {'oh': 'hai'})
 
 		with self.assertRaises(json.decoder.JSONDecodeError):

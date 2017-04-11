@@ -57,8 +57,6 @@ class load_delay_context_manager(object):
 
 
 class WebGetPjsMixin(object):
-	# creds is a list of 3-tuples that gets inserted into the password manager.
-	# it is structured [(top_level_url1, username1, password1), (top_level_url2, username2, password2)]
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
@@ -80,8 +78,37 @@ class WebGetPjsMixin(object):
 
 
 	def _syncIntoPjsWebDriver(self):
-		# TODO
+		'''
+		So selenium is completely retarded, and you can't just set cookes, you have to
+		be navigated to the domain for which you want to set cookies.
+		This is extra double-plus idiotic, as it means you can't set cookies up
+		before navigating.
+		Sigh.
+		'''
 		pass
+		# for cookie in self.getCookies():
+		# 	print("Cookie: ", cookie)
+
+		# 	cookurl = [
+		# 			"http" if cookieDict['httponly'] else "https",   # scheme   0	URL scheme specifier
+		# 			cookie.domain,                                   # netloc   1	Network location part
+		# 			"/",                                             # path     2	Hierarchical path
+		# 			"",                                              # params   3	Parameters for last path element
+		# 			"",                                              # query    4	Query component
+		# 			"",                                              # fragment 5	Fragment identifier
+		# 		]
+
+		# 	cdat = {
+		# 				'name'   : cookie.name,
+		# 				'value'  : cookie.value,
+		# 				'domain' : cookie.domain,
+		# 				'path'   :
+		# 				'expiry' :
+		# 			}
+		# 	print("CDat: ", cdat)
+
+		# 	self.pjs_driver.add_cookie(cdat)
+
 
 	def _syncOutOfPjsWebDriver(self):
 		for cookie in self.pjs_driver.get_cookies():
@@ -117,7 +144,7 @@ class WebGetPjsMixin(object):
 
 
 
-	def getHeadTitlePhantomJS(self, url, referrer):
+	def getHeadTitlePhantomJS(self, url, referrer=None):
 		self.getHeadPhantomJS(url, referrer)
 		ret = {
 			'url'   : self.pjs_driver.current_url,
@@ -125,7 +152,7 @@ class WebGetPjsMixin(object):
 		}
 		return ret
 
-	def getHeadPhantomJS(self, url, referrer):
+	def getHeadPhantomJS(self, url, referrer=None):
 		self.log.info("Getting HEAD with PhantomJS")
 
 		if not self.pjs_driver:
@@ -142,8 +169,8 @@ class WebGetPjsMixin(object):
 				except socket.timeout as e:
 					if x > tries:
 						raise e
-
-		try_get(referrer)
+		if referrer:
+			try_get(referrer)
 		try_get(url)
 
 		self._syncOutOfPjsWebDriver()
@@ -211,21 +238,14 @@ class WebGetPjsMixin(object):
 		if titleContains and titleNotContains:
 			raise ValueError("You can only pass a single conditional statement!")
 
-
 		self.log.info("Attempting to access page through cloudflare browser verification.")
 
-		dcap = dict(DesiredCapabilities.PHANTOMJS)
-		wgSettings = dict(self.browserHeaders)
+		if not self.pjs_driver:
+			self._initPjsWebDriver()
+		self._syncIntoPjsWebDriver()
 
-		# Install the headers from the WebGet class into phantomjs
-		dcap["phantomjs.page.settings.userAgent"] = wgSettings.pop('User-Agent')
-		for headerName in wgSettings:
-			dcap['phantomjs.page.customHeaders.{header}'.format(header=headerName)] = wgSettings[headerName]
 
-		driver = selenium.webdriver.PhantomJS(desired_capabilities=dcap)
-		driver.set_window_size(1024, 768)
-
-		driver.get(url)
+		self.pjs_driver.get(url)
 
 		if titleContains:
 			condition = EC.title_contains(titleContains)
@@ -236,7 +256,7 @@ class WebGetPjsMixin(object):
 
 
 		try:
-			WebDriverWait(driver, 20).until(condition)
+			WebDriverWait(self.pjs_driver, 20).until(condition)
 			success = True
 			self.log.info("Successfully accessed main page!")
 		except TimeoutException:
@@ -244,9 +264,7 @@ class WebGetPjsMixin(object):
 			success = False
 		# Add cookies to cookiejar
 
-		for cookie in driver.get_cookies():
-			self.addSeleniumCookie(cookie)
-			#print cookie[u"value"]
+		self._syncOutOfPjsWebDriver()
 
 		self.__syncCookiesFromFile()
 

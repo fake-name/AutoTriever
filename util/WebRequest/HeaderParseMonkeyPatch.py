@@ -9,10 +9,10 @@ cchardet = False
 
 try:
 	import cchardet
-except ImportError:
+except ImportError:    # pragma: no cover
 	pass
 
-def isUTF8Strict(data):
+def isUTF8Strict(data):     # pragma: no cover - Only used when cchardet is missing.
 	'''
 	Check if all characters in a bytearray are decodable
 	using UTF-8.
@@ -44,7 +44,7 @@ def decode_headers(header_list):
 				decoded_headers.append(header.decode(inferred['encoding']))
 			else:
 				decoded_headers.append(header.decode('iso-8859-1'))
-		else:
+		else:    # pragma: no cover
 			# All bytes are < 127 (e.g. ASCII)
 			if all([char & 0x80 == 0 for char in header]):
 				decoded_headers.append(header.decode("us-ascii"))
