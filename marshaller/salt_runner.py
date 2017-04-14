@@ -108,7 +108,10 @@ class VpsHerder(object):
 
 		provider = "vultr"
 
-		planid, places = self.get_512_meta()
+		try:
+			planid, places = self.get_512_meta()
+		except TypeError as e:
+			raise  marshaller_exceptions.VmCreateFailed("Failed when creating VM configuration? Exception: %s" % e)
 
 		scriptname = "bootstrap-salt-delay.sh"
 		scriptdir  = os.path.dirname(os.path.realpath(__file__))
