@@ -119,7 +119,6 @@ class VpsHerder(object):
 
 	def generate_do_conf(self):
 
-
 		try:
 			planid, place = self.get_5_dollar_do_meta()
 		except TypeError as e:
@@ -135,7 +134,6 @@ class VpsHerder(object):
 		}
 
 		return provider, kwargs
-
 
 
 
@@ -165,9 +163,9 @@ class VpsHerder(object):
 		return provider, kwargs
 
 	def generate_conf(self):
-		# TODO: Vultr goes here too
-		return random.choice([self.generate_do_conf, self.generate_vultr_conf])()
-		# return random.choice([self.generate_do_conf])()
+		gen_call = random.choice([self.generate_do_conf, self.generate_vultr_conf])
+		self.log.info("Generator call: %s", gen_call)
+		return gen_call()
 
 	def make_client(self, clientname):
 
@@ -401,5 +399,9 @@ if __name__ == '__main__':
 		herder.list_vultr_options()
 	elif "do-opts" in sys.argv:
 		herder.list_do_options()
+	elif "gen-call" in sys.argv:
+		conf = herder.generate_conf()
+		print("Generated configuration:")
+		print(conf)
 	else:
 		print("Nothing to do")
