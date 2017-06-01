@@ -126,7 +126,7 @@ class TestSimpleFetch(unittest.TestCase):
 
 	# We expect to get the same value as passed, since pjs will not resolve out
 	# the bad redirects.
-	# Note we have to restart phantomjs, because otherwise it remembers state.
+	# Note we have to restart phantomjs for these tests, because otherwise it remembers state (this is why they're separate tests).
 	def test_head_pjs_2(self):
 		url_3 = "http://localhost:{}/redirect/bad-1".format(self.mock_server_port)
 		purl_3 = self.wg.getHeadPhantomJS("http://localhost:{}/redirect/bad-1".format(self.mock_server_port))
