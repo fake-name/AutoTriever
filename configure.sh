@@ -42,6 +42,13 @@ function setup_phantomjs() {
 
 function setup_headless_chrome() {
 
+	# sudo add-apt-repository ppa:saiarcot895/chromium-dev
+	# sudo apt-get update
+	# sudo apt-get install -y chromium-codecs-ffmpeg-extra
+	# sudo apt-get download chromium-browser
+	# sudo dpkg -i --force-all chromium-browser*.deb
+
+
 	set +e
 
 
@@ -92,6 +99,7 @@ else
 	./venv/bin/python3 get-pip.py
 	rm get-pip.py
 	source venv/bin/activate
+	./venv/bin/pip install six
 	./venv/bin/pip install cython
 	./venv/bin/pip install requests
 	./venv/bin/pip install chromedriver_installer
