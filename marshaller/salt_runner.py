@@ -6,6 +6,7 @@ import random
 import logging
 import json
 import copy
+import traceback
 import uuid
 
 import settings
@@ -90,13 +91,14 @@ class VpsHerder(object):
 			'size': '512mb',
 			'vm_size': '512mb',
 			'private_networking' : False,
+			# Derive this from the interface?
 			'location' : random.choice(['ams2', 'ams3', 'blr1', 'fra1', 'lon1', 'nyc1', 'nyc2', 'nyc3', 'sfo1', 'sgp1', 'tor1']),
 		}
 
 		return provider, kwargs
 
 
-	def get_512_meta(self):
+	def get_vultr_512_meta(self):
 		self.log.info("Vultr test")
 		sizes = self.cc.list_sizes(provider='vultr')['vultr']['vultr']
 		for name, size_meta in sizes.items():
@@ -108,7 +110,7 @@ class VpsHerder(object):
 
 		provider = "vultr"
 
-		planid, places = self.get_512_meta()
+		planid, places = self.get_vultr_512_meta()
 
 		scriptname = "bootstrap-salt-delay.sh"
 		scriptdir  = os.path.dirname(os.path.realpath(__file__))
@@ -126,9 +128,96 @@ class VpsHerder(object):
 		}
 		return provider, kwargs
 
+
+	def get_linode_5_bux_meta(self):
+		sizes     = self.cc.list_sizes(provider='linode')['linode']['linode']
+		locations = self.cc.list_locations(provider='linode')['linode']['linode']
+		sizel = []
+		locl = []
+		for name, size_meta in sizes.items():
+			if size_meta[u'PRICE'] <= 5:
+				sizel.append(name)
+
+
+		for name, loc_meta in locations.items():
+			locl.append(name)
+
+		return sizel, locl
+
+	def generate_linode_conf(self):
+
+		provider = "linode"
+
+		plans, places = self.get_linode_5_bux_meta()
+
+		scriptname = "bootstrap-salt-delay.sh"
+		scriptdir  = os.path.dirname(os.path.realpath(__file__))
+		fqscript = os.path.join(scriptdir, scriptname)
+
+		kwargs = {
+			# 'image'              : 'Ubuntu 16.04 x64',
+			# 'private_networking' : False,
+			# 'size'               : planid,
+			# 'location'           : random.choice(places),
+
+			'size'     : random.choice(plans),
+			'image'    : u'Ubuntu 16.04 LTS',
+			'location' : random.choice(places),
+
+			'script'             : fqscript,
+			'script_args'        : "-D",
+
+
+		}
+		return provider, kwargs
+
+
+	def generate_scaleway_conf(self):
+
+		provider = "scaleway"
+
+		scriptname = "bootstrap-salt-delay.sh"
+		scriptdir  = os.path.dirname(os.path.realpath(__file__))
+		fqscript = os.path.join(scriptdir, scriptname)
+
+		# I dunno if this is correct.
+		opt_tups = [
+			('C1',        'Paris'),
+			('VC1S',      'Paris'),
+			('ARM64-2GB', 'Paris'),
+			('VC1S',      'Amsterdam'),
+			('ARM64-2GB', 'Amsterdam'),
+		]
+
+		size, location = random.choice(opt_tups)
+
+		kwargs = {
+			# 'image'              : 'Ubuntu 16.04 x64',
+			# 'private_networking' : False,
+			# 'size'               : planid,
+			# 'location'           : random.choice(places),
+
+			'size'     : size,
+			'image'    : u'Ubuntu 16.04 LTS',
+			'location' : location,
+
+			'script'             : fqscript,
+			'script_args'        : "-D",
+
+
+		}
+		return provider, kwargs
+
+
+
 	def generate_conf(self):
 		# TODO: Vultr goes here too
-		return random.choice([self.generate_do_conf, self.generate_vultr_conf])()
+		return random.choice([
+				self.generate_do_conf,
+				self.generate_vultr_conf,
+				# self.generate_linode_conf,
+				# self.generate_scaleway_conf,
+			])()
 		# return random.choice([self.generate_do_conf])()
 
 	def make_client(self, clientname):
@@ -228,9 +317,9 @@ class VpsHerder(object):
 				pass
 			loops += 1
 
-		# images = cc.list_images()
-		# locs   = cc.list_locations()
-		# sizes  = cc.list_sizes()
+		# images = cc.list_images(provider='scaleway')
+		# locs   = cc.list_locations(provider='scaleway')
+		# sizes  = cc.list_sizes(provider='scaleway')
 		# pprint.pprint(images)
 		# pprint.pprint(locs)
 		# pprint.pprint(sizes)
@@ -263,6 +352,16 @@ class VpsHerder(object):
 		if 'vultr' in nodelist:
 			if 'vultr' in nodelist['vultr']:
 				for key, nodedict in nodelist['vultr']['vultr'].items():
+					if key:
+						nodes.append(key.encode("ascii"))
+		if 'linode' in nodelist:
+			if 'linode' in nodelist['linode']:
+				for key, nodedict in nodelist['linode']['linode'].items():
+					if key:
+						nodes.append(key.encode("ascii"))
+		if 'scaleway' in nodelist:
+			if 'scaleway' in nodelist['scaleway']:
+				for key, nodedict in nodelist['scaleway']['scaleway'].items():
 					if key:
 						nodes.append(key.encode("ascii"))
 		self.log.info("Active nodes: %s", nodes)
@@ -303,12 +402,11 @@ def vtest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	# herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0)
 	herder.log.info("Instance created!")
 
-
 def dtest():
-	clientname = "test-1"
+	clientname = "test-2"
 	provider, kwargs = herder.generate_do_conf()
 	herder.log.info("Creating instance...")
 	herder.log.info("	Client name: '%s'", clientname)
@@ -317,7 +415,33 @@ def dtest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	# herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0)
+	herder.log.info("Instance created!")
+
+def ltest():
+	clientname = "test-3"
+	provider, kwargs = herder.generate_linode_conf()
+	herder.log.info("Creating instance...")
+	herder.log.info("	Client name: '%s'", clientname)
+	herder.log.info("	using provider: '%s'", provider)
+	herder.log.info("	kwargs: '%s'", kwargs)
+	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
+	print("Create response:", ret)
+
+	herder.configure_client(clientname, 0)
+	herder.log.info("Instance created!")
+
+def stest():
+	clientname = "test-4"
+	provider, kwargs = herder.generate_scaleway_conf()
+	herder.log.info("Creating instance...")
+	herder.log.info("	Client name: '%s'", clientname)
+	herder.log.info("	using provider: '%s'", provider)
+	herder.log.info("	kwargs: '%s'", kwargs)
+	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
+	print("Create response:", ret)
+
+	herder.configure_client(clientname, 0)
 	herder.log.info("Instance created!")
 
 
@@ -331,13 +455,24 @@ if __name__ == '__main__':
 
 	if "vtest" in sys.argv:
 		vtest()
-
+	elif "ltest" in sys.argv:
+		ltest()
+	elif "dtest" in sys.argv:
+		dtest()
+	elif "stest" in sys.argv:
+		stest()
 	elif "destroy-all" in sys.argv:
 		while herder.list_nodes():
 			for node in herder.list_nodes():
 				herder.destroy_client(node)
 	elif "destroy" in sys.argv:
-		herder.destroy_client("test-1")
+		bad = ["test-1", "test-2", "test-3"]
+		for badname in bad:
+			try:
+				herder.destroy_client(badname)
+			except Exception:
+				traceback.print_exc()
+				print("Continuing")
 	elif "brute-vtest" in sys.argv:
 		while 1:
 			vtest()
