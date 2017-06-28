@@ -138,13 +138,13 @@ class VpsHerder(object):
 
 	def make_client(self, clientname):
 
-		provider, kwargs = self.generate_conf()
+		driver, kwargs = self.generate_conf()
 		self.log.info("Creating instance...")
 		self.log.info("	Client name: '%s'", clientname)
-		self.log.info("	using provider: '%s'", provider)
+		self.log.info("	using driver: '%s'", driver)
 		self.log.info("	kwargs: '%s'", kwargs)
 		try:
-			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
+			ret = self.cc.create(names=[clientname], driver=driver, **kwargs)
 			self.log.info("Instance created!")
 		except Exception as e:
 			traceback.print_exc()
