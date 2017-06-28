@@ -301,6 +301,7 @@ class VpsHerder(object):
 			['cmd.run', ["cat ~/.ssh/authorized_keys", ],      {}],
 
 			['cmd.run', [dirmake_oneliner, ],      {}],
+			['cmd.run', ["apt-get update", ],      {}],
 			['cmd.run', ["apt-get install -y build-essential git screen", ],      {}],
 			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}],
 			['cmd.run', ["ls /scraper", ], {}],
