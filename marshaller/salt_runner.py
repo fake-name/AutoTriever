@@ -101,15 +101,19 @@ class VpsHerder(object):
 		self.log.info("Vultr test")
 		sizes = self.cc.list_sizes(provider='vultr')['vultr']['vultr']
 		for name, size_meta in sizes.items():
-			if int(size_meta['ram']) == 768:
+			if int(size_meta['price_per_month']) <= 5:
 				return size_meta['VPSPLANID'], size_meta['available_locations']
 
+		return None, None
 
 	def generate_vultr_conf(self):
 
 		provider = "vultr"
 
 		planid, places = self.get_512_meta()
+
+		if not planid:
+			raise marshaller_exceptions.VmCreateFailed("No vultr plan available?")
 
 		scriptname = "bootstrap-salt-delay.sh"
 		scriptdir  = os.path.dirname(os.path.realpath(__file__))
