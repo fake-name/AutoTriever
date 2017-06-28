@@ -101,7 +101,7 @@ class VpsHerder(object):
 		self.log.info("Vultr test")
 		sizes = self.cc.list_sizes(provider='vultr')['vultr']['vultr']
 		for name, size_meta in sizes.items():
-			if int(size_meta['price_per_month']) <= 5:
+			if float(size_meta['price_per_month']) <= 5.0:
 				return size_meta['VPSPLANID'], size_meta['available_locations']
 
 		return None, None
@@ -147,7 +147,7 @@ class VpsHerder(object):
 			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
 			self.log.info("Instance created!")
 		except Exception as e:
-			traceback.format_exc()
+			traceback.print_exc()
 			raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
 		# instance = cc.create(names=['test-1'], provider=provider, **kwargs)
 		# print(ret)
