@@ -6,6 +6,7 @@ import random
 import logging
 import json
 import copy
+import traceback
 import uuid
 import ast
 
@@ -104,19 +105,6 @@ class VpsHerder(object):
 		self.log.info("Found %s potential VPS location/configurations", len(items))
 		return random.choice(items)
 
-	def get_5_dollar_vultr_meta(self):
-		self.log.info("Generating Vultr Configuration")
-		sizes = self.cc.list_sizes(provider='vultr')['vultr']['vultr']
-		items = []
-
-		for name, size_meta in sizes.items():
-			if float(size_meta['price_per_month']) <= MAX_MONTHLY_PRICE_DOLLARS:
-				print("Item:", name, size_meta)
-				for loc in size_meta['available_locations']:
-					items.append((size_meta['VPSPLANID'], loc))
-		self.log.info("Found %s potential VPS location/configurations", len(items))
-		return random.choice(items)
-
 	def generate_do_conf(self):
 
 		try:
@@ -135,7 +123,18 @@ class VpsHerder(object):
 
 		return provider, kwargs
 
+	def get_5_dollar_vultr_meta(self):
+		self.log.info("Generating Vultr Configuration")
+		sizes = self.cc.list_sizes(provider='vultr')['vultr']['vultr']
+		items = []
 
+		for name, size_meta in sizes.items():
+			if float(size_meta['price_per_month']) <= MAX_MONTHLY_PRICE_DOLLARS:
+				print("Item:", name, size_meta)
+				for loc in size_meta['available_locations']:
+					items.append((size_meta['VPSPLANID'], loc))
+		self.log.info("Found %s potential VPS location/configurations", len(items))
+		return random.choice(items)
 
 	def generate_vultr_conf(self):
 
@@ -155,6 +154,49 @@ class VpsHerder(object):
 			'private_networking' : False,
 			'size'               : planid,
 			'location'           : place,
+
+			'script'             : fqscript,
+			'script_args'        : "-D",
+		}
+
+		return provider, kwargs
+
+
+	def get_linode_5_bux_meta(self):
+		sizes     = self.cc.list_sizes(provider='linode')['linode']['linode']
+		locations = self.cc.list_locations(provider='linode')['linode']['linode']
+		sizel = []
+		locl = []
+		for name, size_meta in sizes.items():
+			if size_meta[u'PRICE'] <= 5:
+				sizel.append(name)
+
+
+		for name, loc_meta in locations.items():
+			locl.append(name)
+
+		return sizel, locl
+
+	def generate_linode_conf(self):
+
+		provider = "linode"
+
+		plans, places = self.get_linode_5_bux_meta()
+
+		scriptname = "bootstrap-salt-delay.sh"
+		scriptdir  = os.path.dirname(os.path.realpath(__file__))
+		fqscript = os.path.join(scriptdir, scriptname)
+
+		kwargs = {
+			# 'image'              : 'Ubuntu 16.04 x64',
+			# 'private_networking' : False,
+			# 'size'               : planid,
+			# 'location'           : random.choice(places),
+
+			'size'     : random.choice(plans),
+			'image'    : u'Ubuntu 16.04 LTS',
+			'location' : random.choice(places),
+
 			'script'             : fqscript,
 			'script_args'        : "-D",
 
@@ -162,7 +204,54 @@ class VpsHerder(object):
 		}
 		return provider, kwargs
 
+
+	def generate_scaleway_conf(self):
+
+		provider = "scaleway"
+
+		scriptname = "bootstrap-salt-delay.sh"
+		scriptdir  = os.path.dirname(os.path.realpath(__file__))
+		fqscript = os.path.join(scriptdir, scriptname)
+
+		# I dunno if this is correct.
+		opt_tups = [
+			('C1',        'Paris'),
+			('VC1S',      'Paris'),
+			('ARM64-2GB', 'Paris'),
+			('VC1S',      'Amsterdam'),
+			('ARM64-2GB', 'Amsterdam'),
+		]
+
+		size, location = random.choice(opt_tups)
+
+		kwargs = {
+			# 'image'              : 'Ubuntu 16.04 x64',
+			# 'private_networking' : False,
+			# 'size'               : planid,
+			# 'location'           : random.choice(places),
+
+			'size'     : size,
+			'image'    : u'Ubuntu Xenial (16.04 latest)',
+			'location' : location,
+
+			'script'             : fqscript,
+			'script_args'        : "-D",
+
+
+		}
+		return provider, kwargs
+
+
+
 	def generate_conf(self):
+		# TODO: Vultr goes here too
+		return random.choice([
+				self.generate_do_conf,
+				self.generate_vultr_conf,
+				# self.generate_linode_conf,
+				# self.generate_scaleway_conf,
+			])()
+		# return random.choice([self.generate_do_conf])()
 		gen_call = random.choice([self.generate_do_conf, self.generate_vultr_conf])
 		self.log.info("Generator call: %s", gen_call)
 		return gen_call()
@@ -188,7 +277,31 @@ class VpsHerder(object):
 		self.log.info("Configuring client")
 
 		commands = [
+			# splat in public keys.
+			['cmd.run', ['mkdir -p ~/.ssh/', ],      {}],
+			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
+				+ 'LKb/iJkABH+hxq8ZL7kXiKuGgeHsI60I2wECMxg17Qs918ND626AkXqlMIUW1SchcAi3rYRMVY0OaGSOutIcjR+mJ6liogTv1DLRD0eRbuollz7XsYz4ILb'
+				+ 'i9kEsqwaly92vK6vlIVlAWtDoNf95c6jk/lh0M5p1LV0lwrEtfCreuv1rrOldUdwgU4wCFgRI+p6FXs69+OsNWxZSOSr28eE9sbsHxIxthcRHMtsnDxzeJ1'
+				+ 'PVhvC4JclFEHEZSlYaemI6zOezVuBuipwSv Neko@ODO | tee -a ~/.ssh/authorized_keys', ],      {}],
+			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCi7/9jOHVJj0ODnPqinqFbOaErT2pNaeq0pYKapcG2DHGrvVlX3ZUO8z7uY1QZX0OiC3y'
+				+ '7rv4c7NEl7/OtmRDfNPd5YgpAuXelbwu5Pj1BjQq1pn3CeP4zhw4gcEPx2UAc5Rw1jzH8vE7NMf2iReBiHr2SfSLh8T/jt5bEAVDCnhMS/8YvoPLLftESiL'
+				+ 'oi+TU6Y9/zw4zac3AyJJ02tHpHLSpWWPPLi31ASEu/p+lWynUd+dSTMbwmc3hwBQkZTrK6P1I3431eQqYVNOyWJe+GeCXLaw5CvO8qlE7Nj3Z+dics3Bq0F'
+				+ '7ugDC+27qWk7m5soPfbZ8qlQz4CWFv01GHWdWwdHh9SR2bplNZ6MDuED91mu7gxyx2Wyo2AIiKsLcpGOIdLnIvrSA9VGpdgKbflbnqtfyIm6gloPpITnAJX'
+				+ 'imWSvIxF76PVFjdZa86jAx7JZfBfirvtRg6/qXbDUDAErF3OllqxBvuGOzHptDDgha/29tabzxUIxhpBrG0TiRTMDmmqgM+b9kANgzEe4Yef2w/IaTC96D/'
+				+ 'oLxRHmRBbof8GIMlNZjFlVw8XIyzYxnvALwCE7gRubba13f6qU0lT56be9HKYrSvHVy9/855lKlLwTCePaHK0EPBGuMWZOBexGKyxTFXmA+oqkBg5zFnZLy'
+				+ 'xcsaVZQtZRnDU4Cu4jyQ== rwpscrape@fake-url.com | tee -a ~/.ssh/authorized_keys', ],      {}],
+			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDMv9sMkEOjqsFu8wPiG2jUP62qKEpxmvQ7IiYaLKogW/LQlLhKP7KCIE2MVUmctwdvyEF'
+				+ 'rXGOXDCVgFMFLEZiCi2+B7itMcFBlxJsZYQ9Y5FzXg/xK/Xld9rZu2ST+4z9xrX03n0rrsvO3HgpbNoIWF1LbXrc8L80CUCf13GWkZErhzc4mcd44McLVxX'
+				+ 'q+hcikMguVdOcejpLJTQkq2LRLEx2zhrz+CfNe9AQ0I5AOsh8Os3rrILFs0t290hejMX82nwJUCIcODTBJqR0o7qs/Tt8zLy3YKnAN3eGqfO7tw/d75AD/n'
+				+ 'ENup5kJscpVb/6v3xfWnjgAjalj/hw2bwoc3SE+Y3u2wmyuhrJcSy6rw/IltFc+BaZamZMBW/si8tW+xo9rb903GXANJbjVOABECJSp2i03xtPfYfk9KqZb'
+				+ '/vUkpYTmwRQGvDK9u1viIF8nIomE4omN6buFktvVjH1IG6bOPeMi4Y0zBNds7Q1W28Um1ygaBU+NCalep8UDEWInNkfYe1E/hj5A5EaMPaRjnPhXJqUzglO'
+				+ 'l1O2Tco2FYhfvCiyZvAHv25LLrGzePidR59SzTP7/fLxK7FgmH0m79AOKvjuZaNjb7njmgDhyQggOLU6bJwiiJ7MqldPlic2qCKyQVavLv2nXGIGVXEovtM'
+				+ '9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a ~/.ssh/authorized_keys', ],      {}],
+			['cmd.run', ["chmod 0600 ~/.ssh/authorized_keys", ],      {}],
+			['cmd.run', ["cat ~/.ssh/authorized_keys", ],      {}],
+
 			['cmd.run', [dirmake_oneliner, ],      {}],
+			['cmd.run', ["apt-get update", ],      {}],
 			['cmd.run', ["apt-get install -y build-essential git screen", ],      {}],
 			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}],
 			['cmd.run', ["ls /scraper", ], {}],
@@ -264,9 +377,9 @@ class VpsHerder(object):
 				pass
 			loops += 1
 
-		# images = cc.list_images()
-		# locs   = cc.list_locations()
-		# sizes  = cc.list_sizes()
+		# images = cc.list_images(provider='scaleway')
+		# locs   = cc.list_locations(provider='scaleway')
+		# sizes  = cc.list_sizes(provider='scaleway')
 		# pprint.pprint(images)
 		# pprint.pprint(locs)
 		# pprint.pprint(sizes)
@@ -299,6 +412,16 @@ class VpsHerder(object):
 		if 'vultr' in nodelist:
 			if 'vultr' in nodelist['vultr']:
 				for key, nodedict in nodelist['vultr']['vultr'].items():
+					if key:
+						nodes.append(key.encode("ascii"))
+		if 'linode' in nodelist:
+			if 'linode' in nodelist['linode']:
+				for key, nodedict in nodelist['linode']['linode'].items():
+					if key:
+						nodes.append(key.encode("ascii"))
+		if 'scaleway' in nodelist:
+			if 'scaleway' in nodelist['scaleway']:
+				for key, nodedict in nodelist['scaleway']['scaleway'].items():
 					if key:
 						nodes.append(key.encode("ascii"))
 		self.log.info("Active nodes: %s", nodes)
@@ -341,12 +464,11 @@ def vtest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	# herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0)
 	herder.log.info("Instance created!")
 
-
 def dtest():
-	clientname = "test-1"
+	clientname = "test-2"
 	provider, kwargs = herder.generate_do_conf()
 	herder.log.info("Creating instance...")
 	herder.log.info("	Client name: '%s'", clientname)
@@ -355,7 +477,33 @@ def dtest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	# herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0)
+	herder.log.info("Instance created!")
+
+def ltest():
+	clientname = "test-3"
+	provider, kwargs = herder.generate_linode_conf()
+	herder.log.info("Creating instance...")
+	herder.log.info("	Client name: '%s'", clientname)
+	herder.log.info("	using provider: '%s'", provider)
+	herder.log.info("	kwargs: '%s'", kwargs)
+	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
+	print("Create response:", ret)
+
+	herder.configure_client(clientname, 0)
+	herder.log.info("Instance created!")
+
+def stest():
+	clientname = "test-4"
+	provider, kwargs = herder.generate_scaleway_conf()
+	herder.log.info("Creating instance...")
+	herder.log.info("	Client name: '%s'", clientname)
+	herder.log.info("	using provider: '%s'", provider)
+	herder.log.info("	kwargs: '%s'", kwargs)
+	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
+	print("Create response:", ret)
+
+	herder.configure_client(clientname, 0)
 	herder.log.info("Instance created!")
 
 
@@ -367,13 +515,24 @@ if __name__ == '__main__':
 
 	if "vtest" in sys.argv:
 		vtest()
-
+	elif "ltest" in sys.argv:
+		ltest()
+	elif "dtest" in sys.argv:
+		dtest()
+	elif "stest" in sys.argv:
+		stest()
 	elif "destroy-all" in sys.argv:
 		while herder.list_nodes():
 			for node in herder.list_nodes():
 				herder.destroy_client(node)
 	elif "destroy" in sys.argv:
-		herder.destroy_client("test-1")
+		bad = ["test-1", "test-2", "test-3", "test-4"]
+		for badname in bad:
+			try:
+				herder.destroy_client(badname)
+			except Exception:
+				traceback.print_exc()
+				print("Continuing")
 	elif "brute-vtest" in sys.argv:
 		while 1:
 			vtest()
