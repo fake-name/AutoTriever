@@ -8,6 +8,7 @@ import json
 import copy
 import traceback
 import uuid
+import ast
 
 import settings
 
@@ -20,6 +21,8 @@ import salt.exceptions
 import marshaller_exceptions
 import logSetup
 import os.path
+
+MAX_MONTHLY_PRICE_DOLLARS = 5.0
 
 SETTINGS_BASE = {
 	"note1" : "Connection settings for the RabbitMQ server.",
@@ -83,34 +86,64 @@ class VpsHerder(object):
 
 
 
+
+	def get_5_dollar_do_meta(self):
+		self.log.info("Generating DO Configuration")
+
+		sizes = self.cc.list_sizes(provider='do')['do']['digital_ocean']
+		items = []
+
+		for name, size_meta in sizes.items():
+			if float(size_meta['price_monthly']) <= MAX_MONTHLY_PRICE_DOLLARS:
+
+				# Why the fuck is this a string?
+				size_meta['regions'] = ast.literal_eval(size_meta['regions'])
+
+				for loc in size_meta['regions']:
+					items.append((name, loc))
+
+		self.log.info("Found %s potential VPS location/configurations", len(items))
+		return random.choice(items)
+
 	def generate_do_conf(self):
+
+		try:
+			planid, place = self.get_5_dollar_do_meta()
+		except TypeError as e:
+			raise  marshaller_exceptions.VmCreateFailed("Failed when creating VM configuration? Exception: %s" % e)
 
 		provider = "do"
 		kwargs = {
 			'image': 'ubuntu-14-04-x64',
-			'size': '512mb',
-			'vm_size': '512mb',
+			'size': planid,
+			# 'vm_size': planid,
 			'private_networking' : False,
-			# Derive this from the interface?
-			'location' : random.choice(['ams2', 'ams3', 'blr1', 'fra1', 'lon1', 'nyc1', 'nyc2', 'nyc3', 'sfo1', 'sgp1', 'tor1']),
+			'location' : place,
 		}
 
 		return provider, kwargs
 
-
-	def get_vultr_512_meta(self):
-		self.log.info("Vultr test")
+	def get_5_dollar_vultr_meta(self):
+		self.log.info("Generating Vultr Configuration")
 		sizes = self.cc.list_sizes(provider='vultr')['vultr']['vultr']
-		for name, size_meta in sizes.items():
-			if int(size_meta['ram']) == 768:
-				return size_meta['VPSPLANID'], size_meta['available_locations']
+		items = []
 
+		for name, size_meta in sizes.items():
+			if float(size_meta['price_per_month']) <= MAX_MONTHLY_PRICE_DOLLARS:
+				print("Item:", name, size_meta)
+				for loc in size_meta['available_locations']:
+					items.append((size_meta['VPSPLANID'], loc))
+		self.log.info("Found %s potential VPS location/configurations", len(items))
+		return random.choice(items)
 
 	def generate_vultr_conf(self):
 
 		provider = "vultr"
 
-		planid, places = self.get_vultr_512_meta()
+		try:
+			planid, place = self.get_5_dollar_vultr_meta()
+		except TypeError as e:
+			raise  marshaller_exceptions.VmCreateFailed("Failed when creating VM configuration? Exception: %s" % e)
 
 		scriptname = "bootstrap-salt-delay.sh"
 		scriptdir  = os.path.dirname(os.path.realpath(__file__))
@@ -120,7 +153,7 @@ class VpsHerder(object):
 			'image'              : 'Ubuntu 16.04 x64',
 			'private_networking' : False,
 			'size'               : planid,
-			'location'           : random.choice(places),
+			'location'           : place,
 			'script'             : fqscript,
 			'script_args'        : "-D",
 
@@ -219,6 +252,9 @@ class VpsHerder(object):
 				# self.generate_scaleway_conf,
 			])()
 		# return random.choice([self.generate_do_conf])()
+		gen_call = random.choice([self.generate_do_conf, self.generate_vultr_conf])
+		self.log.info("Generator call: %s", gen_call)
+		return gen_call()
 
 	def make_client(self, clientname):
 
@@ -377,8 +413,10 @@ class VpsHerder(object):
 		sizes = self.cc.list_sizes(provider='vultr')['vultr']['vultr']
 		pprint.pprint(images)
 		pprint.pprint(sizes)
-		for name, size in sizes.items():
-			print(int(size['ram']) == 768)
+
+		for name, size_meta in sizes.items():
+			if float(size_meta['price_per_month']) <= 5.0:
+				print("Item:", name, size_meta)
 
 	def list_do_options(self):
 		self.log.info("DO test")
@@ -450,8 +488,6 @@ if __name__ == '__main__':
 	logSetup.initLogging()
 	herder = VpsHerder()
 
-	# herder.list_vultr_options()
-	# herder.list_do_options()
 
 	if "vtest" in sys.argv:
 		vtest()
@@ -481,11 +517,26 @@ if __name__ == '__main__':
 		while 1:
 			dtest()
 			herder.destroy_client("test-1")
+	elif "vtest" in sys.argv:
+		vtest()
+		herder.destroy_client("test-1")
+	elif "dtest" in sys.argv:
+		dtest()
+		herder.destroy_client("test-1")
 	elif "list" in sys.argv:
 		herder.list_nodes()
 	elif "configure" in sys.argv:
 		herder.configure_client("test-1", 0)
-	else:
+	elif 'test-1' in sys.argv:
 		herder.make_client("test-1")
 		herder.configure_client("test-1", 0)
-
+	elif "vultr-opts" in sys.argv:
+		herder.list_vultr_options()
+	elif "do-opts" in sys.argv:
+		herder.list_do_options()
+	elif "gen-call" in sys.argv:
+		conf = herder.generate_conf()
+		print("Generated configuration:")
+		print(conf)
+	else:
+		print("Nothing to do")

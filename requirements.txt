@@ -1,4 +1,5 @@
 git+https://github.com/jkehler/unshortenit.git
+git+https://github.com/jkehler/unshortenit.git
 
 ## apscheduler
 ## rabbitpy
@@ -21,7 +22,6 @@ git+https://github.com/jkehler/unshortenit.git
 APScheduler==3.3.0
 beautifulsoup4==4.5.1
 cchardet==1.1.1
-chromedriver-installer==0.0.4
 colorama==0.3.7
 Cython==0.25.2
 Faker==0.7.5
