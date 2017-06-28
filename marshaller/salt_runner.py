@@ -145,6 +145,7 @@ class VpsHerder(object):
 		self.log.info("	kwargs: '%s'", kwargs)
 		try:
 			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
+			self.log.info("Response: %s", ret)
 			self.log.info("Instance created!")
 		except Exception as e:
 			traceback.format_exc()
