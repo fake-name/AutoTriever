@@ -212,6 +212,10 @@ class VpsHerder(object):
 				self.log.info("Received empty response")
 
 
+		print("Response:")
+		print(resp)
+
+
 		if not resp[clientname].strip().endswith('Setup OK! System is configured for launch'):
 			raise VmInitError("Setup command did not return success!")
 
