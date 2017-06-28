@@ -297,6 +297,8 @@ class VpsHerder(object):
 				+ '/vUkpYTmwRQGvDK9u1viIF8nIomE4omN6buFktvVjH1IG6bOPeMi4Y0zBNds7Q1W28Um1ygaBU+NCalep8UDEWInNkfYe1E/hj5A5EaMPaRjnPhXJqUzglO'
 				+ 'l1O2Tco2FYhfvCiyZvAHv25LLrGzePidR59SzTP7/fLxK7FgmH0m79AOKvjuZaNjb7njmgDhyQggOLU6bJwiiJ7MqldPlic2qCKyQVavLv2nXGIGVXEovtM'
 				+ '9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a ~/.ssh/authorized_keys', ],      {}],
+			['cmd.run', ["chmod 0600 ~/.ssh/authorized_keys", ],      {}],
+			['cmd.run', ["cat ~/.ssh/authorized_keys", ],      {}],
 
 			['cmd.run', [dirmake_oneliner, ],      {}],
 			['cmd.run', ["apt-get install -y build-essential git screen", ],      {}],
