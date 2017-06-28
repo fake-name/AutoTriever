@@ -310,6 +310,7 @@ class VpsHerder(object):
 			# Make swap so
 			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=1024", ], {}],
 			['cmd.run', ["mkswap /swapfile", ], {}],
+			['cmd.run', ["chmod 0600 /swapfile", ], {}],
 			['cmd.run', ["swapon /swapfile", ], {}],
 			['cmd.run', ["dpkg-reconfigure locales", ], {}],
 			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ], {}],
