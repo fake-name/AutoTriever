@@ -7,6 +7,7 @@ import logging
 import json
 import copy
 import uuid
+import traceback
 
 import settings
 
@@ -142,6 +143,7 @@ class VpsHerder(object):
 			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
 			self.log.info("Instance created!")
 		except Exception as e:
+			traceback.format_exc()
 			raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
 		# instance = cc.create(names=['test-1'], provider=provider, **kwargs)
 		# print(ret)
