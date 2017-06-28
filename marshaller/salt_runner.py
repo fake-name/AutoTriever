@@ -231,7 +231,7 @@ class VpsHerder(object):
 			# 'location'           : random.choice(places),
 
 			'size'     : size,
-			'image'    : u'Ubuntu 16.04 LTS',
+			'image'    : u'Ubuntu Xenial (16.04 latest)',
 			'location' : location,
 
 			'script'             : fqscript,
@@ -248,7 +248,7 @@ class VpsHerder(object):
 		return random.choice([
 				self.generate_do_conf,
 				self.generate_vultr_conf,
-				# self.generate_linode_conf,
+				self.generate_linode_conf,
 				# self.generate_scaleway_conf,
 			])()
 		# return random.choice([self.generate_do_conf])()
