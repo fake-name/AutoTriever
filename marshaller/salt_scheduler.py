@@ -6,6 +6,7 @@ import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 import sys
 import settings
+import traceback
 
 import logSetup
 import marshaller_exceptions
@@ -49,6 +50,7 @@ class VpsScheduler(object):
 			self.log.info("VM %s created.", vm_name)
 		except marshaller_exceptions.VmCreateFailed:
 			self.log.info("Failure instantiating VM %s.", vm_name)
+			traceback.print_exc()
 			self.destroy_vm(vm_name)
 
 	def destroy_vm(self, vm_name):
