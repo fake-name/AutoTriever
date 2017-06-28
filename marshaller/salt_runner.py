@@ -344,6 +344,9 @@ if __name__ == '__main__':
 	if "vtest" in sys.argv:
 		vtest()
 
+	elif "dtest" in sys.argv:
+		dtest()
+
 	elif "destroy-all" in sys.argv:
 		while herder.list_nodes():
 			for node in herder.list_nodes():
