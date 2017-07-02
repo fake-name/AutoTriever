@@ -23,6 +23,15 @@ import marshaller_exceptions
 import logSetup
 import os.path
 
+import random
+import string
+
+def gen_random_string(length):
+	if not hasattr(gen_random_string, "rng"):
+		gen_random_string.rng = random.SystemRandom() # Create a static variable
+	return ''.join([ gen_random_string.rng.choice(string.ascii_letters + string.digits) for _ in xrange(length) ])
+
+
 MAX_MONTHLY_PRICE_DOLLARS = 5.0
 
 SETTINGS_BASE = {
@@ -241,8 +250,12 @@ class VpsHerder(object):
 			'script'             : fqscript,
 			'script_args'        : "-D",
 
-
+			'password'           : gen_random_string(32),
 		}
+
+		self.log.info("Scaleway VM will use password: '%s'", kwargs['password'])
+
+
 		return provider, kwargs
 
 
@@ -306,6 +319,8 @@ class VpsHerder(object):
 				+ '9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a ~/.ssh/authorized_keys', ],      {}],
 			['cmd.run', ["chmod 0600 ~/.ssh/authorized_keys", ],      {}],
 			['cmd.run', ["cat ~/.ssh/authorized_keys", ],      {}],
+			# So something is missing some of the keys, somehow
+			['cmd.run', ["ssh-add -l", ],      {}],
 
 			['cmd.run', [dirmake_oneliner, ],      {}],
 			['cmd.run', ["apt-get update", ],      {}],
@@ -401,19 +416,19 @@ class VpsHerder(object):
 		'''
 		Example response:
 		{
-		    'do': {
-		        'digital_ocean': {
-		            u 'test-1': {
-		                'private_ips': [],
-		                'image': u '14.04.4 x64',
-		                'state': 'active',
-		                'name': u 'test-1',
-		                'public_ips': [u 'xxx.xxx.xxx.xxx'],
-		                'id': 18105705,
-		                'size': u '512mb'
-		            }
-		        }
-		    }
+			'do': {
+				'digital_ocean': {
+					u 'test-1': {
+						'private_ips': [],
+						'image': u '14.04.4 x64',
+						'state': 'active',
+						'name': u 'test-1',
+						'public_ips': [u 'xxx.xxx.xxx.xxx'],
+						'id': 18105705,
+						'size': u '512mb'
+					}
+				}
+			}
 		}
 		'''
 		nodes = []
