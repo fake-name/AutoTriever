@@ -386,7 +386,8 @@ class VpsHerder(object):
 				return
 			except salt.exceptions.SaltCloudSystemExit:
 				self.log.error("Failed to destroy: %s", clientname)
-				pass
+				for line in traceback.format_exc().split("\n"):
+					self.log.error("%s", line)
 			loops += 1
 
 		# images = cc.list_images(provider='scaleway')
