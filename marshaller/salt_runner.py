@@ -250,7 +250,7 @@ class VpsHerder(object):
 			'script'             : fqscript,
 			'script_args'        : "-D",
 
-			'password'           : gen_random_string(32),
+			# 'password'           : gen_random_string(32),
 		}
 
 		self.log.info("Scaleway VM will use password: '%s'", kwargs['password'])
