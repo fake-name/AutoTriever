@@ -320,6 +320,8 @@ class VpsHerder(object):
 			['cmd.run', ["chmod 0600 ~/.ssh/authorized_keys", ],      {}],
 			['cmd.run', ["cat ~/.ssh/authorized_keys", ],      {}],
 			# So something is missing some of the keys, somehow
+			['cmd.run', ["eval ssh-agent $SHELL", ],      {}],
+			['cmd.run', ["ssh-add ~/.ssh/authorized_keys", ],      {}],
 			['cmd.run', ["ssh-add -l", ],      {}],
 
 			['cmd.run', [dirmake_oneliner, ],      {}],
