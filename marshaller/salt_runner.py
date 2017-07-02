@@ -61,6 +61,7 @@ SETTINGS_BASE = {
 class VmInitError(RuntimeError):
 	pass
 
+dirmake_ssh_oneliner = 'python -c \'import os.path, sys, os; os.makedirs("~/.ssh/") if not os.path.exists("~/.ssh/") else None; print("Dir exists and is dir: ", os.path.isdir("~/.ssh/"));sys.exit(1 if os.path.isdir("~/.ssh/") else 0);\''
 dirmake_oneliner = 'python -c \'import os.path, sys, os; os.makedirs("/scraper") if not os.path.exists("/scraper") else None; print("Dir exists and is dir: ", os.path.isdir("/scraper"));sys.exit(1 if os.path.isdir("/scraper") else 0);\''
 
 class VpsHerder(object):
@@ -213,8 +214,11 @@ class VpsHerder(object):
 			'script'             : fqscript,
 			'script_args'        : "-D",
 
-
+			'password'           : gen_random_string(32),
 		}
+
+		self.log.info("Linode VM will use password: '%s'", kwargs['password'])
+
 		return provider, kwargs
 
 
@@ -298,7 +302,9 @@ class VpsHerder(object):
 
 		commands = [
 			# splat in public keys.
-			['cmd.run', ['mkdir -p ~/.ssh/', ],      {}],
+			['cmd.run', ['mkdir ~/.ssh/', ],      {}],
+			['cmd.run', [dirmake_ssh_oneliner, ],      {}],
+			['cmd.run', ['ls -la ~/', ],      {}],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
 				+ 'LKb/iJkABH+hxq8ZL7kXiKuGgeHsI60I2wECMxg17Qs918ND626AkXqlMIUW1SchcAi3rYRMVY0OaGSOutIcjR+mJ6liogTv1DLRD0eRbuollz7XsYz4ILb'
 				+ 'i9kEsqwaly92vK6vlIVlAWtDoNf95c6jk/lh0M5p1LV0lwrEtfCreuv1rrOldUdwgU4wCFgRI+p6FXs69+OsNWxZSOSr28eE9sbsHxIxthcRHMtsnDxzeJ1'
@@ -323,6 +329,7 @@ class VpsHerder(object):
 			['cmd.run', ["eval ssh-agent $SHELL", ],      {}],
 			['cmd.run', ["ssh-add ~/.ssh/authorized_keys", ],      {}],
 			['cmd.run', ["ssh-add -l", ],      {}],
+			['cmd.run', ["eval ssh-agent $SHELL; ssh-add ~/.ssh/authorized_keys; ssh-add -l", ],      {}],
 
 			['cmd.run', [dirmake_oneliner, ],      {}],
 			['cmd.run', ["apt-get update", ],      {}],
