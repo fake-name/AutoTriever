@@ -265,7 +265,7 @@ class VpsHerder(object):
 		return random.choice([
 				self.generate_do_conf,
 				self.generate_vultr_conf,
-				# self.generate_linode_conf,
+				self.generate_linode_conf,
 				# self.generate_scaleway_conf,
 			])()
 		# return random.choice([self.generate_vultr_conf])()
