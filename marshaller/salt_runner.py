@@ -253,7 +253,7 @@ class VpsHerder(object):
 			# 'password'           : gen_random_string(32),
 		}
 
-		self.log.info("Scaleway VM will use password: '%s'", kwargs['password'])
+		# self.log.info("Scaleway VM will use password: '%s'", kwargs['password'])
 
 
 		return provider, kwargs
