@@ -61,7 +61,7 @@ SETTINGS_BASE = {
 class VmInitError(RuntimeError):
 	pass
 
-dirmake_ssh_oneliner = 'python -c \'import os.path, sys, os; os.makedirs("~/.ssh/") if not os.path.exists("~/.ssh/") else None; print("Dir exists and is dir: ", os.path.isdir("~/.ssh/"));sys.exit(1 if os.path.isdir("~/.ssh/") else 0);\''
+dirmake_ssh_oneliner = 'python -c \'import os.path, sys, os; os.makedirs(".ssh/") if not os.path.exists(".ssh/") else None; print("Dir exists and is dir: ", os.path.isdir(".ssh/"));sys.exit(1 if os.path.isdir(".ssh/") else 0);\''
 dirmake_oneliner = 'python -c \'import os.path, sys, os; os.makedirs("/scraper") if not os.path.exists("/scraper") else None; print("Dir exists and is dir: ", os.path.isdir("/scraper"));sys.exit(1 if os.path.isdir("/scraper") else 0);\''
 
 class VpsHerder(object):
@@ -302,34 +302,35 @@ class VpsHerder(object):
 
 		commands = [
 			# splat in public keys.
-			['cmd.run', ['mkdir ~/.ssh/', ],      {}],
+			['cmd.run', ['mkdir .ssh/', ],      {}],
 			['cmd.run', [dirmake_ssh_oneliner, ],      {}],
-			['cmd.run', ['ls -la ~/', ],      {}],
+			['cmd.run', ['pwd', ],      {}],
+			['cmd.run', ['ls -la ', ],      {}],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
 				+ 'LKb/iJkABH+hxq8ZL7kXiKuGgeHsI60I2wECMxg17Qs918ND626AkXqlMIUW1SchcAi3rYRMVY0OaGSOutIcjR+mJ6liogTv1DLRD0eRbuollz7XsYz4ILb'
 				+ 'i9kEsqwaly92vK6vlIVlAWtDoNf95c6jk/lh0M5p1LV0lwrEtfCreuv1rrOldUdwgU4wCFgRI+p6FXs69+OsNWxZSOSr28eE9sbsHxIxthcRHMtsnDxzeJ1'
-				+ 'PVhvC4JclFEHEZSlYaemI6zOezVuBuipwSv Neko@ODO | tee -a ~/.ssh/authorized_keys', ],      {}],
+				+ 'PVhvC4JclFEHEZSlYaemI6zOezVuBuipwSv Neko@ODO | tee -a .ssh/authorized_keys', ],      {}],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCi7/9jOHVJj0ODnPqinqFbOaErT2pNaeq0pYKapcG2DHGrvVlX3ZUO8z7uY1QZX0OiC3y'
 				+ '7rv4c7NEl7/OtmRDfNPd5YgpAuXelbwu5Pj1BjQq1pn3CeP4zhw4gcEPx2UAc5Rw1jzH8vE7NMf2iReBiHr2SfSLh8T/jt5bEAVDCnhMS/8YvoPLLftESiL'
 				+ 'oi+TU6Y9/zw4zac3AyJJ02tHpHLSpWWPPLi31ASEu/p+lWynUd+dSTMbwmc3hwBQkZTrK6P1I3431eQqYVNOyWJe+GeCXLaw5CvO8qlE7Nj3Z+dics3Bq0F'
 				+ '7ugDC+27qWk7m5soPfbZ8qlQz4CWFv01GHWdWwdHh9SR2bplNZ6MDuED91mu7gxyx2Wyo2AIiKsLcpGOIdLnIvrSA9VGpdgKbflbnqtfyIm6gloPpITnAJX'
 				+ 'imWSvIxF76PVFjdZa86jAx7JZfBfirvtRg6/qXbDUDAErF3OllqxBvuGOzHptDDgha/29tabzxUIxhpBrG0TiRTMDmmqgM+b9kANgzEe4Yef2w/IaTC96D/'
 				+ 'oLxRHmRBbof8GIMlNZjFlVw8XIyzYxnvALwCE7gRubba13f6qU0lT56be9HKYrSvHVy9/855lKlLwTCePaHK0EPBGuMWZOBexGKyxTFXmA+oqkBg5zFnZLy'
-				+ 'xcsaVZQtZRnDU4Cu4jyQ== rwpscrape@fake-url.com | tee -a ~/.ssh/authorized_keys', ],      {}],
+				+ 'xcsaVZQtZRnDU4Cu4jyQ== rwpscrape@fake-url.com | tee -a .ssh/authorized_keys', ],      {}],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDMv9sMkEOjqsFu8wPiG2jUP62qKEpxmvQ7IiYaLKogW/LQlLhKP7KCIE2MVUmctwdvyEF'
 				+ 'rXGOXDCVgFMFLEZiCi2+B7itMcFBlxJsZYQ9Y5FzXg/xK/Xld9rZu2ST+4z9xrX03n0rrsvO3HgpbNoIWF1LbXrc8L80CUCf13GWkZErhzc4mcd44McLVxX'
 				+ 'q+hcikMguVdOcejpLJTQkq2LRLEx2zhrz+CfNe9AQ0I5AOsh8Os3rrILFs0t290hejMX82nwJUCIcODTBJqR0o7qs/Tt8zLy3YKnAN3eGqfO7tw/d75AD/n'
 				+ 'ENup5kJscpVb/6v3xfWnjgAjalj/hw2bwoc3SE+Y3u2wmyuhrJcSy6rw/IltFc+BaZamZMBW/si8tW+xo9rb903GXANJbjVOABECJSp2i03xtPfYfk9KqZb'
 				+ '/vUkpYTmwRQGvDK9u1viIF8nIomE4omN6buFktvVjH1IG6bOPeMi4Y0zBNds7Q1W28Um1ygaBU+NCalep8UDEWInNkfYe1E/hj5A5EaMPaRjnPhXJqUzglO'
 				+ 'l1O2Tco2FYhfvCiyZvAHv25LLrGzePidR59SzTP7/fLxK7FgmH0m79AOKvjuZaNjb7njmgDhyQggOLU6bJwiiJ7MqldPlic2qCKyQVavLv2nXGIGVXEovtM'
-				+ '9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a ~/.ssh/authorized_keys', ],      {}],
-			['cmd.run', ["chmod 0600 ~/.ssh/authorized_keys", ],      {}],
-			['cmd.run', ["cat ~/.ssh/authorized_keys", ],      {}],
+				+ '9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a .ssh/authorized_keys', ],      {}],
+			['cmd.run', ["chmod 0600 .ssh/authorized_keys", ],      {}],
+			['cmd.run', ["cat .ssh/authorized_keys", ],      {}],
 			# So something is missing some of the keys, somehow
 			['cmd.run', ["eval ssh-agent $SHELL", ],      {}],
-			['cmd.run', ["ssh-add ~/.ssh/authorized_keys", ],      {}],
+			['cmd.run', ["ssh-add .ssh/authorized_keys", ],      {}],
 			['cmd.run', ["ssh-add -l", ],      {}],
-			['cmd.run', ["eval ssh-agent $SHELL; ssh-add ~/.ssh/authorized_keys; ssh-add -l", ],      {}],
+			['cmd.run', ["eval ssh-agent $SHELL; ssh-add .ssh/authorized_keys; ssh-add -l", ],      {}],
 
 			['cmd.run', [dirmake_oneliner, ],      {}],
 			['cmd.run', ["apt-get update", ],      {}],
