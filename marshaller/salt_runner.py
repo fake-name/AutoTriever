@@ -315,7 +315,7 @@ def vtest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	# herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0)
 	herder.log.info("Instance created!")
 
 
@@ -329,7 +329,7 @@ def dtest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	# herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0)
 	herder.log.info("Instance created!")
 
 
