@@ -9,6 +9,7 @@ import copy
 import traceback
 import uuid
 import ast
+import traceback
 
 import settings
 
@@ -145,6 +146,9 @@ class VpsHerder(object):
 		except TypeError as e:
 			raise  marshaller_exceptions.VmCreateFailed("Failed when creating VM configuration? Exception: %s" % e)
 
+		if not planid:
+			raise marshaller_exceptions.VmCreateFailed("No vultr plan available?")
+
 		scriptname = "bootstrap-salt-delay.sh"
 		scriptdir  = os.path.dirname(os.path.realpath(__file__))
 		fqscript = os.path.join(scriptdir, scriptname)
@@ -251,6 +255,7 @@ class VpsHerder(object):
 				# self.generate_linode_conf,
 				# self.generate_scaleway_conf,
 			])()
+		# return random.choice([self.generate_vultr_conf])()
 		# return random.choice([self.generate_do_conf])()
 		gen_call = random.choice([self.generate_do_conf, self.generate_vultr_conf])
 		self.log.info("Generator call: %s", gen_call)
@@ -265,8 +270,10 @@ class VpsHerder(object):
 		self.log.info("	kwargs: '%s'", kwargs)
 		try:
 			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
+			self.log.info("Response: %s", ret)
 			self.log.info("Instance created!")
 		except Exception as e:
+			traceback.format_exc()
 			raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
 		# instance = cc.create(names=['test-1'], provider=provider, **kwargs)
 		# print(ret)
@@ -354,6 +361,10 @@ class VpsHerder(object):
 					self.log.info("	%s", line)
 			else:
 				self.log.info("Received empty response")
+
+
+		print("Response:")
+		print(resp)
 
 
 		if not resp[clientname].strip().endswith('Setup OK! System is configured for launch'):
@@ -522,6 +533,9 @@ if __name__ == '__main__':
 		dtest()
 	elif "stest" in sys.argv:
 		stest()
+	elif "dtest" in sys.argv:
+		dtest()
+
 	elif "destroy-all" in sys.argv:
 		while herder.list_nodes():
 			for node in herder.list_nodes():
