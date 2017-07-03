@@ -466,9 +466,8 @@ class VpsHerder(object):
 			if provider in nodelist:
 				if provider in nodelist[provider]:
 					for key, nodedict in nodelist[provider][provider].items():
-						if 'name' in nodedict:
-							nodes.append((provider, nodedict['name'].encode("ascii")))
-							countl[provider].append(nodedict['name'].encode("ascii"))
+						nodes.append((provider, key))
+						countl[provider].append(key)
 		# Do statsd update.
 		with self.mon_con.pipeline() as pipe:
 			for provider in sources:
