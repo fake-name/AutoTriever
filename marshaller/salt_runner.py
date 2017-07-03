@@ -458,19 +458,21 @@ class VpsHerder(object):
 		]
 
 		nodes = []
+		countl = {}
 		nodelist = self.cc.query()
 
 		for provider in sources:
+			countl.setdefault(provider, [])
 			if provider in nodelist:
 				if provider in nodelist[provider]:
 					for key, nodedict in nodelist[provider][provider].items():
 						if 'name' in nodedict:
 							nodes.append((provider, nodedict['name'].encode("ascii")))
-
+							countl[provider].append(nodedict['name'].encode("ascii"))
 		# Do statsd update.
 		with self.mon_con.pipeline() as pipe:
 			for provider in sources:
-				pipe.gauge('PlatformWorkers.%s' % provider, len(sources[provider]))
+				pipe.gauge('PlatformWorkers.%s' % provider, len(countl[provider]))
 
 		self.log.info("Active nodes: %s", nodes)
 		return nodes
