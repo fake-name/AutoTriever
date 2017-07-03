@@ -300,11 +300,13 @@ class VpsHerder(object):
 		except Exception as e:
 			traceback.format_exc()
 			raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
+
+		return provider, kwargs
 		# instance = cc.create(names=['test-1'], provider=provider, **kwargs)
 		# print(ret)
 
 
-	def configure_client(self, clientname, client_idx):
+	def configure_client(self, clientname, client_idx, provider=None, provider_kwargs=None):
 		assert "_" not in clientname, "VM names cannot contain _ on digital ocean, I think?"
 		self.log.info("Configuring client")
 
@@ -414,8 +416,8 @@ class VpsHerder(object):
 		nodes = [nodename for _host, nodename in self.list_nodes()]
 		while clientname in nodes:
 			try:
-				self.log.info("Destroying.... %s", loops)
-				ret = self.cc.destroy(clientname)
+				self.log.info("Destroying %s, attempts %s", clientname, loops)
+				ret = self.cc.destroy([clientname])
 				self.log.info("Destroy returned: ")
 				self.log.info('%s', ret)
 				return
@@ -518,7 +520,7 @@ def vtest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
 
 def dtest():
@@ -531,7 +533,7 @@ def dtest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
 
 def ltest():
@@ -544,7 +546,7 @@ def ltest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
 
 def stest():
@@ -557,7 +559,7 @@ def stest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
 
 
@@ -579,8 +581,9 @@ if __name__ == '__main__':
 		dtest()
 
 	elif "destroy-all" in sys.argv:
-		while herder.list_nodes():
-			for node in herder.list_nodes():
+		while [node for host, node in herder.list_nodes() if 'scrape-worker' in node]:
+			for node in [node for host, node in herder.list_nodes() if 'scrape-worker' in node]:
+				print("Destroy call for node: '%s'" % node)
 				herder.destroy_client(node)
 	elif "destroy" in sys.argv:
 		bad = ["test-1", "test-2", "test-3", "test-4"]
