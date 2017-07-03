@@ -411,11 +411,13 @@ class VpsHerder(object):
 	def destroy_client(self, clientname):
 		self.log.info("Destroying client named: '%s'", clientname)
 		loops = 1
-		while clientname in self.list_nodes():
+		nodes = [nodename for _host, nodename in self.list_nodes()]
+		while clientname in nodes:
 			try:
 				self.log.info("Destroying.... %s", loops)
 				ret = self.cc.destroy(clientname)
-				print(ret)
+				self.log.info("Destroy returned: ")
+				self.log.info('%s', ret)
 				return
 			except salt.exceptions.SaltCloudSystemExit:
 				self.log.error("Failed to destroy: %s", clientname)
@@ -473,7 +475,10 @@ class VpsHerder(object):
 			for provider in sources:
 				pipe.gauge('PlatformWorkers.%s' % provider, len(countl[provider]))
 
-		self.log.info("Active nodes: %s", nodes)
+		nodes.sort()
+		self.log.info("Active nodes:")
+		for node_tmp in nodes:
+			self.log.info("	%s", node_tmp)
 		return nodes
 
 	def dump_minion_conf(self):
