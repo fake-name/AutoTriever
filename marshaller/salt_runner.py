@@ -22,6 +22,7 @@ import salt.exceptions
 import marshaller_exceptions
 import logSetup
 import os.path
+import statsd
 
 import random
 import string
@@ -79,6 +80,13 @@ class VpsHerder(object):
 
 		self.cc = salt.cloud.CloudClient('/etc/salt/cloud')
 
+
+		self.mon_con = statsd.StatsClient(
+				host = settings.GRAPHITE_DB_IP,
+				port = 8125,
+				prefix = 'ReadableWebProxy.VpsHerder',
+				)
+
 	def __make_conf_file(self, client_id, client_idx):
 		assert client_idx < len(settings.mq_accts)
 
@@ -101,7 +109,7 @@ class VpsHerder(object):
 	def get_5_dollar_do_meta(self):
 		self.log.info("Generating DO Configuration")
 
-		sizes = self.cc.list_sizes(provider='do')['do']['digital_ocean']
+		sizes = self.cc.list_sizes(provider='digital_ocean')['digital_ocean']['digital_ocean']
 		items = []
 
 		for name, size_meta in sizes.items():
@@ -123,7 +131,7 @@ class VpsHerder(object):
 		except TypeError as e:
 			raise  marshaller_exceptions.VmCreateFailed("Failed when creating VM configuration? Exception: %s" % e)
 
-		provider = "do"
+		provider = "digital_ocean"
 		kwargs = {
 			'image': 'ubuntu-14-04-x64',
 			'size': planid,
@@ -426,7 +434,7 @@ class VpsHerder(object):
 		'''
 		Example response:
 		{
-			'do': {
+			'digital_ocean': {
 				'digital_ocean': {
 					u 'test-1': {
 						'private_ips': [],
@@ -441,27 +449,28 @@ class VpsHerder(object):
 			}
 		}
 		'''
+
+		sources = [
+			'digital_ocean',
+			'vultr',
+			'linode',
+			'scaleway',
+		]
+
 		nodes = []
 		nodelist = self.cc.query()
-		if 'do' in nodelist:
-			if 'digital_ocean' in nodelist['do']:
-				for key, nodedict in nodelist['do']['digital_ocean'].items():
-					nodes.append(nodedict['name'].encode("ascii"))
-		if 'vultr' in nodelist:
-			if 'vultr' in nodelist['vultr']:
-				for key, nodedict in nodelist['vultr']['vultr'].items():
-					if key:
-						nodes.append(key.encode("ascii"))
-		if 'linode' in nodelist:
-			if 'linode' in nodelist['linode']:
-				for key, nodedict in nodelist['linode']['linode'].items():
-					if key:
-						nodes.append(key.encode("ascii"))
-		if 'scaleway' in nodelist:
-			if 'scaleway' in nodelist['scaleway']:
-				for key, nodedict in nodelist['scaleway']['scaleway'].items():
-					if key:
-						nodes.append(key.encode("ascii"))
+
+		for provider in sources:
+			if provider in nodelist:
+				if provider in nodelist[provider]:
+					for key, nodedict in nodelist[provider][provider].items():
+						nodes.append((provider, nodedict['name'].encode("ascii")))
+
+		# Do statsd update.
+		with self.mon_con.pipeline() as pipe:
+			for provider in sources:
+				pipe.gauge('PlatformWorkers.%s' % provider, len(sources[provider]))
+
 		self.log.info("Active nodes: %s", nodes)
 		return nodes
 
@@ -482,8 +491,8 @@ class VpsHerder(object):
 
 	def list_do_options(self):
 		self.log.info("DO test")
-		images = self.cc.list_images(provider='do')
-		sizes = self.cc.list_sizes(provider='do')
+		images = self.cc.list_images(provider='digital_ocean')
+		sizes = self.cc.list_sizes(provider='digital_ocean')
 		pprint.pprint(images)
 		pprint.pprint(sizes)
 		pass
