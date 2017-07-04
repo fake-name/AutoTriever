@@ -35,7 +35,8 @@ class VpsScheduler(object):
 				'apscheduler.timezone': 'UTC',
 			})
 
-		self.sched.add_job(self.ensure_active_workers, 'interval', seconds=60)
+		self.sched.add_job(self.worker_lister,         'interval', seconds=60)
+		self.sched.add_job(self.ensure_active_workers, 'interval', seconds=60 * 5)
 		self.install_destroyer_jobs()
 
 
@@ -86,6 +87,11 @@ class VpsScheduler(object):
 		assert len(set(ret)) == len(ret), "VPS instances with duplicate names!"
 		return set(ret)
 
+	def worker_lister(self):
+		'''
+		Maximally dumb function to kick over the stats system.
+		'''
+		self.get_active_vms()
 
 	def ensure_active_workers(self):
 		self.log.info("Validating active VPSes")
@@ -94,6 +100,7 @@ class VpsScheduler(object):
 		self.log.info("Active managed VPSes: %s", active)
 		self.log.info("Target VPS set: %s", target)
 
+		# Whoo set math!
 		missing = target - active
 		extra   = active - target
 		self.log.info("Need to create VMs: %s", missing)
