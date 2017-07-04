@@ -23,6 +23,11 @@ VPS_NAME_FORMAT = "scrape-worker-{number}"
 def hrs_to_sec(in_val):
 	return in_val * 60 * 60
 
+def poke_statsd():
+	interface = salt_runner.VpsHerder()
+	interface.list_nodes()
+
+
 class VpsScheduler(object):
 
 	def __init__(self):
@@ -35,12 +40,13 @@ class VpsScheduler(object):
 				'apscheduler.timezone': 'UTC',
 			})
 
-		self.sched.add_job(self.worker_lister,         'interval', seconds=60)
+		self.sched.add_job(poke_statsd,         'interval', seconds=60)
 		self.sched.add_job(self.ensure_active_workers, 'interval', seconds=60 * 5)
 		self.install_destroyer_jobs()
 
 
 	def create_vm(self, vm_name):
+
 
 		vm_idx = int(vm_name.split("-")[-1])-1
 
@@ -54,10 +60,14 @@ class VpsScheduler(object):
 			traceback.print_exc()
 			self.destroy_vm(vm_name)
 
+		self.interface.list_nodes()
+
 	def destroy_vm(self, vm_name):
+		self.interface.list_nodes()
 		self.log.info("Destroying VM named: %s", vm_name)
 		self.interface.destroy_client(vm_name)
 		self.log.info("VM %s destroyed.", vm_name)
+		self.interface.list_nodes()
 
 	def build_target_vm_list(self):
 		workers = []
@@ -96,6 +106,11 @@ class VpsScheduler(object):
 	def ensure_active_workers(self):
 		self.log.info("Validating active VPSes")
 		active = self.get_active_vms()
+
+		self.log.info("Active nodes:")
+		for node_tmp in active:
+			self.log.info("	%s", node_tmp)
+
 		target = self.build_target_vm_list()
 		self.log.info("Active managed VPSes: %s", active)
 		self.log.info("Target VPS set: %s", target)

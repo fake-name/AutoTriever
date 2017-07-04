@@ -478,9 +478,6 @@ class VpsHerder(object):
 				pipe.gauge('PlatformWorkers.%s' % provider, len(countl[provider]))
 
 		nodes.sort()
-		self.log.info("Active nodes:")
-		for node_tmp in nodes:
-			self.log.info("	%s", node_tmp)
 		return nodes
 
 	def dump_minion_conf(self):
@@ -564,36 +561,66 @@ def stest():
 
 
 
-if __name__ == '__main__':
-	logSetup.initLogging()
-	herder = VpsHerder()
+def gtest():
+	clientname = "test-5"
+	provider, kwargs = herder.generate_scaleway_conf()
+	herder.log.info("Creating instance...")
+	herder.log.info("	Client name: '%s'", clientname)
+	herder.log.info("	using provider: '%s'", provider)
+	herder.log.info("	kwargs: '%s'", kwargs)
+	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
+	print("Create response:", ret)
+
+	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
+	herder.log.info("Instance created!")
+
+def destroy_all():
+	while [node for host, node in herder.list_nodes() if 'scrape-worker' in node]:
+		for node in [node for host, node in herder.list_nodes() if 'scrape-worker' in node]:
+			print("Destroy call for node: '%s'" % node)
+			herder.destroy_client(node)
+
+def destroy():
+	bad = ["test-1", "test-2", "test-3", "test-4", "test-5"]
+	for badname in bad:
+		try:
+			herder.destroy_client(badname)
+		except Exception:
+			traceback.print_exc()
+			print("Continuing")
 
 
-	if "vtest" in sys.argv:
-		vtest()
-	elif "ltest" in sys.argv:
-		ltest()
-	elif "dtest" in sys.argv:
-		dtest()
-	elif "stest" in sys.argv:
-		stest()
-	elif "dtest" in sys.argv:
-		dtest()
 
-	elif "destroy-all" in sys.argv:
-		while [node for host, node in herder.list_nodes() if 'scrape-worker' in node]:
-			for node in [node for host, node in herder.list_nodes() if 'scrape-worker' in node]:
-				print("Destroy call for node: '%s'" % node)
-				herder.destroy_client(node)
-	elif "destroy" in sys.argv:
-		bad = ["test-1", "test-2", "test-3", "test-4"]
-		for badname in bad:
-			try:
-				herder.destroy_client(badname)
-			except Exception:
-				traceback.print_exc()
-				print("Continuing")
-	elif "brute-vtest" in sys.argv:
+def go():
+
+	if len(sys.argv) == 1:
+		print("Nothing to do")
+		return
+
+	command = sys.argv[1]
+
+	fmap = {
+
+		"vtest" : vtest,
+		"ltest" : ltest,
+		"dtest" : dtest,
+		"stest" : stest,
+		"dtest" : dtest,
+		"gtest" : gtest,
+
+		"destroy"     : destroy,
+		'destroy-all' : destroy_all,
+		"list"        : herder.list_nodes,
+		"vultr-opts"  : herder.list_vultr_options,
+		"do-opts"     : herder.list_do_options,
+
+	}
+	if command in fmap:
+		fmap[command]()
+		return
+
+
+	if "brute-vtest" in sys.argv:
 		while 1:
 			vtest()
 			herder.destroy_client("test-1")
@@ -607,20 +634,19 @@ if __name__ == '__main__':
 	elif "dtest" in sys.argv:
 		dtest()
 		herder.destroy_client("test-1")
-	elif "list" in sys.argv:
-		herder.list_nodes()
 	elif "configure" in sys.argv:
 		herder.configure_client("test-1", 0)
 	elif 'test-1' in sys.argv:
 		herder.make_client("test-1")
 		herder.configure_client("test-1", 0)
-	elif "vultr-opts" in sys.argv:
-		herder.list_vultr_options()
-	elif "do-opts" in sys.argv:
-		herder.list_do_options()
 	elif "gen-call" in sys.argv:
 		conf = herder.generate_conf()
 		print("Generated configuration:")
 		print(conf)
-	else:
-		print("Nothing to do")
+
+
+if __name__ == '__main__':
+	logSetup.initLogging()
+	herder = VpsHerder()
+
+	go()
