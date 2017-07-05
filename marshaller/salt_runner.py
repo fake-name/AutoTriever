@@ -221,6 +221,73 @@ class VpsHerder(object):
 		return provider, kwargs
 
 	################################################################################################
+	# GCE
+	################################################################################################
+
+	def get_gce_5_bux_meta(self):
+		self.cc.action(fun='update_pricing', provider='gce')
+		# sizes     = self.cc.list_sizes(provider='gce')['gce']['gce']
+		locations = self.cc.list_locations(provider='gce')['gce']['gce']
+
+		images = self.cc.list_images(provider='gce')['gce']['gce']
+
+		image = None
+		for key in images:
+			if key.startswith('ubuntu-1604-xenial-'):
+				image = key
+
+		# pprint.pprint(sizes)
+		# pprint.pprint(locations)
+
+		# for item in sizes:
+		# 	print(item['name'], item['price'])
+
+		# ATM, the only instance size I want is the f1-micro
+		# I want a preemptible instance (it's REALLY cheap), but
+		# I haven't figured out how to extract the preemptible
+		# instance pricing, so just hard-code it.
+		size = 'f1-micro'
+
+		locl = []
+		for name, dummy_loc_meta in locations.items():
+			locl.append(name)
+
+		return image, size, locl
+
+	def generate_gce_conf(self):
+
+		provider = "gce"
+
+		image, size, places = self.get_gce_5_bux_meta()
+		if not image:
+			raise VmInitError("No Ubuntu 16.04 image found!")
+
+		scriptname = "bootstrap-salt-delay.sh"
+		scriptdir  = os.path.dirname(os.path.realpath(__file__))
+		fqscript = os.path.join(scriptdir, scriptname)
+
+		kwargs = {
+			# 'image'              : 'Ubuntu 16.04 x64',
+			# 'private_networking' : False,
+			# 'size'               : planid,
+			# 'location'           : random.choice(places),
+
+			'size'     : size,
+			'image'    : image,
+			'location' : random.choice(places),
+
+			'script'             : fqscript,
+			'script_args'        : "-D",
+
+			# I think the gce driver maps 'preemptible' to 'ex_preemptible'
+			# Pass both anyways.
+			'preemptible'        : True,
+			'ex_preemptible'     : True,
+		}
+
+		return provider, kwargs
+
+	################################################################################################
 	# Scaleway
 	################################################################################################
 
@@ -273,6 +340,7 @@ class VpsHerder(object):
 				self.generate_do_conf,
 				self.generate_vultr_conf,
 				self.generate_linode_conf,
+				self.generate_gce_conf,
 				# self.generate_scaleway_conf,
 			]
 
@@ -350,7 +418,12 @@ class VpsHerder(object):
 			['cmd.run', ["mkswap /swapfile", ], {}],
 			['cmd.run', ["chmod 0600 /swapfile", ], {}],
 			['cmd.run', ["swapon /swapfile", ], {}],
-			['cmd.run', ["dpkg-reconfigure locales", ], {}],
+
+			# Needed to make GCE play nice. I think they just flat-out don't preinstall a locale
+			['cmd.run', ["sudo apt-get install language-pack-en -y", ], {}],
+
+			# Shit to make the tty work in UTF-8. Otherwise, the logging can asplode
+			# and break all the things.
 			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ], {}],
 			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ], {}],
 			['cmd.run', ["dpkg-reconfigure locales", ], {}],
@@ -398,7 +471,7 @@ class VpsHerder(object):
 		print(resp)
 
 
-		if not resp[clientname].strip().endswith('Setup OK! System is configured for launch'):
+		if resp[clientname] and not resp[clientname].strip().endswith('Setup OK! System is configured for launch'):
 			raise VmInitError("Setup command did not return success!")
 
 		self.log.info("Node configured! Starting scraper client!")
@@ -444,30 +517,13 @@ class VpsHerder(object):
 	################################################################################################
 
 	def list_nodes(self):
-		'''
-		Example response:
-		{
-			'digital_ocean': {
-				'digital_ocean': {
-					u 'test-1': {
-						'private_ips': [],
-						'image': u '14.04.4 x64',
-						'state': 'active',
-						'name': u 'test-1',
-						'public_ips': [u 'xxx.xxx.xxx.xxx'],
-						'id': 18105705,
-						'size': u '512mb'
-					}
-				}
-			}
-		}
-		'''
 
 		sources = [
 			'digital_ocean',
 			'vultr',
 			'linode',
 			'scaleway',
+			'gce',
 		]
 
 		nodes = []
@@ -581,7 +637,7 @@ def gtest():
 	herder = VpsHerder()
 
 	clientname = "test-5"
-	provider, kwargs = herder.generate_scaleway_conf()
+	provider, kwargs = herder.generate_gce_conf()
 	herder.log.info("Creating instance...")
 	herder.log.info("	Client name: '%s'", clientname)
 	herder.log.info("	using provider: '%s'", provider)
@@ -627,6 +683,12 @@ def list_do_options():
 	herder = VpsHerder()
 	herder.list_do_options()
 
+
+def list_gce_options():
+	herder = VpsHerder()
+	meta = herder.generate_gce_conf()
+	print(meta)
+
 def brute_vtest():
 	herder = VpsHerder()
 	while 1:
@@ -654,13 +716,16 @@ def gen_call():
 	print("Generated configuration:")
 	print(conf)
 
+
+
 def go():
 
-	if len(sys.argv) == 1:
-		print("Nothing to do")
-		return
-
-	command = sys.argv[1]
+	cmd_args = [tmp for tmp in sys.argv]
+	if "-v" in cmd_args:
+		cmd_args.remove("-v")
+		logSetup.initLogging(logLevel=logging.DEBUG)
+	else:
+		logSetup.initLogging()
 
 	fmap = {
 
@@ -675,6 +740,7 @@ def go():
 		"list"        : list_nodes,
 		"vultr-opts"  : list_vultr_options,
 		"do-opts"     : list_do_options,
+		"gce-opts"    : list_gce_options,
 
 
 		 "brute-vtest" : brute_vtest,
@@ -685,11 +751,25 @@ def go():
 
 
 	}
+
+
+	if len(cmd_args) == 1:
+		print("Nothing to do")
+		print("Available options:")
+		for key in fmap.keys():
+			print("	" + key)
+		return
+
+	command = cmd_args[1]
+
 	if command in fmap:
+		print("executing command %s for arg '%s'" % (fmap[command], command))
 		fmap[command]()
 		return
+	else:
+		print("Error! Unknown command line arg: '%s'" % command)
+
 
 
 if __name__ == '__main__':
-	logSetup.initLogging()
 	go()
