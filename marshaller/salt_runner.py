@@ -9,7 +9,7 @@ import copy
 import traceback
 import uuid
 import ast
-import traceback
+import string
 
 import settings
 
@@ -24,8 +24,6 @@ import logSetup
 import os.path
 import statsd
 
-import random
-import string
 
 def gen_random_string(length):
 	if not hasattr(gen_random_string, "rng"):
@@ -87,24 +85,10 @@ class VpsHerder(object):
 				prefix = 'ReadableWebProxy.VpsHerder',
 				)
 
-	def __make_conf_file(self, client_id, client_idx):
-		assert client_idx < len(settings.mq_accts)
 
-		conf = copy.copy(SETTINGS_BASE)
-		conf['RABBIT_LOGIN'] = settings.mq_accts[client_idx]['login']
-		conf['RABBIT_PASWD'] = settings.mq_accts[client_idx]['passwd']
-		conf['RABBIT_SRVER'] = settings.RABBIT_SERVER
-
-		conf['clientid'] = client_id
-		conf['client_key'] = uuid.uuid4().urn
-
-		conf['sadPanda']['login']  = settings.EX_LOGIN
-		conf['sadPanda']['passWd'] = settings.EX_PASSW
-
-		return json.dumps(conf)
-
-
-
+	################################################################################################
+	# Digital Ocean
+	################################################################################################
 
 	def get_5_dollar_do_meta(self):
 		self.log.info("Generating DO Configuration")
@@ -141,6 +125,10 @@ class VpsHerder(object):
 		}
 
 		return provider, kwargs
+
+	################################################################################################
+	# Vultr
+	################################################################################################
 
 	def get_5_dollar_vultr_meta(self):
 		self.log.info("Generating Vultr Configuration")
@@ -183,6 +171,9 @@ class VpsHerder(object):
 
 		return provider, kwargs
 
+	################################################################################################
+	# Linode
+	################################################################################################
 
 	def get_linode_5_bux_meta(self):
 		sizes     = self.cc.list_sizes(provider='linode')['linode']['linode']
@@ -229,6 +220,9 @@ class VpsHerder(object):
 
 		return provider, kwargs
 
+	################################################################################################
+	# Scaleway
+	################################################################################################
 
 	def generate_scaleway_conf(self):
 
@@ -270,40 +264,42 @@ class VpsHerder(object):
 
 		return provider, kwargs
 
-
+	################################################################################################
+	# Choice selector
+	################################################################################################
 
 	def generate_conf(self):
-		# TODO: Vultr goes here too
-		return random.choice([
+		gen_calls = [
 				self.generate_do_conf,
 				self.generate_vultr_conf,
 				self.generate_linode_conf,
 				# self.generate_scaleway_conf,
-			])()
-		# return random.choice([self.generate_vultr_conf])()
-		# return random.choice([self.generate_do_conf])()
-		gen_call = random.choice([self.generate_do_conf, self.generate_vultr_conf])
-		self.log.info("Generator call: %s", gen_call)
-		return gen_call()
+			]
 
-	def make_client(self, clientname):
+		selected_gen_call = random.choice(gen_calls)
 
-		provider, kwargs = self.generate_conf()
-		self.log.info("Creating instance...")
-		self.log.info("	Client name: '%s'", clientname)
-		self.log.info("	using provider: '%s'", provider)
-		self.log.info("	kwargs: '%s'", kwargs)
-		try:
-			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
-			self.log.info("Response: %s", ret)
-			self.log.info("Instance created!")
-		except Exception as e:
-			traceback.format_exc()
-			raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
+		self.log.info("Generator call: %s", selected_gen_call)
+		return selected_gen_call()
 
-		return provider, kwargs
-		# instance = cc.create(names=['test-1'], provider=provider, **kwargs)
-		# print(ret)
+	################################################################################################
+	# End of config generator calls
+	################################################################################################
+
+	def __make_conf_file(self, client_id, client_idx):
+		assert client_idx < len(settings.mq_accts)
+
+		conf = copy.copy(SETTINGS_BASE)
+		conf['RABBIT_LOGIN'] = settings.mq_accts[client_idx]['login']
+		conf['RABBIT_PASWD'] = settings.mq_accts[client_idx]['passwd']
+		conf['RABBIT_SRVER'] = settings.RABBIT_SERVER
+
+		conf['clientid'] = client_id
+		conf['client_key'] = uuid.uuid4().urn
+
+		conf['sadPanda']['login']  = settings.EX_LOGIN
+		conf['sadPanda']['passWd'] = settings.EX_PASSW
+
+		return json.dumps(conf)
 
 
 	def configure_client(self, clientname, client_idx, provider=None, provider_kwargs=None):
@@ -409,6 +405,24 @@ class VpsHerder(object):
 		jobid = self.local.cmd_async(tgt=clientname, fun='cmd.run', arg=["screen -d -m ./run.sh", ], kwarg={"cwd" : '/scraper'})
 		self.log.info("Job id: '%s'", jobid)
 
+	################################################################################################
+
+	def make_client(self, clientname):
+
+		provider, kwargs = self.generate_conf()
+		self.log.info("Creating instance...")
+		self.log.info("	Client name: '%s'", clientname)
+		self.log.info("	using provider: '%s'", provider)
+		self.log.info("	kwargs: '%s'", kwargs)
+		try:
+			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
+			self.log.info("Response: %s", ret)
+			self.log.info("Instance created!")
+		except Exception as e:
+			traceback.format_exc()
+			raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
+
+		return provider, kwargs
 
 	def destroy_client(self, clientname):
 		self.log.info("Destroying client named: '%s'", clientname)
@@ -427,12 +441,7 @@ class VpsHerder(object):
 					self.log.error("%s", line)
 			loops += 1
 
-		# images = cc.list_images(provider='scaleway')
-		# locs   = cc.list_locations(provider='scaleway')
-		# sizes  = cc.list_sizes(provider='scaleway')
-		# pprint.pprint(images)
-		# pprint.pprint(locs)
-		# pprint.pprint(sizes)
+	################################################################################################
 
 	def list_nodes(self):
 		'''
@@ -501,13 +510,14 @@ class VpsHerder(object):
 		sizes = self.cc.list_sizes(provider='digital_ocean')
 		pprint.pprint(images)
 		pprint.pprint(sizes)
-		pass
 
 
 # So.... vultur support is currently fucked.
 # Waiting on https://github.com/saltstack/salt/issues/37040
 
 def vtest():
+	herder = VpsHerder()
+
 	clientname = "test-1"
 	provider, kwargs = herder.generate_vultr_conf()
 	herder.log.info("Creating instance...")
@@ -521,6 +531,8 @@ def vtest():
 	herder.log.info("Instance created!")
 
 def dtest():
+	herder = VpsHerder()
+
 	clientname = "test-2"
 	provider, kwargs = herder.generate_do_conf()
 	herder.log.info("Creating instance...")
@@ -534,6 +546,8 @@ def dtest():
 	herder.log.info("Instance created!")
 
 def ltest():
+	herder = VpsHerder()
+
 	clientname = "test-3"
 	provider, kwargs = herder.generate_linode_conf()
 	herder.log.info("Creating instance...")
@@ -547,6 +561,8 @@ def ltest():
 	herder.log.info("Instance created!")
 
 def stest():
+	herder = VpsHerder()
+
 	clientname = "test-4"
 	provider, kwargs = herder.generate_scaleway_conf()
 	herder.log.info("Creating instance...")
@@ -562,6 +578,8 @@ def stest():
 
 
 def gtest():
+	herder = VpsHerder()
+
 	clientname = "test-5"
 	provider, kwargs = herder.generate_scaleway_conf()
 	herder.log.info("Creating instance...")
@@ -575,12 +593,16 @@ def gtest():
 	herder.log.info("Instance created!")
 
 def destroy_all():
+	herder = VpsHerder()
+
 	while [node for host, node in herder.list_nodes() if 'scrape-worker' in node]:
 		for node in [node for host, node in herder.list_nodes() if 'scrape-worker' in node]:
 			print("Destroy call for node: '%s'" % node)
 			herder.destroy_client(node)
 
 def destroy():
+	herder = VpsHerder()
+
 	bad = ["test-1", "test-2", "test-3", "test-4", "test-5"]
 	for badname in bad:
 		try:
@@ -589,7 +611,48 @@ def destroy():
 			traceback.print_exc()
 			print("Continuing")
 
+def list_nodes():
+	herder = VpsHerder()
+	nodes = herder.list_nodes()
+	print("Active nodes:")
+	for node in nodes:
+		print("	" + str(node))
 
+
+def list_vultr_options():
+	herder = VpsHerder()
+	herder.list_vultr_options()
+
+def list_do_options():
+	herder = VpsHerder()
+	herder.list_do_options()
+
+def brute_vtest():
+	herder = VpsHerder()
+	while 1:
+		vtest()
+		herder.destroy_client("test-1")
+
+def brute_dtest():
+	herder = VpsHerder()
+	while 1:
+		dtest()
+		herder.destroy_client("test-1")
+
+def configure():
+	herder = VpsHerder()
+	herder.configure_client("test-1", 0)
+
+def test_1():
+	herder = VpsHerder()
+	herder.make_client("test-1")
+	herder.configure_client("test-1", 0)
+
+def gen_call():
+	herder = VpsHerder()
+	conf = herder.generate_conf()
+	print("Generated configuration:")
+	print(conf)
 
 def go():
 
@@ -603,16 +666,23 @@ def go():
 
 		"vtest" : vtest,
 		"ltest" : ltest,
-		"dtest" : dtest,
 		"stest" : stest,
 		"dtest" : dtest,
 		"gtest" : gtest,
 
 		"destroy"     : destroy,
 		'destroy-all' : destroy_all,
-		"list"        : herder.list_nodes,
-		"vultr-opts"  : herder.list_vultr_options,
-		"do-opts"     : herder.list_do_options,
+		"list"        : list_nodes,
+		"vultr-opts"  : list_vultr_options,
+		"do-opts"     : list_do_options,
+
+
+		 "brute-vtest" : brute_vtest,
+		 "brute-dtest" : brute_dtest,
+		 "configure"   : configure,
+		 'test-1'      : test_1,
+		 "gen-call"    : gen_call,
+
 
 	}
 	if command in fmap:
@@ -620,33 +690,6 @@ def go():
 		return
 
 
-	if "brute-vtest" in sys.argv:
-		while 1:
-			vtest()
-			herder.destroy_client("test-1")
-	elif "brute-dtest" in sys.argv:
-		while 1:
-			dtest()
-			herder.destroy_client("test-1")
-	elif "vtest" in sys.argv:
-		vtest()
-		herder.destroy_client("test-1")
-	elif "dtest" in sys.argv:
-		dtest()
-		herder.destroy_client("test-1")
-	elif "configure" in sys.argv:
-		herder.configure_client("test-1", 0)
-	elif 'test-1' in sys.argv:
-		herder.make_client("test-1")
-		herder.configure_client("test-1", 0)
-	elif "gen-call" in sys.argv:
-		conf = herder.generate_conf()
-		print("Generated configuration:")
-		print(conf)
-
-
 if __name__ == '__main__':
 	logSetup.initLogging()
-	herder = VpsHerder()
-
 	go()
