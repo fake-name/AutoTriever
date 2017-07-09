@@ -1,5 +1,3 @@
-git+https://github.com/jkehler/unshortenit.git
-git+https://github.com/jkehler/unshortenit.git
 
 ## apscheduler
 ## rabbitpy
@@ -16,27 +14,33 @@ git+https://github.com/jkehler/unshortenit.git
 ## SQLAlchemy
 ## cchardet
 
+requests
+git+https://github.com/fake-name/ChromeController.git
 
 PySocks
+dill
 
 APScheduler==3.3.0
 beautifulsoup4==4.5.1
-cchardet==1.1.1
-colorama==0.3.7
-Cython==0.25.2
-Faker==0.7.5
-feedparser==5.2.1
-ftfy==4.2.0
-lxml==3.7.0
-mmh3==2.3.1
+cchardet
+colorama
+selenium
+Faker
+lxml
 msgpack-python==0.4.8
-pamqp==1.6.1
-pika==0.10.0
-python-dateutil==2.6.0
 pytz==2016.10
-requests==2.12.4
-selenium==3.0.2
-six==1.10.0
-SQLAlchemy==1.1.4
-tzlocal==1.3
+
+## python-dateutil==2.6.0
+## tzlocal==1.3
+## feedparser
+## Cython
+
+## mmh3==2.3.1
+## six==1.10.0
+## ftfy==4.2.0
+## pamqp==1.6.1
+## pika==0.10.0
+## requests==2.12.4
+## SQLAlchemy==1.1.4
 ## unshortenit==0.3.0
+## git+https://github.com/jkehler/unshortenit.git

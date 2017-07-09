@@ -101,7 +101,7 @@ else
 	rm get-pip.py
 	source venv/bin/activate
 	./venv/bin/pip install six
-	./venv/bin/pip install cython
+	# ./venv/bin/pip install cython
 	./venv/bin/pip install requests
 	./venv/bin/pip install chromedriver_installer
 

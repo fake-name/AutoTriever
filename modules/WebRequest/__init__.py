@@ -17,3 +17,15 @@ class PluginInterface_WebRequest(WebGetRobust):
 			'addSeleniumCookie'     : self.addSeleniumCookie,
 			'stepThroughCloudFlare' : self.stepThroughCloudFlare,
 		}
+
+	def test(self):
+		print("Exec()ing `runTest.sh` from directory root!")
+
+		import subprocess
+		command = "./runTests.sh"
+
+		process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+		output, error = process.communicate()
+
+		print("Command output: ", output)
+		print("Command errors: ", error)
