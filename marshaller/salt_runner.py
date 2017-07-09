@@ -9,7 +9,7 @@ import copy
 import traceback
 import uuid
 import ast
-import traceback
+import string
 
 import settings
 
@@ -24,8 +24,6 @@ import logSetup
 import os.path
 import statsd
 
-import random
-import string
 
 def gen_random_string(length):
 	if not hasattr(gen_random_string, "rng"):
@@ -87,24 +85,10 @@ class VpsHerder(object):
 				prefix = 'ReadableWebProxy.VpsHerder',
 				)
 
-	def __make_conf_file(self, client_id, client_idx):
-		assert client_idx < len(settings.mq_accts)
 
-		conf = copy.copy(SETTINGS_BASE)
-		conf['RABBIT_LOGIN'] = settings.mq_accts[client_idx]['login']
-		conf['RABBIT_PASWD'] = settings.mq_accts[client_idx]['passwd']
-		conf['RABBIT_SRVER'] = settings.RABBIT_SERVER
-
-		conf['clientid'] = client_id
-		conf['client_key'] = uuid.uuid4().urn
-
-		conf['sadPanda']['login']  = settings.EX_LOGIN
-		conf['sadPanda']['passWd'] = settings.EX_PASSW
-
-		return json.dumps(conf)
-
-
-
+	################################################################################################
+	# Digital Ocean
+	################################################################################################
 
 	def get_5_dollar_do_meta(self):
 		self.log.info("Generating DO Configuration")
@@ -141,6 +125,10 @@ class VpsHerder(object):
 		}
 
 		return provider, kwargs
+
+	################################################################################################
+	# Vultr
+	################################################################################################
 
 	def get_5_dollar_vultr_meta(self):
 		self.log.info("Generating Vultr Configuration")
@@ -183,6 +171,9 @@ class VpsHerder(object):
 
 		return provider, kwargs
 
+	################################################################################################
+	# Linode
+	################################################################################################
 
 	def get_linode_5_bux_meta(self):
 		sizes     = self.cc.list_sizes(provider='linode')['linode']['linode']
@@ -229,6 +220,76 @@ class VpsHerder(object):
 
 		return provider, kwargs
 
+	################################################################################################
+	# GCE
+	################################################################################################
+
+	def get_gce_5_bux_meta(self):
+		self.cc.action(fun='update_pricing', provider='gce')
+		# sizes     = self.cc.list_sizes(provider='gce')['gce']['gce']
+		locations = self.cc.list_locations(provider='gce')['gce']['gce']
+
+		images = self.cc.list_images(provider='gce')['gce']['gce']
+
+		image = None
+		for key in images:
+			if key.startswith('ubuntu-1604-xenial-'):
+				image = key
+
+		# pprint.pprint(sizes)
+		# pprint.pprint(locations)
+
+		# for item in sizes:
+		# 	print(item['name'], item['price'])
+
+		# ATM, the only instance size I want is the f1-micro
+		# I want a preemptible instance (it's REALLY cheap), but
+		# I haven't figured out how to extract the preemptible
+		# instance pricing, so just hard-code it.
+		size = 'f1-micro'
+
+		locl = []
+		for name, dummy_loc_meta in locations.items():
+			locl.append(name)
+
+		return image, size, locl
+
+	def generate_gce_conf(self):
+
+		provider = "gce"
+
+		image, size, places = self.get_gce_5_bux_meta()
+		if not image:
+			raise VmInitError("No Ubuntu 16.04 image found!")
+
+		scriptname = "bootstrap-salt-delay.sh"
+		scriptdir  = os.path.dirname(os.path.realpath(__file__))
+		fqscript = os.path.join(scriptdir, scriptname)
+
+		kwargs = {
+			# 'image'              : 'Ubuntu 16.04 x64',
+			# 'private_networking' : False,
+			# 'size'               : planid,
+			# 'location'           : random.choice(places),
+
+			'size'     : size,
+			'image'    : image,
+			'location' : random.choice(places),
+
+			'script'             : fqscript,
+			'script_args'        : "-D",
+
+			# I think the gce driver maps 'preemptible' to 'ex_preemptible'
+			# Pass both anyways.
+			'preemptible'        : True,
+			'ex_preemptible'     : True,
+		}
+
+		return provider, kwargs
+
+	################################################################################################
+	# Scaleway
+	################################################################################################
 
 	def generate_scaleway_conf(self):
 
@@ -270,41 +331,46 @@ class VpsHerder(object):
 
 		return provider, kwargs
 
-
+	################################################################################################
+	# Choice selector
+	################################################################################################
 
 	def generate_conf(self):
-		# TODO: Vultr goes here too
-		return random.choice([
+		gen_calls = [
 				self.generate_do_conf,
 				self.generate_vultr_conf,
 				self.generate_linode_conf,
+				self.generate_gce_conf,
 				# self.generate_scaleway_conf,
-			])()
-		# return random.choice([self.generate_vultr_conf])()
-		# return random.choice([self.generate_do_conf])()
-		gen_call = random.choice([self.generate_do_conf, self.generate_vultr_conf])
-		self.log.info("Generator call: %s", gen_call)
-		return gen_call()
+			]
 
-	def make_client(self, clientname):
+		selected_gen_call = random.choice(gen_calls)
 
-		provider, kwargs = self.generate_conf()
-		self.log.info("Creating instance...")
-		self.log.info("	Client name: '%s'", clientname)
-		self.log.info("	using provider: '%s'", provider)
-		self.log.info("	kwargs: '%s'", kwargs)
-		try:
-			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
-			self.log.info("Response: %s", ret)
-			self.log.info("Instance created!")
-		except Exception as e:
-			traceback.format_exc()
-			raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
-		# instance = cc.create(names=['test-1'], provider=provider, **kwargs)
-		# print(ret)
+		self.log.info("Generator call: %s", selected_gen_call)
+		return selected_gen_call()
+
+	################################################################################################
+	# End of config generator calls
+	################################################################################################
+
+	def __make_conf_file(self, client_id, client_idx):
+		assert client_idx < len(settings.mq_accts)
+
+		conf = copy.copy(SETTINGS_BASE)
+		conf['RABBIT_LOGIN'] = settings.mq_accts[client_idx]['login']
+		conf['RABBIT_PASWD'] = settings.mq_accts[client_idx]['passwd']
+		conf['RABBIT_SRVER'] = settings.RABBIT_SERVER
+
+		conf['clientid'] = client_id
+		conf['client_key'] = uuid.uuid4().urn
+
+		conf['sadPanda']['login']  = settings.EX_LOGIN
+		conf['sadPanda']['passWd'] = settings.EX_PASSW
+
+		return json.dumps(conf)
 
 
-	def configure_client(self, clientname, client_idx):
+	def configure_client(self, clientname, client_idx, provider=None, provider_kwargs=None):
 		assert "_" not in clientname, "VM names cannot contain _ on digital ocean, I think?"
 		self.log.info("Configuring client")
 
@@ -352,7 +418,12 @@ class VpsHerder(object):
 			['cmd.run', ["mkswap /swapfile", ], {}],
 			['cmd.run', ["chmod 0600 /swapfile", ], {}],
 			['cmd.run', ["swapon /swapfile", ], {}],
-			['cmd.run', ["dpkg-reconfigure locales", ], {}],
+
+			# Needed to make GCE play nice. I think they just flat-out don't preinstall a locale
+			['cmd.run', ["sudo apt-get install language-pack-en -y", ], {}],
+
+			# Shit to make the tty work in UTF-8. Otherwise, the logging can asplode
+			# and break all the things.
 			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ], {}],
 			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ], {}],
 			['cmd.run', ["dpkg-reconfigure locales", ], {}],
@@ -400,22 +471,42 @@ class VpsHerder(object):
 		print(resp)
 
 
-		if not resp[clientname].strip().endswith('Setup OK! System is configured for launch'):
+		if resp[clientname] and not resp[clientname].strip().endswith('Setup OK! System is configured for launch'):
 			raise VmInitError("Setup command did not return success!")
 
 		self.log.info("Node configured! Starting scraper client!")
 		jobid = self.local.cmd_async(tgt=clientname, fun='cmd.run', arg=["screen -d -m ./run.sh", ], kwarg={"cwd" : '/scraper'})
 		self.log.info("Job id: '%s'", jobid)
 
+	################################################################################################
+
+	def make_client(self, clientname):
+
+		provider, kwargs = self.generate_conf()
+		self.log.info("Creating instance...")
+		self.log.info("	Client name: '%s'", clientname)
+		self.log.info("	using provider: '%s'", provider)
+		self.log.info("	kwargs: '%s'", kwargs)
+		try:
+			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
+			self.log.info("Response: %s", ret)
+			self.log.info("Instance created!")
+		except Exception as e:
+			traceback.format_exc()
+			raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
+
+		return provider, kwargs
 
 	def destroy_client(self, clientname):
 		self.log.info("Destroying client named: '%s'", clientname)
 		loops = 1
-		while clientname in self.list_nodes():
+		nodes = [nodename for _host, nodename in self.list_nodes()]
+		while clientname in nodes:
 			try:
-				self.log.info("Destroying.... %s", loops)
-				ret = self.cc.destroy(clientname)
-				print(ret)
+				self.log.info("Destroying %s, attempts %s", clientname, loops)
+				ret = self.cc.destroy([clientname])
+				self.log.info("Destroy returned: ")
+				self.log.info('%s', ret)
 				return
 			except salt.exceptions.SaltCloudSystemExit:
 				self.log.error("Failed to destroy: %s", clientname)
@@ -423,38 +514,16 @@ class VpsHerder(object):
 					self.log.error("%s", line)
 			loops += 1
 
-		# images = cc.list_images(provider='scaleway')
-		# locs   = cc.list_locations(provider='scaleway')
-		# sizes  = cc.list_sizes(provider='scaleway')
-		# pprint.pprint(images)
-		# pprint.pprint(locs)
-		# pprint.pprint(sizes)
+	################################################################################################
 
 	def list_nodes(self):
-		'''
-		Example response:
-		{
-			'digital_ocean': {
-				'digital_ocean': {
-					u 'test-1': {
-						'private_ips': [],
-						'image': u '14.04.4 x64',
-						'state': 'active',
-						'name': u 'test-1',
-						'public_ips': [u 'xxx.xxx.xxx.xxx'],
-						'id': 18105705,
-						'size': u '512mb'
-					}
-				}
-			}
-		}
-		'''
 
 		sources = [
 			'digital_ocean',
 			'vultr',
 			'linode',
 			'scaleway',
+			'gce',
 		]
 
 		nodes = []
@@ -473,7 +542,7 @@ class VpsHerder(object):
 			for provider in sources:
 				pipe.gauge('PlatformWorkers.%s' % provider, len(countl[provider]))
 
-		self.log.info("Active nodes: %s", nodes)
+		nodes.sort()
 		return nodes
 
 	def dump_minion_conf(self):
@@ -497,13 +566,14 @@ class VpsHerder(object):
 		sizes = self.cc.list_sizes(provider='digital_ocean')
 		pprint.pprint(images)
 		pprint.pprint(sizes)
-		pass
 
 
 # So.... vultur support is currently fucked.
 # Waiting on https://github.com/saltstack/salt/issues/37040
 
 def vtest():
+	herder = VpsHerder()
+
 	clientname = "test-1"
 	provider, kwargs = herder.generate_vultr_conf()
 	herder.log.info("Creating instance...")
@@ -513,10 +583,12 @@ def vtest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
 
 def dtest():
+	herder = VpsHerder()
+
 	clientname = "test-2"
 	provider, kwargs = herder.generate_do_conf()
 	herder.log.info("Creating instance...")
@@ -526,10 +598,12 @@ def dtest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
 
 def ltest():
+	herder = VpsHerder()
+
 	clientname = "test-3"
 	provider, kwargs = herder.generate_linode_conf()
 	herder.log.info("Creating instance...")
@@ -539,10 +613,12 @@ def ltest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
 
 def stest():
+	herder = VpsHerder()
+
 	clientname = "test-4"
 	provider, kwargs = herder.generate_scaleway_conf()
 	herder.log.info("Creating instance...")
@@ -552,67 +628,148 @@ def stest():
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
 	print("Create response:", ret)
 
-	herder.configure_client(clientname, 0)
+	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
 
 
 
-if __name__ == '__main__':
-	logSetup.initLogging()
+def gtest():
 	herder = VpsHerder()
 
+	clientname = "test-5"
+	provider, kwargs = herder.generate_gce_conf()
+	herder.log.info("Creating instance...")
+	herder.log.info("	Client name: '%s'", clientname)
+	herder.log.info("	using provider: '%s'", provider)
+	herder.log.info("	kwargs: '%s'", kwargs)
+	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
+	print("Create response:", ret)
 
-	if "vtest" in sys.argv:
-		vtest()
-	elif "ltest" in sys.argv:
-		ltest()
-	elif "dtest" in sys.argv:
-		dtest()
-	elif "stest" in sys.argv:
-		stest()
-	elif "dtest" in sys.argv:
-		dtest()
+	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
+	herder.log.info("Instance created!")
 
-	elif "destroy-all" in sys.argv:
-		while herder.list_nodes():
-			for node in herder.list_nodes():
-				herder.destroy_client(node)
-	elif "destroy" in sys.argv:
-		bad = ["test-1", "test-2", "test-3", "test-4"]
-		for badname in bad:
-			try:
-				herder.destroy_client(badname)
-			except Exception:
-				traceback.print_exc()
-				print("Continuing")
-	elif "brute-vtest" in sys.argv:
-		while 1:
-			vtest()
-			herder.destroy_client("test-1")
-	elif "brute-dtest" in sys.argv:
-		while 1:
-			dtest()
-			herder.destroy_client("test-1")
-	elif "vtest" in sys.argv:
+def destroy_all():
+	herder = VpsHerder()
+
+	while [node for host, node in herder.list_nodes() if 'scrape-worker' in node]:
+		for node in [node for host, node in herder.list_nodes() if 'scrape-worker' in node]:
+			print("Destroy call for node: '%s'" % node)
+			herder.destroy_client(node)
+
+def destroy():
+	herder = VpsHerder()
+
+	bad = ["test-1", "test-2", "test-3", "test-4", "test-5"]
+	for badname in bad:
+		try:
+			herder.destroy_client(badname)
+		except Exception:
+			traceback.print_exc()
+			print("Continuing")
+
+def list_nodes():
+	herder = VpsHerder()
+	nodes = herder.list_nodes()
+	print("Active nodes:")
+	for node in nodes:
+		print("	" + str(node))
+
+
+def list_vultr_options():
+	herder = VpsHerder()
+	herder.list_vultr_options()
+
+def list_do_options():
+	herder = VpsHerder()
+	herder.list_do_options()
+
+
+def list_gce_options():
+	herder = VpsHerder()
+	meta = herder.generate_gce_conf()
+	print(meta)
+
+def brute_vtest():
+	herder = VpsHerder()
+	while 1:
 		vtest()
 		herder.destroy_client("test-1")
-	elif "dtest" in sys.argv:
+
+def brute_dtest():
+	herder = VpsHerder()
+	while 1:
 		dtest()
 		herder.destroy_client("test-1")
-	elif "list" in sys.argv:
-		herder.list_nodes()
-	elif "configure" in sys.argv:
-		herder.configure_client("test-1", 0)
-	elif 'test-1' in sys.argv:
-		herder.make_client("test-1")
-		herder.configure_client("test-1", 0)
-	elif "vultr-opts" in sys.argv:
-		herder.list_vultr_options()
-	elif "do-opts" in sys.argv:
-		herder.list_do_options()
-	elif "gen-call" in sys.argv:
-		conf = herder.generate_conf()
-		print("Generated configuration:")
-		print(conf)
+
+def configure():
+	herder = VpsHerder()
+	herder.configure_client("test-1", 0)
+
+def test_1():
+	herder = VpsHerder()
+	herder.make_client("test-1")
+	herder.configure_client("test-1", 0)
+
+def gen_call():
+	herder = VpsHerder()
+	conf = herder.generate_conf()
+	print("Generated configuration:")
+	print(conf)
+
+
+
+def go():
+
+	cmd_args = [tmp for tmp in sys.argv]
+	if "-v" in cmd_args:
+		cmd_args.remove("-v")
+		logSetup.initLogging(logLevel=logging.DEBUG)
 	else:
+		logSetup.initLogging()
+
+	fmap = {
+
+		"vtest" : vtest,
+		"ltest" : ltest,
+		"stest" : stest,
+		"dtest" : dtest,
+		"gtest" : gtest,
+
+		"destroy"     : destroy,
+		'destroy-all' : destroy_all,
+		"list"        : list_nodes,
+		"vultr-opts"  : list_vultr_options,
+		"do-opts"     : list_do_options,
+		"gce-opts"    : list_gce_options,
+
+
+		 "brute-vtest" : brute_vtest,
+		 "brute-dtest" : brute_dtest,
+		 "configure"   : configure,
+		 'test-1'      : test_1,
+		 "gen-call"    : gen_call,
+
+
+	}
+
+
+	if len(cmd_args) == 1:
 		print("Nothing to do")
+		print("Available options:")
+		for key in fmap.keys():
+			print("	" + key)
+		return
+
+	command = cmd_args[1]
+
+	if command in fmap:
+		print("executing command %s for arg '%s'" % (fmap[command], command))
+		fmap[command]()
+		return
+	else:
+		print("Error! Unknown command line arg: '%s'" % command)
+
+
+
+if __name__ == '__main__':
+	go()

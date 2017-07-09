@@ -147,6 +147,12 @@ def initLogging(logLevel=logging.INFO):
 	ch = ColourHandler()
 	mainLogger.addHandler(ch)
 
+	mainLogger = logging.getLogger("salt")			# salt logger
+	mainLogger.setLevel(logLevel)
+
+	ch = ColourHandler()
+	mainLogger.addHandler(ch)
+
 	# logName	= "Error - %s.txt" % (time.strftime("%Y-%m-%d %H;%M;%S", time.gmtime()))
 
 	# errLogHandler = RobustFileHandler(os.path.join("./logs", logName))
