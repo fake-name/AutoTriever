@@ -74,6 +74,7 @@ else
 	sudo apt-get install wget -y
 	sudo apt-get install libxml2 libxslt1-dev python3-dev libz-dev -y
 
+
 	# Needed for chromedriver
 	sudo apt-get install libnss3 -y
 	sudo apt-get install libgconf2-4 -y
