@@ -29,6 +29,7 @@ from sockshandler import SocksiPyHandler
 
 from . import HeaderParseMonkeyPatch
 
+from . import ChromiumMixin
 from . import PhantomJSMixin
 from . import Handlers
 from . import iri2uri
@@ -102,7 +103,7 @@ def determine_json_encoding(json_bytes):
 # OOOOLLLLLLDDDDD, has lots of creaky internals. Needs some cleanup desperately, but lots of crap depends on almost everything.
 # Arrrgh.
 
-class WebGetRobust(PhantomJSMixin.WebGetPjsMixin):
+class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 
 	COOKIEFILE = 'cookies.lwp'				# the path and filename to save your cookies in
 	cj = None

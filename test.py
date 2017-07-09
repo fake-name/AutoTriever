@@ -23,7 +23,13 @@ def get_plugin_lut():
 
 def test_storiesonline():
 	import main
-	settings = main.loadSettings()
+	try:
+		settings = main.loadSettings()
+	except main.SettingsLoadFailed:
+		print("WARNING! No settings!")
+		print("Cannot test storiesonline!")
+		return
+
 	dispatch_cls = dispatcher.RpcCallDispatcher(settings)
 	for x in range(12880, 12980):
 		url = "http://storiesonline.net/s/{num}/".format(num=x)

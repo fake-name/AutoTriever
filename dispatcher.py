@@ -143,11 +143,11 @@ def getPythonScriptModules(dirPath):
 	return ret
 
 def findPluginClass(module, prefix):
-	print("Finding plugin classes for: ", module, prefix)
+	# print("Finding plugin classes for: ", module, prefix)
 	interfaces = []
-	print("interfaces: ", interfaces)
+	# print("interfaces: ", interfaces)
 	for item in dir(module):
-		print("	item: ", item)
+		# print("	item: ", item)
 		if not item.startswith(prefix):
 			continue
 
@@ -166,25 +166,28 @@ def dedup_modules(modules):
 	return modules
 
 def loadPlugins(onPath, prefix):
-	print("Loading modules on path: ", onPath)
+	# print("Loading modules on path: ", onPath)
 	modules = getPythonScriptModules(onPath)
 	modules = dedup_modules(modules)
-	pprint.pprint("Modules:")
-	pprint.pprint(modules)
+	# pprint.pprint("Modules:")
+	# pprint.pprint(modules)
 	ret = {}
-
 
 	for fPath, modName in modules:
 		loader = SourceFileLoader(modName, fPath)
 		mod = loader.load_module()
-		print("Loader:", loader, "module: ", mod, 'modName:', modName, "prefix: ", prefix)
+		# print("Loader:", loader, "module: ", mod, 'modName:', modName, "prefix: ", prefix)
 		plugClasses = findPluginClass(mod, prefix)
-		print("PlugClasses: ", plugClasses)
+		# print("PlugClasses: ", plugClasses)
 		for key, pClass in plugClasses:
 			if key in ret:
-				print("WARNING? - Two plugins providing an interface with the same name? Name: '%s'" % key)
+				# Something somewhere seems to be caching loaded module components, so
+				# we only complain if the class is actually different
+				if ret[key] != pClass:
+					print("WARNING? - Two plugins providing an interface with the same name? Name: '%s'" % key)
 
 			ret[key] = pClass
+
 	return ret
 
 

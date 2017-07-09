@@ -14,6 +14,8 @@ import os
 
 from state import RUN_STATE
 
+class SettingsLoadFailed(ValueError):
+	pass
 
 def loadSettings():
 
@@ -33,7 +35,7 @@ def loadSettings():
 		settings = json.loads(os.environ['SCRAPE_CREDS'])
 
 	if not settings:
-		raise ValueError("No settings.json file or 'SCRAPE_CREDS' environment variable found!")
+		raise SettingsLoadFailed("No settings.json file or 'SCRAPE_CREDS' environment variable found!")
 
 	return settings
 

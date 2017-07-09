@@ -104,12 +104,11 @@ else
 	# ./venv/bin/pip install cython
 	./venv/bin/pip install requests
 	./venv/bin/pip install chromedriver_installer
+	./venv/bin/pip install git+https://github.com/berkerpeksag/astor.git
 
 fi;
 
-./venv/bin/pip install --upgrade rabbitpy
-./venv/bin/pip install --upgrade pika
-./venv/bin/pip install --upgrade -r requirements.txt
+./venv/bin/pip install --process-dependency-links --upgrade -r requirements.txt
 
 # If we're in a docker instance, the credentials will have been passed in as a
 # env var. Therefore, dump them to the settings.json file.
