@@ -11,3 +11,4 @@ ghostdriver.log
 /Headless
 /vendored/out/Headless
 /vendored/ChromeHeadless.tar.gz
+/*.coverage
