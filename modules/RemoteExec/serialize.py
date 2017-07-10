@@ -1,6 +1,23 @@
 
 import dill
 import logging
+import urllib.parse
+import socket
+import traceback
+import threading
+import multiprocessing
+import queue
+import time
+import json
+import mimetypes
+import re
+import bs4
+import urllib.request
+import urllib.parse
+
+import util.WebRequest as WebRequest
+import util.Mailinator as Mailinator
+
 
 # Note: The imports in *this* file determine what's available when
 # a rpc call is executed.
