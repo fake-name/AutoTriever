@@ -74,6 +74,7 @@ else
 	sudo apt-get install wget -y
 	sudo apt-get install libxml2 libxslt1-dev python3-dev libz-dev -y
 
+
 	# Needed for chromedriver
 	sudo apt-get install libnss3 -y
 	sudo apt-get install libgconf2-4 -y
@@ -100,15 +101,14 @@ else
 	rm get-pip.py
 	source venv/bin/activate
 	./venv/bin/pip install six
-	./venv/bin/pip install cython
+	# ./venv/bin/pip install cython
 	./venv/bin/pip install requests
 	./venv/bin/pip install chromedriver_installer
+	./venv/bin/pip install git+https://github.com/berkerpeksag/astor.git
 
 fi;
 
-./venv/bin/pip install --upgrade rabbitpy
-./venv/bin/pip install --upgrade pika
-./venv/bin/pip install --upgrade -r requirements.txt
+./venv/bin/pip install --process-dependency-links --upgrade -r requirements.txt
 
 # If we're in a docker instance, the credentials will have been passed in as a
 # env var. Therefore, dump them to the settings.json file.

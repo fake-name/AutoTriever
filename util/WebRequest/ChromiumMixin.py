@@ -7,13 +7,12 @@ import urllib.parse
 import http.cookiejar
 import bs4
 
-import ChromiumController
+import ChromeController
 
 # THIS IS COMPLETELY BROKEN ATM!
 
 
-
-class WebGetPjsMixin(object):
+class WebGetCrMixin(object):
 	# creds is a list of 3-tuples that gets inserted into the password manager.
 	# it is structured [(top_level_url1, username1, password1), (top_level_url2, username2, password2)]
 	def __init__(self, *args, **kwargs):
@@ -56,11 +55,11 @@ class WebGetPjsMixin(object):
 		self.cr_driver.set_page_load_timeout(30)
 
 
-	def _syncIntoPjsWebDriver(self):
+	def _syncIntoCrWebDriver(self):
 		# TODO
 		pass
 
-	def _syncOutOfPjsWebDriver(self):
+	def _syncOutOfCrWebDriver(self):
 		for cookie in self.cr_driver.get_cookies():
 			self.addSeleniumCookie(cookie)
 
@@ -69,8 +68,8 @@ class WebGetPjsMixin(object):
 		self.log.info("Fetching page for URL: '%s' with PhantomJS" % itemUrl)
 
 		if not self.cr_driver:
-			self._initPjsWebDriver()
-		self._syncIntoPjsWebDriver()
+			self._initCrWebDriver()
+		self._syncIntoCrWebDriver()
 
 		with load_delay_context_manager(self.cr_driver):
 			self.cr_driver.get(itemUrl)
@@ -79,7 +78,7 @@ class WebGetPjsMixin(object):
 		fileN = urllib.parse.unquote(urllib.parse.urlparse(self.cr_driver.current_url)[2].split("/")[-1])
 		fileN = bs4.UnicodeDammit(fileN).unicode_markup
 
-		self._syncOutOfPjsWebDriver()
+		self._syncOutOfCrWebDriver()
 
 		# Probably a bad assumption
 		mType = "text/html"
@@ -106,8 +105,8 @@ class WebGetPjsMixin(object):
 		self.log.info("Getting HEAD with PhantomJS")
 
 		if not self.cr_driver:
-			self._initPjsWebDriver()
-		self._syncIntoPjsWebDriver()
+			self._initCrWebDriver()
+		self._syncIntoCrWebDriver()
 
 		def try_get(loc_url):
 			tries = 3
@@ -123,7 +122,7 @@ class WebGetPjsMixin(object):
 		try_get(referrer)
 		try_get(url)
 
-		self._syncOutOfPjsWebDriver()
+		self._syncOutOfCrWebDriver()
 
 		return self.cr_driver.current_url
 
@@ -162,7 +161,7 @@ class WebGetPjsMixin(object):
 			self.cr_driver.quit()
 
 
-	def stepThroughCloudFlare_pjs(self, url, titleContains='', titleNotContains=''):
+	def stepThroughCloudFlare_cr(self, url, titleContains='', titleNotContains=''):
 		'''
 		Use Selenium+PhantomJS to access a resource behind cloudflare protection.
 
