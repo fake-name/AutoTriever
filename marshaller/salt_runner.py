@@ -23,12 +23,47 @@ import marshaller_exceptions
 import logSetup
 import os.path
 import statsd
+import math
+import datetime
 
 
 def gen_random_string(length):
 	if not hasattr(gen_random_string, "rng"):
 		gen_random_string.rng = random.SystemRandom() # Create a static variable
 	return ''.join([ gen_random_string.rng.choice(string.ascii_letters + string.digits) for _ in xrange(length) ])
+
+def weighted_choice(weights):
+	totals = []
+	running_total = 0
+
+	for w in weights:
+		running_total += w
+		totals.append(running_total)
+
+	rnd = random.random() * running_total
+	for i, total in enumerate(totals):
+		if rnd < total:
+			return i
+
+def generate_weights(length, time_override=None):
+	if time_override:
+		now = time_override
+	else:
+		now = datetime.datetime.utcnow()
+	seconds_since_midnight = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+	day_fraction = seconds_since_midnight / 86400
+
+	day_angle = day_fraction * 2 * math.pi
+
+	weights = []
+	for x in range(length):
+		ang = x * ((2 * math.pi) / length) + day_angle
+
+		weight = math.sin(ang)
+		weight += 1
+		weights.append(weight)
+
+	return weights
 
 
 MAX_MONTHLY_PRICE_DOLLARS = 5.0
@@ -335,6 +370,7 @@ class VpsHerder(object):
 	# Choice selector
 	################################################################################################
 
+
 	def generate_conf(self):
 		gen_calls = [
 				self.generate_do_conf,
@@ -344,7 +380,9 @@ class VpsHerder(object):
 				# self.generate_scaleway_conf,
 			]
 
-		selected_gen_call = random.choice(gen_calls)
+		weights = generate_weights(len(gen_calls))
+		print("Generated weighting:", weights)
+		selected_gen_call = gen_calls[weighted_choice(weights)]
 
 		self.log.info("Generator call: %s", selected_gen_call)
 		return selected_gen_call()
@@ -537,6 +575,7 @@ class VpsHerder(object):
 					for key, nodedict in nodelist[provider][provider].items():
 						nodes.append((provider, key))
 						countl[provider].append(key)
+
 		# Do statsd update.
 		with self.mon_con.pipeline() as pipe:
 			for provider in sources:

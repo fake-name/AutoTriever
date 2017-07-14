@@ -76,7 +76,7 @@ class VpsScheduler(object):
 			# Mostly for nicer printing
 			workers.append(VPS_NAME_FORMAT.format(number=x+1))
 
-		assert len(set(workers)) == len(workers), "Duplicate VPS target names!"
+		assert len(set(workers)) == len(workers), "Duplicate VPS target names: %s!" % workers
 		return set(workers)
 
 

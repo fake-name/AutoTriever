@@ -141,17 +141,17 @@ def initLogging(logLevel=logging.INFO):
 	if not os.path.exists(os.path.join("./logs")):
 		os.mkdir(os.path.join("./logs"))
 
+	ch = ColourHandler()
+
 	mainLogger = logging.getLogger("Main")			# Main logger
 	mainLogger.setLevel(logLevel)
 
-	ch = ColourHandler()
 	mainLogger.addHandler(ch)
 
-	mainLogger = logging.getLogger("salt")			# salt logger
-	mainLogger.setLevel(logLevel)
+	saltLogger = logging.getLogger("salt")			# salt logger
+	saltLogger.setLevel(logLevel)
 
-	ch = ColourHandler()
-	mainLogger.addHandler(ch)
+	saltLogger.addHandler(ch)
 
 	# logName	= "Error - %s.txt" % (time.strftime("%Y-%m-%d %H;%M;%S", time.gmtime()))
 
