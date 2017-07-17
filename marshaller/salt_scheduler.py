@@ -52,8 +52,10 @@ class VpsScheduler(object):
 
 		self.log.info("Creating VM named: %s, index: %s", vm_name, vm_idx)
 		try:
-			self.interface.make_client(vm_name)
-			self.interface.configure_client(vm_name, vm_idx)
+			# This is slightly horrible.
+			with self.interface.mon_con.timer("VM-Creation"):
+				self.interface.make_client(vm_name)
+				self.interface.configure_client(vm_name, vm_idx)
 			self.log.info("VM %s created.", vm_name)
 		except marshaller_exceptions.VmCreateFailed:
 			self.log.info("Failure instantiating VM %s.", vm_name)
