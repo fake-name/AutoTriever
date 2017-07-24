@@ -550,6 +550,8 @@ class VpsHerder(object):
 				self.log.error("Failed to destroy: %s", clientname)
 				for line in traceback.format_exc().split("\n"):
 					self.log.error("%s", line)
+
+			nodes = [nodename for _host, nodename in self.list_nodes()]
 			loops += 1
 
 	################################################################################################

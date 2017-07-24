@@ -10,7 +10,7 @@ import traceback
 
 import logSetup
 import marshaller_exceptions
-
+import stopit
 
 if "test" in sys.argv:
 	import salt_dummy as salt_runner
@@ -52,11 +52,17 @@ class VpsScheduler(object):
 
 		self.log.info("Creating VM named: %s, index: %s", vm_name, vm_idx)
 		try:
-			# This is slightly horrible.
-			with self.interface.mon_con.timer("VM-Creation"):
-				self.interface.make_client(vm_name)
-				self.interface.configure_client(vm_name, vm_idx)
-			self.log.info("VM %s created.", vm_name)
+			# VM Create time is 30 minutes, max
+			with stopit.ThreadingTimeout(60 * 30, swallow_exc=False):
+				# This is slightly horrible.
+				with self.interface.mon_con.timer("VM-Creation"):
+					self.interface.make_client(vm_name)
+					self.interface.configure_client(vm_name, vm_idx)
+				self.log.info("VM %s created.", vm_name)
+		except stopit.TimeoutException:
+			self.log.info("Timeout instantiating VM %s.", vm_name)
+			traceback.print_exc()
+			self.destroy_vm(vm_name)
 		except marshaller_exceptions.VmCreateFailed:
 			self.log.info("Failure instantiating VM %s.", vm_name)
 			traceback.print_exc()
@@ -67,8 +73,11 @@ class VpsScheduler(object):
 	def destroy_vm(self, vm_name):
 		self.interface.list_nodes()
 		self.log.info("Destroying VM named: %s", vm_name)
-		self.interface.destroy_client(vm_name)
-		self.log.info("VM %s destroyed.", vm_name)
+		dest_cnt = 0
+		while vm_name in [worker for provider, worker in self.interface.list_nodes()]:
+			self.interface.destroy_client(vm_name)
+			dest_cnt += 1
+		self.log.info("VM %s destroyed (%s calls).", vm_name, dest_cnt)
 		self.interface.list_nodes()
 
 	def build_target_vm_list(self):
@@ -95,9 +104,16 @@ class VpsScheduler(object):
 				active_each.setdefault(provider, []).append(worker)
 
 
-		ret = [worker for provider, worker in workers if worker.startswith('scrape-worker')]
-		assert len(set(ret)) == len(ret), "VPS instances with duplicate names!"
-		return set(ret)
+		workers = [worker for provider, worker in workers if worker.startswith('scrape-worker')]
+
+		if len(set(workers)) != len(workers):
+			self.log.error("Duplicate VPS target names in active workers: %s!", workers)
+			for worker in set(workers):
+				if workers.count(worker) > 1:
+					self.log.info("Destroying VM: ")
+					self.destroy_vm(worker)
+
+		return set(workers)
 
 	def worker_lister(self):
 		'''
