@@ -20,18 +20,20 @@ class PluginInterface_RemoteExec():
 			'callCode'               : self.call_code,
 		}
 
-	def call_code(self, code_struct):
+	def call_code(self, code_struct, extra_env=None, *call_args, **call_kwargs):
 		self.log.info("RPC Call for %s byte class!" , len(code_struct['source']))
 		class_def, call_name = serialize.deserialize_class(code_struct)
 
 		call_env = {
 			'wg'     : self.wg,
 		}
+		for key, value in extra_env:
+			extra_env[key] = value
 
 		instantiated = class_def(**call_env)
 		self.log.info("Instantiated instance of %s. Calling member function %s.", class_def, call_name)
 
-		return getattr(instantiated, call_name)()
+		return getattr(instantiated, call_name)(*call_args, **call_kwargs)
 
 	def test(self):
 		run_test.run_test(self)
