@@ -342,7 +342,7 @@ class RpcHandler(object):
 				ret['cancontinue'] = True
 
 
-			self.log.info("Processing complete. Submitting job with id '%s'.", ret['jobid'])
+			self.log.info("Processing complete. Submitting job with id '%s'.", body['jobid'])
 		except Exception:
 
 			if "unique_id" in body:
@@ -374,8 +374,6 @@ class RpcHandler(object):
 		ret['user'] = self.settings['clientid']
 		ret['user_uuid'] = self.settings['client_key']
 
-		self.log.info("Returning")
-
 
 		# Copy the jobid and dbid across, so we can cross-reference the job
 		# when it's received.
@@ -385,6 +383,8 @@ class RpcHandler(object):
 			ret['jobmeta'] = body['jobmeta']
 		if 'extradat' in body:
 			ret['extradat'] = body['extradat']
+
+		self.log.info("Returning")
 
 		return ret, delay
 
