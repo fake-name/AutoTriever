@@ -70,10 +70,6 @@ class RpcCallDispatcher(client.RpcHandler):
 				'error'       : "No module in message!",
 				'cancontinue' : True
 			}
-
-			if 'extradat' in command:
-				ret['extradat'] = command['extradat']
-
 			return ret
 
 		if not 'call' in command:
@@ -84,8 +80,6 @@ class RpcCallDispatcher(client.RpcHandler):
 				'error'       : "No call in message!",
 				'cancontinue' : True
 			}
-			if 'extradat' in command:
-				ret['extradat'] = command['extradat']
 			return ret
 
 

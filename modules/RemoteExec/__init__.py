@@ -27,8 +27,9 @@ class PluginInterface_RemoteExec():
 		call_env = {
 			'wg'     : self.wg,
 		}
-		for key, value in extra_env:
-			extra_env[key] = value
+		if extra_env:
+			for key, value in extra_env.items():
+				extra_env[key] = value
 
 		instantiated = class_def(**call_env)
 		self.log.info("Instantiated instance of %s. Calling member function %s.", class_def, call_name)

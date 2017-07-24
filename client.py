@@ -336,15 +336,6 @@ class RpcHandler(object):
 
 			assert isinstance(ret, dict) == True, '`process()` call in child-class must return a dict!'
 
-			# Copy the jobid and dbid across, so we can cross-reference the job
-			# when it's received.
-			if 'jobid' in body:
-				ret['jobid'] = body['jobid']
-			if 'jobmeta' in body:
-				ret['jobmeta'] = body['jobmeta']
-			if 'extradat' in body:
-				ret['extradat'] = body['extradat']
-
 			if not 'success' in ret:
 				ret['success'] = True
 			if not 'cancontinue' in ret:
@@ -364,11 +355,6 @@ class RpcHandler(object):
 				'traceback'   : traceback.format_exc(),
 				'cancontinue' : True
 			}
-			if 'jobid' in body:
-				ret['jobid'] = body['jobid']
-
-			if 'jobmeta' in body:
-				ret['jobmeta'] = body['jobmeta']
 
 			self.log.error("Had exception?")
 			for line in traceback.format_exc().split("\n"):
@@ -390,6 +376,15 @@ class RpcHandler(object):
 
 		self.log.info("Returning")
 
+
+		# Copy the jobid and dbid across, so we can cross-reference the job
+		# when it's received.
+		if 'jobid' in body:
+			ret['jobid'] = body['jobid']
+		if 'jobmeta' in body:
+			ret['jobmeta'] = body['jobmeta']
+		if 'extradat' in body:
+			ret['extradat'] = body['extradat']
 
 		return ret, delay
 
