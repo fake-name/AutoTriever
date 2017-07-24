@@ -108,9 +108,6 @@ class RpcCallDispatcher(client.RpcHandler):
 			'call'         : command['call'],
 		}
 
-		if 'extradat' in command:
-			response['extradat'] = command['extradat']
-
 		return response
 
 

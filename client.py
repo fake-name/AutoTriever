@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 import msgpack
 import rabbitpy
@@ -307,9 +308,9 @@ class RpcHandler(object):
 		raise ValueError("This must be subclassed!")
 
 
-	def _process(self, body):
+	def _process(self, body_r):
 		# body = json.loads(body)
-		body = msgpack.unpackb(body, use_list=True, encoding='utf-8')
+		body = msgpack.unpackb(body_r, use_list=True, encoding='utf-8')
 
 		assert isinstance(body, dict) == True, 'The message must decode to a dict!'
 
@@ -339,9 +340,10 @@ class RpcHandler(object):
 			# when it's received.
 			if 'jobid' in body:
 				ret['jobid'] = body['jobid']
-
 			if 'jobmeta' in body:
 				ret['jobmeta'] = body['jobmeta']
+			if 'extradat' in body:
+				ret['extradat'] = body['extradat']
 
 			if not 'success' in ret:
 				ret['success'] = True
