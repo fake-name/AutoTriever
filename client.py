@@ -343,7 +343,7 @@ class RpcHandler(object):
 
 
 			self.log.info("Processing complete. Submitting job with id '%s'.", body['jobid'])
-		except Exception:
+		except Exception as e:
 
 			if "unique_id" in body:
 				with self.seen_lock:
@@ -355,6 +355,8 @@ class RpcHandler(object):
 				'traceback'   : traceback.format_exc(),
 				'cancontinue' : True
 			}
+			if hasattr(e, 'log_data'):
+				ret['log'] = e.log_data
 
 			self.log.error("Had exception?")
 			for line in traceback.format_exc().split("\n"):
