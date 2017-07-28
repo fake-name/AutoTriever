@@ -13,6 +13,7 @@ import mimetypes
 import re
 import bs4
 import sys
+import base64
 import urllib.request
 import urllib.parse
 
