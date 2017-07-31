@@ -16,6 +16,7 @@ import sys
 import base64
 import urllib.request
 import urllib.parse
+import urllib.error
 
 import util.WebRequest as WebRequest
 import util.Mailinator as Mailinator

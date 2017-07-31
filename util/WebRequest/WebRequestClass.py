@@ -404,13 +404,14 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 
 		if errored and pghandle != None:
 			print(("Later attempt succeeded %s" % pgreq.get_full_url()))
-		elif errored and pghandle == None:
+		elif (errored or not pgctnt) and pghandle is None:
 
 			if lastErr and nativeError:
 				raise lastErr
-			raise urllib.error.URLError("Failed to retreive page '%s'!" % (requestedUrl, ))
+			raise Exceptions.FetchFailureError("Failed to retreive page '%s'!" % (requestedUrl, ))
 
 		if returnMultiple:
+
 			return pgctnt, pghandle
 		else:
 			return pgctnt
