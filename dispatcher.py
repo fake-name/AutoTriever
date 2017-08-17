@@ -58,6 +58,9 @@ class RpcCallDispatcher(client.RpcHandler):
 		# self.log.info("Args '%s'", call_args)
 		# self.log.info("Kwargs '%s'", call_kwargs)
 
+		if hasattr(self.classCache[module], "can_send_partials"):
+			call_kwargs['partial_resp_interface'] = self
+
 		return self.classCache[module].calls[call](*call_args, **call_kwargs)
 
 	def process(self, command):

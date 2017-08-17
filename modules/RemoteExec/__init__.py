@@ -10,6 +10,7 @@ from util.WebRequest import WebGetRobust
 class PluginInterface_RemoteExec():
 
 	name = 'RemoteExec'
+	can_send_partials = True
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
