@@ -180,11 +180,29 @@ class VpsScheduler(object):
 	def run(self):
 		self.sched.start()
 
-if __name__ == '__main__':
-	logSetup.initLogging()
+def refresh():
+	sched = VpsScheduler()
+	vm_names = sched.get_active_vms()
+	print("Active VMs to refresh:", vm_names)
+	for vm_name in vm_names:
+		print("Reconstructing %s" % vm_name)
+		sched.destroy_vm(vm_name)
+		sched.ensure_active_workers()
+
+def run_scheduler():
+
 	sched = VpsScheduler()
 
 	print("Sched: ", sched)
 
 	sched.ensure_active_workers()
 	sched.run()
+
+if __name__ == '__main__':
+	logSetup.initLogging()
+
+	if 'refresh' in sys.argv:
+		refresh()
+	else:
+		run_scheduler()
+
