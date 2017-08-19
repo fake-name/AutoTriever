@@ -12,6 +12,7 @@ import json
 import mimetypes
 import re
 import bs4
+import copy
 import sys
 import base64
 import urllib.request
