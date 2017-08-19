@@ -309,11 +309,11 @@ class RpcHandler(object):
 
 	def partial_response(self, context, connector):
 		# Hurray for closure abuse.
-		def partial_capture(content):
+		def partial_capture(logs, content):
 			assert isinstance(content, dict), '`partial response` must be passed a dict!'
 			self.log.info("Doing incremental response transmission")
 			response = {
-				'ret'          : content,
+				'ret'          : (logs, content),
 				'success'      : True,
 				'cancontinue'  : True,
 				'partial'      : True,
