@@ -47,7 +47,7 @@ class RpcCallDispatcher(client.RpcHandler):
 
 
 
-	def doCall(self, module, call, call_args, call_kwargs):
+	def doCall(self, module, call, call_args, call_kwargs, context_responder):
 		if not module in self.classCache:
 			self.log.info("First call to module '%s'", module)
 			self.classCache[module] =  self.plugins[module]()
@@ -59,11 +59,11 @@ class RpcCallDispatcher(client.RpcHandler):
 		# self.log.info("Kwargs '%s'", call_kwargs)
 
 		if hasattr(self.classCache[module], "can_send_partials"):
-			call_kwargs['partial_resp_interface'] = self
+			call_kwargs['partial_resp_interface'] = context_responder
 
 		return self.classCache[module].calls[call](*call_args, **call_kwargs)
 
-	def process(self, command):
+	def process(self, command, context_responder):
 		if not 'module' in command:
 			self.log.error("No 'module' in message!")
 			self.log.error("Message: '%s'", command)
@@ -94,7 +94,7 @@ class RpcCallDispatcher(client.RpcHandler):
 		if 'kwargs' in command:
 			kwargs = command['kwargs']
 
-		ret = self.doCall(command['module'], command['call'], args, kwargs)
+		ret = self.doCall(command['module'], command['call'], args, kwargs, context_responder)
 		# print(ret)
 		response = {
 			'ret'          : ret,

@@ -304,11 +304,40 @@ class RpcHandler(object):
 
 
 
-	def process(self, body):
+	def process(self, body, context_responder):
 		raise ValueError("This must be subclassed!")
 
+	def partial_response(self, context, connector):
+		def partial_capture(content):
+			assert isinstance(content, dict), '`partial response` must be passed a dict!'
 
-	def _process(self, body_r):
+			response = {
+				'ret'          : content,
+				'success'      : True,
+				'cancontinue'  : True,
+				'partial'      : True,
+				'dispatch_key' : context['dispatch_key'],
+				'module'       : context['module'],
+				'call'         : context['call'],
+				'user'         : self.settings['clientid'],
+				'user_uuid'    : self.settings['client_key'],
+			}
+
+			# Copy the jobid and dbid across, so we can cross-reference the job
+			# when it's received.
+			if 'jobid' in context:
+				response['jobid'] = context['jobid']
+			if 'jobmeta' in context:
+				response['jobmeta'] = context['jobmeta']
+			if 'extradat' in context:
+				response['extradat'] = context['extradat']
+
+			self.put_message_chunked(response, connector)
+
+		return partial_capture
+
+
+	def _process(self, body_r, connector):
 		# body = json.loads(body)
 		body = msgpack.unpackb(body_r, use_list=True, encoding='utf-8')
 
@@ -332,14 +361,12 @@ class RpcHandler(object):
 				delay = int(body['postDelay'])
 
 			self.log.info("Received request. Processing.")
-			ret = self.process(body)
+			ret = self.process(body, self.partial_response(body, connector))
 
-			assert isinstance(ret, dict) == True, '`process()` call in child-class must return a dict!'
+			assert isinstance(ret, dict), '`process()` call in child-class must return a dict!'
 
-			if not 'success' in ret:
-				ret['success'] = True
-			if not 'cancontinue' in ret:
-				ret['cancontinue'] = True
+			ret.setdefault('success', True)
+			ret.setdefault('cancontinue', True)
 
 
 			self.log.info("Processing complete. Submitting job with id '%s'.", body['jobid'])
@@ -366,7 +393,7 @@ class RpcHandler(object):
 			# Disable the delay if the call had an exception.
 			delay = 0
 
-		if not 'cancontinue' in ret:
+		if 'cancontinue' not in ret:
 			self.log.error('Invalid return value from `process()`')
 		elif not ret['cancontinue']:
 			self.log.error('Uncaught error in `process()`. Exiting.')
@@ -452,7 +479,7 @@ class RpcHandler(object):
 				self.log.info("Processing message. (%s of %s before connection reset)", msg_count, loops)
 
 				try:
-					response, postDelay = self._process(message.body)
+					response, postDelay = self._process(message.body, connector)
 
 					self.put_message_chunked(response, connector)
 					# connector.put_response(response)
