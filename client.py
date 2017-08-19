@@ -308,9 +308,10 @@ class RpcHandler(object):
 		raise ValueError("This must be subclassed!")
 
 	def partial_response(self, context, connector):
+		# Hurray for closure abuse.
 		def partial_capture(content):
 			assert isinstance(content, dict), '`partial response` must be passed a dict!'
-
+			self.log.info("Doing incremental response transmission")
 			response = {
 				'ret'          : content,
 				'success'      : True,
