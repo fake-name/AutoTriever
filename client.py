@@ -352,7 +352,7 @@ class RpcHandler(object):
 			ret = {
 				'success'     : False,
 				'error'       : "unknown",
-				'traceback'   : traceback.format_exc(),
+				'traceback'   : traceback.format_exc().split("\n"),
 				'cancontinue' : True
 			}
 			if hasattr(e, 'log_data'):
