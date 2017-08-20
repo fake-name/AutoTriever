@@ -452,7 +452,7 @@ class VpsHerder(object):
 			['cmd.run', ["whoami", ], {}],
 
 			# Make swap so
-			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=1024", ], {}],
+			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=4096", ], {}],
 			['cmd.run', ["mkswap /swapfile", ], {}],
 			['cmd.run', ["chmod 0600 /swapfile", ], {}],
 			['cmd.run', ["swapon /swapfile", ], {}],

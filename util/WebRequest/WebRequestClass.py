@@ -24,8 +24,12 @@ import json
 from threading import Lock
 
 import bs4
-import socks
-from sockshandler import SocksiPyHandler
+try:
+	import socks
+	from sockshandler import SocksiPyHandler
+	HAVE_SOCKS = True
+except ImportError:
+	HAVE_SOCKS = False
 
 from . import HeaderParseMonkeyPatch
 
@@ -379,7 +383,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 				#traceback.print_exc()
 				lastErr = sys.exc_info()
 				self.log.warning("Retreival failed. Traceback:")
-				self.log.warning(lastErr)
+				self.log.warning(str(lastErr))
 				self.log.warning(traceback.format_exc())
 
 				self.log.warning("Error Retrieving Page! - Trying again - Waiting %s seconds", self.retryDelay)
@@ -716,6 +720,8 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 					args += (self.credHandler, )
 				if self.use_socks:
 					print("Using Socks handler")
+					if not HAVE_SOCKS:
+						raise RuntimeError("SOCKS Use specified, and no socks installed!")
 					args = (SocksiPyHandler(socks.SOCKS5, "127.0.0.1", 9050), ) + args
 
 				self.opener = urllib.request.build_opener(*args)

@@ -8,9 +8,6 @@ import email.parser
 import urllib.request
 import urllib.parse
 import urllib.error
-import socks
-from sockshandler import SocksiPyHandler
-
 
 import os.path
 

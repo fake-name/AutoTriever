@@ -414,6 +414,8 @@ class RpcHandler(object):
 		if 'extradat' in body:
 			ret['extradat'] = body['extradat']
 
+		# Main return path isn't a partial
+		ret.setdefault('partial', False)
 		self.log.info("Returning")
 
 		return ret, delay
