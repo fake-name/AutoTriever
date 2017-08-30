@@ -1,16 +1,16 @@
 
 import time
-import pytz
 import logging
 import datetime
-from apscheduler.schedulers.blocking import BlockingScheduler
 import sys
-import settings
 import traceback
-
+import multiprocessing
+import pytz
+from apscheduler.schedulers.blocking import BlockingScheduler
 import logSetup
 import marshaller_exceptions
 import stopit
+import settings
 
 if "test" in sys.argv:
 	import salt_dummy as salt_runner
@@ -26,6 +26,11 @@ def hrs_to_sec(in_val):
 def poke_statsd():
 	interface = salt_runner.VpsHerder()
 	interface.list_nodes()
+
+# We explicitly want a non-locked shared value, as
+# that way the worker thread terminating can't result in
+# a wedged lock
+CREATE_WATCHDOG = multiprocessing.Value("i", lock=False)
 
 
 class VpsScheduler(object):
@@ -59,6 +64,7 @@ class VpsScheduler(object):
 					self.interface.make_client(vm_name)
 					self.interface.configure_client(vm_name, vm_idx)
 				self.log.info("VM %s created.", vm_name)
+				CREATE_WATCHDOG.value += 1
 		except stopit.TimeoutException:
 			self.log.info("Timeout instantiating VM %s.", vm_name)
 			traceback.print_exc()
@@ -145,7 +151,6 @@ class VpsScheduler(object):
 			self.create_vm(vm_name)
 
 		existing = self.sched.get_jobs()
-		tznow = datetime.datetime.now(tz=pytz.utc)
 		for job in existing:
 			self.log.info(" %s, %s", job, job.args)
 
@@ -197,6 +202,37 @@ def run_scheduler():
 
 	sched.ensure_active_workers()
 	sched.run()
+
+def run():
+
+	proc = None
+	last_zero = time.time()
+
+
+	new_create_timeout_secs = 60 * 60 * 2
+
+
+	while 1:
+		# If there's no thread, create it.
+		if proc is None:
+			proc = multiprocessing.Process(target=run_scheduler)
+			proc.start()
+			CREATE_WATCHDOG.value = 0
+
+		# If the worker has touched the watchdog flag, capture the
+		# time that happened.
+		if CREATE_WATCHDOG.value != 0:
+			last_zero = time.time()
+			CREATE_WATCHDOG.value = 0
+
+		# If the last worker update time is longer ago then the timeout,
+		# destroy the worker thread.
+		if (time.time() - last_zero) > new_create_timeout_secs:
+			proc.terminate()
+			proc = None
+
+		time.sleep(5)
+
 
 if __name__ == '__main__':
 	logSetup.initLogging()
