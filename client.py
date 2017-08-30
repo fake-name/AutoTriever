@@ -251,7 +251,7 @@ class Connector:
 class RpcHandler(object):
 	die = False
 
-	def __init__(self, settings, seen_lock):
+	def __init__(self, settings, seen_lock, serialize_lock):
 
 		thName = threading.current_thread().name
 		if "-" in thName:
@@ -262,8 +262,9 @@ class RpcHandler(object):
 		self.log = logging.getLogger(logPath)
 		self.log.info("RPC Management class instantiated.")
 
-		self.seen_lock = seen_lock
-		self.settings  = settings
+		self.seen_lock      = seen_lock
+		self.serialize_lock = serialize_lock
+		self.settings       = settings
 
 		# Require clientID in settings
 		assert 'clientid'     in settings
@@ -354,6 +355,14 @@ class RpcHandler(object):
 					self.log.info("New unique message ID: %s. Fetching.", mid)
 					INSTANCE_SEEN_MESSAGE_IDS.add(mid)
 
+		have_serialize_lock = False
+		if 'serialize' in body and body['serialize']:
+			acquired = self.serialize_lock.acquire(blocking=False)
+			if not acquired:
+				self.log.info("Forcing job to be serialized on worker. Rejecting while a job is active.")
+				raise SeenMessageError
+			have_serialize_lock = True
+
 
 		delay = None
 
@@ -417,6 +426,9 @@ class RpcHandler(object):
 		# Main return path isn't a partial
 		ret.setdefault('partial', False)
 		self.log.info("Returning")
+
+		if have_serialize_lock:
+			self.serialize_lock.release()
 
 		return ret, delay
 
