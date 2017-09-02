@@ -241,5 +241,5 @@ if __name__ == '__main__':
 	if 'refresh' in sys.argv:
 		refresh()
 	else:
-		run_scheduler()
+		run()
 
