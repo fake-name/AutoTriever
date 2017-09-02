@@ -219,6 +219,7 @@ def run():
 			proc.start()
 			CREATE_WATCHDOG.value = 0
 
+		print("Watchdog looping! Value: %s, last update: %s/%s ago" % (CREATE_WATCHDOG.value, int(time.time() - last_zero), new_create_timeout_secs))
 		# If the worker has touched the watchdog flag, capture the
 		# time that happened.
 		if CREATE_WATCHDOG.value != 0:
@@ -231,7 +232,6 @@ def run():
 			proc.terminate()
 			proc = None
 
-		print("Watchdog looping! Value: %s, last update: %s ago" % (CREATE_WATCHDOG.value, time.time() - last_zero))
 		time.sleep(5)
 
 
