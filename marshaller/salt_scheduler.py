@@ -231,6 +231,7 @@ def run():
 			proc.terminate()
 			proc = None
 
+		print("Watchdog looping! Value: %s, last update: %s ago" % (CREATE_WATCHDOG.value, time.time() - last_zero))
 		time.sleep(5)
 
 
