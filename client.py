@@ -49,7 +49,6 @@ class Connector:
 			'session_fetch_limit'      : kwargs.get('session_fetch_limit',      None),
 			'durable'                  : kwargs.get('durable',                 False),
 			'socket_timeout'           : kwargs.get('socket_timeout',             10),
-
 		}
 
 
@@ -527,7 +526,8 @@ class RpcHandler(object):
 					self.successDelay(postDelay)
 				except SeenMessageError:
 					self.log.warn("Message has uniqueID that has been seen. Returning to processing queue")
-					message.nack(requeue=True)
+					# Push into dead-letter queue.
+					message.reject(requeue=False)
 					time.sleep(1)
 
 			if msg_count > loops:
