@@ -185,10 +185,32 @@ class Connector:
 			self.log.info("Binding queue %s to exchange %s.", self.config['response_queue_name'], self.config['response_exchange'])
 
 		if not self.config['master']:
+
+			# If we're set to durable, bind a Dead letter exchange to the main task queue,
+			# and attach that dlq to a queue with a timeout that then dead-letters back
+			# into the main queue.
+
+			baseq_args = {}
+			if self.config['durable']:
+				dlex_name = self.config['task_exchange'] + ".dlq.e"
+				dlq_name = self.config['task_queue_name'] + ".dlq.q"
+				baseq_args["x-dead-letter-exchange"] = dlex_name
+
+				dlq_args = {
+					"x-dead-letter-exchange" : self.config['task_exchange'],
+					"x-message-ttl"          : 60 * 1000 * 5
+				}
+				self.channel.exchange_declare(dlex_name, 'direct', auto_delete=False, durable=self.config['durable'])
+				self.channel.queue_declare(dlq_name, auto_delete=False, durable=self.config['durable'], arguments=dlq_args)
+				self.channel.queue_bind(dlq_name, exchange=dlex_name, routing_key=self.config['task_queue_name'].split(".")[0])
+
 			# Clients need to declare their task queues, so the master can publish into them.
-			self.channel.queue_declare(self.config['task_queue_name'], auto_delete=False, durable=self.config['durable'])
+			self.channel.queue_declare(self.config['task_queue_name'], auto_delete=False, durable=self.config['durable'], arguments=baseq_args)
 			self.channel.queue_bind(   self.config['task_queue_name'], exchange=self.config['task_exchange'], routing_key=self.config['task_queue_name'].split(".")[0])
 			self.log.info("Binding queue %s to exchange %s.", self.config['task_queue_name'], self.config['task_exchange'])
+
+
+
 
 		# "NAK" queue, used for keeping the event loop ticking when we
 		# purposefully do not want to receive messages
