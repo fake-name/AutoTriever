@@ -21,7 +21,7 @@ else:
 VPS_NAME_FORMAT = "scrape-worker-{number}"
 
 def hrs_to_sec(in_val):
-	return in_val * 60 * 60
+	return int(in_val * 60 * 60)
 
 def poke_statsd():
 	interface = salt_runner.VpsHerder()
@@ -209,17 +209,26 @@ def run():
 	last_zero = time.time()
 
 
-	new_create_timeout_secs = 60 * 60 * 2
+	new_create_timeout_secs = hrs_to_sec(1.5)
 
 
 	while 1:
 		# If there's no thread, create it.
 		if proc is None:
+			print("Thread is none. Creating.")
 			proc = multiprocessing.Process(target=run_scheduler)
+			proc.daemon = True
 			proc.start()
 			CREATE_WATCHDOG.value = 0
 
-		print("Watchdog looping! Value: %s, last update: %s/%s ago" % (CREATE_WATCHDOG.value, int(time.time() - last_zero), new_create_timeout_secs))
+		try:
+			state = proc.is_alive()
+		except Exception:
+			traceback.print_exc()
+			state = "Failed to get"
+
+
+		print("Watchdog looping! Value: %s, last update: %s/%s ago, thread: %s->%s" % (CREATE_WATCHDOG.value, int(time.time() - last_zero), new_create_timeout_secs, state, proc))
 		# If the worker has touched the watchdog flag, capture the
 		# time that happened.
 		if CREATE_WATCHDOG.value != 0:
@@ -229,7 +238,18 @@ def run():
 		# If the last worker update time is longer ago then the timeout,
 		# destroy the worker thread.
 		if (time.time() - last_zero) > new_create_timeout_secs:
-			proc.terminate()
+			print("Terminating thread!")
+
+			try:
+				while proc.is_alive():
+					print("Trying!")
+					proc.terminate()
+					proc.join()
+					time.sleep(1)
+			except Exception:
+				print("Exception in terminate!")
+				traceback.print_exc()
+
 			proc = None
 
 		time.sleep(5)
