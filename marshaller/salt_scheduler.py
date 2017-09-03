@@ -217,7 +217,6 @@ def run():
 		if proc is None:
 			print("Thread is none. Creating.")
 			proc = multiprocessing.Process(target=run_scheduler)
-			proc.daemon = True
 			proc.start()
 			CREATE_WATCHDOG.value = 0
 
