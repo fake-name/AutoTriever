@@ -244,8 +244,7 @@ def run():
 				while proc.is_alive():
 					print("Trying!")
 					proc.terminate()
-					proc.join()
-					time.sleep(1)
+					proc.join(timeout=1.0)
 			except Exception:
 				print("Exception in terminate!")
 				traceback.print_exc()
