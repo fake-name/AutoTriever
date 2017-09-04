@@ -116,7 +116,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 
 	errorOutCount = 2
 	# retryDelay = 0.1
-	retryDelay = 0.0
+	retryDelay = 0.01
 
 	data = None
 
@@ -136,7 +136,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 		self.cr_driver = None
 		self.use_socks = use_socks
 		# Override the global default socket timeout, so hung connections will actually time out properly.
-		socket.setdefaulttimeout(15)
+		socket.setdefaulttimeout(5)
 
 		self.log = logging.getLogger(logPath)
 		# print("Webget init! Logpath = ", logPath)
