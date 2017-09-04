@@ -136,14 +136,15 @@ class VpsScheduler(object):
 			self.log.info("	%s", node_tmp)
 
 		target = self.build_target_vm_list()
-		self.log.info("Active managed VPSes: %s", active)
-		self.log.info("Target VPS set: %s", target)
 
 		# Whoo set math!
 		missing = target - active
 		extra   = active - target
-		self.log.info("Need to create VMs: %s", missing)
-		self.log.info("Need to destroy VMs: %s", extra)
+
+		self.log.info("Active managed VPSes: %s", active)
+		self.log.info("Target VPS set      : %s", target)
+		self.log.info("Need to create VMs  : %s", missing)
+		self.log.info("Need to destroy VMs : %s", extra)
 
 		for vm_name in extra:
 			self.destroy_vm(vm_name)
@@ -219,6 +220,7 @@ def run():
 			proc = multiprocessing.Process(target=run_scheduler)
 			proc.start()
 			CREATE_WATCHDOG.value = 0
+			last_zero = time.time()
 
 		try:
 			state = proc.is_alive()
