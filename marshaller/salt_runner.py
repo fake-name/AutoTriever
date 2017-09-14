@@ -88,7 +88,7 @@ SETTINGS_BASE = {
 	"RPC_RABBIT_VHOST" : "/rpcsys",
 	"NU_RABBIT_VHOST"  : "/nu-feeds",
 
-	"threads"  : 8,
+	"threads"  : 10,
 
 }
 
