@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import time
+import os.path
 import random
 import socket
 import urllib.parse
@@ -21,55 +22,25 @@ class WebGetCrMixin(object):
 		self.cr_driver = None
 
 
-	def _initCrWebDriver(self):
-		raise RuntimeError("FIXME!")
-		if self.cr_driver:
-			self.cr_driver.quit()
-		dcap = dict(DesiredCapabilities.CHROME)
-		wgSettings = dict(self.browserHeaders)
-		# Install the headers from the WebGet class into phantomjs
-		user_agent = wgSettings.pop('User-Agent')
-		dcap["chrome.page.settings.userAgent"] = user_agent
-		for headerName in wgSettings:
-			if headerName != 'Accept-Encoding':
-				dcap['chrome.page.customHeaders.{header}'.format(header=headerName)] = wgSettings[headerName]
+	def _initChrome(self):
+		crbin = "google-chrome"
+		self._cr = ChromeController.ChromeRemoteDebugInterface(crbin)
 
-		dcap["chrome.switches"] = ["--user-agent="+user_agent]
-
-
-		chromedriver = r'./venv/bin/chromedriver'
-		chrome       = r'./Headless/headless_shell'
-
-		chrome_options = selenium.webdriver.chrome.options.Options()
-		chrome_options.binary_location = chrome
-		chrome_options.add_argument('--load-component-extension')
-		chrome_options.add_argument("--user-agent=\"{}\"".format(user_agent))
-		chrome_options.add_argument('--verbose')
-		chrome_options.add_argument('--no-sandbox')
-		chrome_options.add_argument('--disable-extension')
-
-		self.cr_driver = selenium.webdriver.Chrome(chrome_options=chrome_options, desired_capabilities=dcap)
-		# We can't set the chrome desired capabilities, since headless chrome
-		# doesn't allow extensions.
-
-		self.cr_driver.set_page_load_timeout(30)
-
-
-	def _syncIntoCrWebDriver(self):
+	def _syncIntoChrome(self):
 		# TODO
 		pass
 
-	def _syncOutOfCrWebDriver(self):
+	def _syncOutOfChrome(self):
 		for cookie in self.cr_driver.get_cookies():
 			self.addSeleniumCookie(cookie)
 
 
-	def getItemChromium(self, itemUrl):
+	def getItemChrome(self, itemUrl):
 		self.log.info("Fetching page for URL: '%s' with PhantomJS" % itemUrl)
 
 		if not self.cr_driver:
-			self._initCrWebDriver()
-		self._syncIntoCrWebDriver()
+			self._initChrome()
+		self._syncIntoChrome()
 
 		with load_delay_context_manager(self.cr_driver):
 			self.cr_driver.get(itemUrl)
@@ -78,7 +49,7 @@ class WebGetCrMixin(object):
 		fileN = urllib.parse.unquote(urllib.parse.urlparse(self.cr_driver.current_url)[2].split("/")[-1])
 		fileN = bs4.UnicodeDammit(fileN).unicode_markup
 
-		self._syncOutOfCrWebDriver()
+		self._syncOutOfChrome()
 
 		# Probably a bad assumption
 		mType = "text/html"
@@ -105,8 +76,8 @@ class WebGetCrMixin(object):
 		self.log.info("Getting HEAD with PhantomJS")
 
 		if not self.cr_driver:
-			self._initCrWebDriver()
-		self._syncIntoCrWebDriver()
+			self._initChrome()
+		self._syncIntoChrome()
 
 		def try_get(loc_url):
 			tries = 3

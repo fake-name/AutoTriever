@@ -38,4 +38,4 @@ class PluginInterface_RemoteExec():
 		return getattr(instantiated, call_name)(*call_args, **call_kwargs)
 
 	def test(self):
-		run_test.run_test(self)
+		run_test.validate_deserialize(self)

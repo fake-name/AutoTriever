@@ -48,18 +48,19 @@ function setup_headless_chrome() {
 	# sudo apt-get download chromium-browser
 	# sudo dpkg -i --force-all chromium-browser*.deb
 
+	wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+	sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+	sudo apt-get update
+	sudo apt-get install google-chrome-stable -y
 
-	set +e
-
-
-	# Use our local phantomjs if it appears to be intact and valid.
-	tar tf ./vendored/MinimalHeadless.tar.gz
-	if [ $? -eq 0 ]
-	then
-		echo Have Headless Chromium. Extracting.
-		tar -xvf ./vendored/MinimalHeadless.tar.gz
-	fi;
-	set -e
+	# set +e
+	# tar tf ./vendored/MinimalHeadless.tar.gz
+	# if [ $? -eq 0 ]
+	# then
+	# 	echo Have Headless Chromium. Extracting.
+	# 	tar -xvf ./vendored/MinimalHeadless.tar.gz
+	# fi;
+	# set -e
 }
 
 if [ -d "venv" ]

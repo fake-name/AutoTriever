@@ -19,7 +19,7 @@ def client_thread(mqueue):
 
 	mqueue.put(message_bytes)
 
-def run_test(self):
+def validate_deserialize(cls_body):
 	print("Starting process")
 	mqueue = multiprocessing.Queue()
 	proc = multiprocessing.Process(target=client_thread, args=(mqueue, ))
@@ -36,8 +36,8 @@ def run_test(self):
 
 	ser_obj_out = msgpack.unpackb(message_bytes, use_list=True, encoding='utf-8')
 
-	ret = self.call_code(ser_obj_out)
+	ret = cls_body.call_code(ser_obj_out)
 
-	self.log.info("Return size: %s", len(ret))
+	cls_body.log.info("Return size: %s", len(ret))
 
 	return ret
