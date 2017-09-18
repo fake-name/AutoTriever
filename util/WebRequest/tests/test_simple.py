@@ -1,4 +1,3 @@
-
 import unittest
 import socket
 import json
@@ -11,18 +10,19 @@ from threading import Thread
 
 import util.WebRequest as WebRequest
 
-class TestPlainCreation(unittest.TestCase):
 
+class TestPlainCreation(unittest.TestCase):
 	def test_plain_instantiation_1(self):
 		wg = WebRequest.WebGetRobust()
 		self.assertTrue(wg is not None)
+
 	def test_plain_instantiation_2(self):
 		wg = WebRequest.WebGetRobust(cloudflare=True)
 		self.assertTrue(wg is not None)
+
 	def test_plain_instantiation_3(self):
 		wg = WebRequest.WebGetRobust(use_socks=True)
 		self.assertTrue(wg is not None)
-
 
 
 class MockServerRequestHandler(BaseHTTPRequestHandler):
@@ -37,20 +37,20 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 
 		elif self.path == "/html-decode":
 			self.send_response(200)
-			self.send_header('Content-type',"text/html")
+			self.send_header('Content-type', "text/html")
 			self.end_headers()
 			self.wfile.write(b"Root OK?")
 
 		elif self.path == "/html/real":
 			self.send_response(200)
-			self.send_header('Content-type',"text/html")
+			self.send_header('Content-type', "text/html")
 			self.end_headers()
 			self.wfile.write(b"<html><body>Root OK?</body></html>")
 
 		elif self.path == "/compressed/deflate":
 			self.send_response(200)
 			self.send_header('Content-Encoding', 'deflate')
-			self.send_header('Content-type',"text/html")
+			self.send_header('Content-type', "text/html")
 			self.end_headers()
 
 			inb = b"Root OK?"
@@ -61,20 +61,19 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 		elif self.path == "/compressed/gzip":
 			self.send_response(200)
 			self.send_header('Content-Encoding', 'gzip')
-			self.send_header('Content-type',"text/html")
+			self.send_header('Content-type', "text/html")
 			self.end_headers()
 			self.wfile.write(gzip.compress(b"Root OK?"))
 
-
 		elif self.path == "/json/invalid":
 			self.send_response(200)
-			self.send_header('Content-type',"text/html")
+			self.send_header('Content-type', "text/html")
 			self.end_headers()
 			self.wfile.write(b"LOLWAT")
 
 		elif self.path == "/json/valid":
 			self.send_response(200)
-			self.send_header('Content-type',"text/html")
+			self.send_header('Content-type', "text/html")
 			self.end_headers()
 			self.wfile.write(b'{"oh" : "hai"}')
 
@@ -89,10 +88,9 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 			self.wfile.write(b"LOLWAT?")
 		elif self.path == "/filename/content-disposition":
 			self.send_response(200)
-			self.send_header('Content-Disposition',"filename=lolercoaster.txt")
+			self.send_header('Content-Disposition', "filename=lolercoaster.txt")
 			self.end_headers()
 			self.wfile.write(b"LOLWAT?")
-
 
 		elif self.path == "/filename_mime/path-only.txt":
 			self.send_response(200)
@@ -101,23 +99,22 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 
 		elif self.path == "/filename_mime/content-disposition":
 			self.send_response(200)
-			self.send_header('Content-Disposition',"filename=lolercoaster.txt")
+			self.send_header('Content-Disposition', "filename=lolercoaster.txt")
 			self.end_headers()
 			self.wfile.write(b"LOLWAT?")
 
 		elif self.path == "/filename_mime/content-disposition-html-suffix":
 			self.send_response(200)
-			self.send_header('Content-Disposition',"filename=lolercoaster.html")
+			self.send_header('Content-Disposition', "filename=lolercoaster.html")
 			self.end_headers()
 			self.wfile.write(b"LOLWAT?")
 
 		elif self.path == "/filename_mime/explicit-html-mime":
 			self.send_response(200)
-			self.send_header('Content-Disposition',"filename=lolercoaster.html")
-			self.send_header('Content-type',"text/html")
+			self.send_header('Content-Disposition', "filename=lolercoaster.html")
+			self.send_header('Content-type', "text/html")
 			self.end_headers()
 			self.wfile.write(b"LOLWAT?")
-
 
 		elif self.path == "/redirect/bad-1":
 			self.send_response(302)
@@ -125,17 +122,17 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 
 		elif self.path == "/redirect/bad-2":
 			self.send_response(302)
-			self.send_header('location',"bad-2")
+			self.send_header('location', "bad-2")
 			self.end_headers()
 
 		elif self.path == "/redirect/bad-3":
 			self.send_response(302)
-			self.send_header('location',"gopher://www.google.com")
+			self.send_header('location', "gopher://www.google.com")
 			self.end_headers()
 
 		elif self.path == "/redirect/from-1":
 			self.send_response(302)
-			self.send_header('location',"to-1")
+			self.send_header('location', "to-1")
 			self.end_headers()
 
 		if self.path == "/redirect/to-1":
@@ -145,7 +142,7 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 
 		elif self.path == "/redirect/from-2":
 			self.send_response(302)
-			self.send_header('uri',"to-2")
+			self.send_header('uri', "to-2")
 			self.end_headers()
 
 		if self.path == "/redirect/to-2":
@@ -153,14 +150,11 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 			self.end_headers()
 			self.wfile.write(b"Redirect-To-2")
 
-
 		elif self.path == "/redirect/from-3":
 			self.send_response(302)
 			newurl = "http://{}:{}".format(self.server.server_address[0], self.server.server_address[1])
 			self.send_header('uri', newurl)
 			self.end_headers()
-
-
 
 		elif self.path == "/password/expect":
 
@@ -169,13 +163,12 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 
 			val = self.headers['Authorization']
 			passval = val.split(" ")[-1]
-			passstr  = base64.b64decode(passval)
+			passstr = base64.b64decode(passval)
 
 			if passstr == b'lol:wat':
 				self.wfile.write(b"Password Ok?")
 			else:
 				self.wfile.write(b"Password Bad!")
-
 
 
 def get_free_port():
@@ -253,26 +246,29 @@ class TestSimpleFetch(unittest.TestCase):
 		self.assertEqual(fn, 'lolercoaster.txt')
 
 	def test_file_name_mime(self):
-		page, fn, mimet = self.wg.getFileNameMime("http://localhost:{}/filename_mime/path-only.txt".format(self.mock_server_port))
+		page, fn, mimet = self.wg.getFileNameMime(
+						"http://localhost:{}/filename_mime/path-only.txt".format(self.mock_server_port))
 		self.assertEqual(page, b'LOLWAT?')
 		self.assertEqual(fn, '')
 		self.assertEqual(mimet, 'text/plain')
 
-		page, fn, mimet = self.wg.getFileNameMime("http://localhost:{}/filename_mime/content-disposition".format(self.mock_server_port))
+		page, fn, mimet = self.wg.getFileNameMime(
+						"http://localhost:{}/filename_mime/content-disposition".format(self.mock_server_port))
 		self.assertEqual(page, b'LOLWAT?')
 		self.assertEqual(fn, 'lolercoaster.txt')
 		self.assertEqual(mimet, 'text/plain')
 
-		page, fn, mimet = self.wg.getFileNameMime("http://localhost:{}/filename_mime/content-disposition-html-suffix".format(self.mock_server_port))
+		page, fn, mimet = self.wg.getFileNameMime(
+						"http://localhost:{}/filename_mime/content-disposition-html-suffix".format(self.mock_server_port))
 		self.assertEqual(page, b'LOLWAT?')
 		self.assertEqual(fn, 'lolercoaster.html')
 		self.assertEqual(mimet, 'text/plain')
 
-		page, fn, mimet = self.wg.getFileNameMime("http://localhost:{}/filename_mime/explicit-html-mime".format(self.mock_server_port))
+		page, fn, mimet = self.wg.getFileNameMime(
+						"http://localhost:{}/filename_mime/explicit-html-mime".format(self.mock_server_port))
 		self.assertEqual(page, 'LOLWAT?')
 		self.assertEqual(fn, 'lolercoaster.html')
 		self.assertEqual(mimet, 'text/html')
-
 
 	def test_get_head(self):
 		inurl_1 = "http://localhost:{}".format(self.mock_server_port)
@@ -292,8 +288,6 @@ class TestSimpleFetch(unittest.TestCase):
 		inurl_2 = "http://localhost:{}/redirect/from-2".format(self.mock_server_port)
 		ctnt_2 = self.wg.getpage(inurl_2)
 		self.assertEqual(ctnt_2, b"Redirect-To-2")
-
-
 
 		inurl_3 = "http://localhost:{}/redirect/from-1".format(self.mock_server_port)
 		outurl_3 = "http://localhost:{}/redirect/to-1".format(self.mock_server_port)
@@ -326,14 +320,11 @@ class TestSimpleFetch(unittest.TestCase):
 		nurl_7 = self.wg.getHead(inurl_7)
 		self.assertEqual(outurl_7, nurl_7)
 
-
 	def test_http_auth(self):
-		wg_1 = WebRequest.WebGetRobust(creds = [("localhost:{}".format(self.mock_server_port), "lol", "wat")])
+		wg_1 = WebRequest.WebGetRobust(creds=[("localhost:{}".format(self.mock_server_port), "lol", "wat")])
 		page = wg_1.getpage("http://localhost:{}/password/expect".format(self.mock_server_port))
 		self.assertEqual(page, b'Password Ok?')
 
-		wg_2 = WebRequest.WebGetRobust(creds = [("localhost:{}".format(self.mock_server_port), "lol", "nope")])
+		wg_2 = WebRequest.WebGetRobust(creds=[("localhost:{}".format(self.mock_server_port), "lol", "nope")])
 		page = wg_2.getpage("http://localhost:{}/password/expect".format(self.mock_server_port))
 		self.assertEqual(page, b'Password Bad!')
-
-

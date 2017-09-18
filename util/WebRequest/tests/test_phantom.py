@@ -1,4 +1,3 @@
-
 import unittest
 import socket
 import json
@@ -12,7 +11,6 @@ from threading import Thread
 import util.WebRequest as WebRequest
 
 
-
 class MockServerRequestHandler(BaseHTTPRequestHandler):
 	def do_GET(self):
 		# Process an HTTP GET request and return a response with an HTTP 200 status.
@@ -20,16 +18,15 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 
 		if self.path == "/":
 			self.send_response(200)
-			self.send_header('Content-type',"text/html")
+			self.send_header('Content-type', "text/html")
 			self.end_headers()
 			self.wfile.write(b"Root OK?")
 
 		elif self.path == "/raw-txt":
 			self.send_response(200)
-			self.send_header('Content-type',"text/plain")
+			self.send_header('Content-type', "text/plain")
 			self.end_headers()
 			self.wfile.write(b"Root OK?")
-
 
 		elif self.path == "/redirect/bad-1":
 			self.send_response(302)
@@ -37,17 +34,17 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 
 		elif self.path == "/redirect/bad-2":
 			self.send_response(302)
-			self.send_header('location',"bad-2")
+			self.send_header('location', "bad-2")
 			self.end_headers()
 
 		elif self.path == "/redirect/bad-3":
 			self.send_response(302)
-			self.send_header('location',"gopher://www.google.com")
+			self.send_header('location', "gopher://www.google.com")
 			self.end_headers()
 
 		elif self.path == "/redirect/from-1":
 			self.send_response(302)
-			self.send_header('location',"to-1")
+			self.send_header('location', "to-1")
 			self.end_headers()
 
 		if self.path == "/redirect/to-1":
@@ -57,14 +54,13 @@ class MockServerRequestHandler(BaseHTTPRequestHandler):
 
 		elif self.path == "/redirect/from-2":
 			self.send_response(302)
-			self.send_header('uri',"to-2")
+			self.send_header('uri', "to-2")
 			self.end_headers()
 
 		if self.path == "/redirect/to-2":
 			self.send_response(200)
 			self.end_headers()
 			self.wfile.write(b"Redirect-To-2")
-
 
 		elif self.path == "/redirect/from-3":
 			self.send_response(302)
@@ -113,7 +109,10 @@ class TestPhantomJS(unittest.TestCase):
 		page_2, fname_2, mtype_2 = self.wg.getItemPhantomJS("http://localhost:{}/raw-txt".format(self.mock_server_port))
 		# I think all this garbage is phantomjs/selenium deciding they know what I want the content to look like for me.
 		# Note that the content isn't specified to be HTML ANYWHERE.
-		self.assertEqual(page_2, '<html><head></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;">Root OK?</pre></body></html>')
+		self.assertEqual(
+						page_2,
+						'<html><head></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;">Root OK?</pre></body></html>'
+		)
 
 	def test_head_pjs_1(self):
 		url_1 = "http://localhost:{}/raw-txt".format(self.mock_server_port)
@@ -131,14 +130,15 @@ class TestPhantomJS(unittest.TestCase):
 		url_3 = "http://localhost:{}/redirect/bad-1".format(self.mock_server_port)
 		purl_3 = self.wg.getHeadPhantomJS("http://localhost:{}/redirect/bad-1".format(self.mock_server_port))
 		self.assertEqual(purl_3, url_3)
+
 	def test_head_pjs_3(self):
 		# Somehow, this turns into 'about:blank'. NFI how
 		url_4 = "about:blank"
 		purl_4 = self.wg.getHeadPhantomJS("http://localhost:{}/redirect/bad-2".format(self.mock_server_port))
 		self.assertEqual(purl_4, url_4)
+
 	def test_head_pjs_4(self):
 		# Somehow, this turns into 'about:blank'. NFI how
 		url_5 = "about:blank"
 		purl_5 = self.wg.getHeadPhantomJS("http://localhost:{}/redirect/bad-3".format(self.mock_server_port))
 		self.assertEqual(purl_5, url_5)
-

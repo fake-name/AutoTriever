@@ -11,7 +11,6 @@ import bs4
 import ChromeController
 
 
-
 class WebGetCrMixin(object):
 	# creds is a list of 3-tuples that gets inserted into the password manager.
 	# it is structured [(top_level_url1, username1, password1), (top_level_url2, username2, password2)]
@@ -19,7 +18,6 @@ class WebGetCrMixin(object):
 		super().__init__(*args, **kwargs)
 
 		self._cr = None
-
 
 	def _initChromium(self):
 		crbin = "google-chrome"
@@ -35,7 +33,6 @@ class WebGetCrMixin(object):
 	def _syncOutOfChromium(self):
 		for cookie in self._cr.get_cookies():
 			self.cj.add(cookie)
-
 
 	def getItemChromium(self, itemUrl):
 		self.log.info("Fetching page for URL: '%s' with Chromium" % itemUrl)
@@ -63,8 +60,6 @@ class WebGetCrMixin(object):
 		content = response['content']
 		return content, fileN, mType
 
-
-
 	def getHeadTitleChromium(self, url, referrer=None):
 		self.log.info("Getting HEAD with Chromium")
 		if not referrer:
@@ -73,7 +68,6 @@ class WebGetCrMixin(object):
 		if not self._cr:
 			self._initChromium()
 		self._syncIntoChromium()
-
 
 		self._cr.blocking_navigate(referrer)
 		time.sleep(random.uniform(2, 6))
@@ -84,8 +78,8 @@ class WebGetCrMixin(object):
 		self._syncOutOfChromium()
 
 		ret = {
-			'url'   : cur_url,
-			'title' : title,
+			'url': cur_url,
+			'title': title,
 		}
 		return ret
 
@@ -98,7 +92,6 @@ class WebGetCrMixin(object):
 			self._initChromium()
 		self._syncIntoChromium()
 
-
 		self._cr.blocking_navigate(referrer)
 		time.sleep(random.uniform(2, 6))
 		self._cr.blocking_navigate(url)
@@ -109,7 +102,6 @@ class WebGetCrMixin(object):
 
 		return cur_url
 
-
 	def close_chromium(self):
 		if self._cr != None:
 			self._cr.close()
@@ -117,7 +109,6 @@ class WebGetCrMixin(object):
 
 	def __del__(self):
 		self.close_chromium()
-
 
 	# def stepThroughCloudFlare_cr(self, url, titleContains='', titleNotContains=''):
 	# 	'''
@@ -145,7 +136,6 @@ class WebGetCrMixin(object):
 	# 	if titleContains and titleNotContains:
 	# 		raise ValueError("You can only pass a single conditional statement!")
 
-
 	# 	self.log.info("Attempting to access page through cloudflare browser verification.")
 
 	# 	dcap = dict(DesiredCapabilities.Chromium)
@@ -168,7 +158,6 @@ class WebGetCrMixin(object):
 	# 	else:
 	# 		raise ValueError("Wat?")
 
-
 	# 	try:
 	# 		WebDriverWait(driver, 20).until(condition)
 	# 		success = True
@@ -185,5 +174,3 @@ class WebGetCrMixin(object):
 	# 	self.__syncCookiesFromFile()
 
 	# 	return success
-
-
