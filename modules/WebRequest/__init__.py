@@ -16,6 +16,10 @@ class PluginInterface_WebRequest(WebGetRobust):
 			'addCookie'             : self.addCookie,
 			'addSeleniumCookie'     : self.addSeleniumCookie,
 			'stepThroughCloudFlare' : self.stepThroughCloudFlare,
+
+			'getHeadChromium'       : self.getHeadChromium,
+			'getHeadTitleChromium'  : self.getHeadTitleChromium,
+			'getItemChromium'       : self.getItemChromium,
 		}
 
 	def test(self):

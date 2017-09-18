@@ -81,7 +81,7 @@ def get_free_port():
 	return port
 
 
-class TestSimpleFetch(unittest.TestCase):
+class TestPhantomJS(unittest.TestCase):
 	def setUp(self):
 
 		# Configure mock server.

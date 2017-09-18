@@ -10,7 +10,6 @@ import bs4
 
 import ChromeController
 
-# THIS IS COMPLETELY BROKEN ATM!
 
 
 class WebGetCrMixin(object):
@@ -19,184 +18,172 @@ class WebGetCrMixin(object):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
-		self.cr_driver = None
+		self._cr = None
 
 
-	def _initChrome(self):
+	def _initChromium(self):
 		crbin = "google-chrome"
 		self._cr = ChromeController.ChromeRemoteDebugInterface(crbin)
 
-	def _syncIntoChrome(self):
-		# TODO
-		pass
+	def _syncIntoChromium(self):
+		# Headers are a list of 2-tuples. We need a dict
+		hdict = dict(self.browserHeaders)
+		self._cr.update_headers(hdict)
+		for cookie in self.cj:
+			self._cr.set_cookie(cookie)
 
-	def _syncOutOfChrome(self):
-		for cookie in self.cr_driver.get_cookies():
-			self.addSeleniumCookie(cookie)
+	def _syncOutOfChromium(self):
+		for cookie in self._cr.get_cookies():
+			self.cj.add(cookie)
 
 
-	def getItemChrome(self, itemUrl):
-		self.log.info("Fetching page for URL: '%s' with PhantomJS" % itemUrl)
+	def getItemChromium(self, itemUrl):
+		self.log.info("Fetching page for URL: '%s' with Chromium" % itemUrl)
 
-		if not self.cr_driver:
-			self._initChrome()
-		self._syncIntoChrome()
+		if not self._cr:
+			self._initChromium()
 
-		with load_delay_context_manager(self.cr_driver):
-			self.cr_driver.get(itemUrl)
-		time.sleep(3)
+		self._syncIntoChromium()
 
-		fileN = urllib.parse.unquote(urllib.parse.urlparse(self.cr_driver.current_url)[2].split("/")[-1])
+		response = self._cr.blocking_navigate_and_get_source(itemUrl, timeout=10)
+
+		raw_url = self._cr.get_current_url()
+		fileN = urllib.parse.unquote(urllib.parse.urlparse(raw_url)[2].split("/")[-1])
 		fileN = bs4.UnicodeDammit(fileN).unicode_markup
 
-		self._syncOutOfChrome()
+		self._syncOutOfChromium()
 
 		# Probably a bad assumption
-		mType = "text/html"
+		if response['binary']:
+			mType = "application/x-binary"
+		else:
+			mType = "text/html"
 
-		# So, self.cr_driver.page_source appears to be the *compressed* page source as-rendered. Because reasons.
-		source = self.cr_driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML")
-
-		assert source != '<head></head><body></body>'
-
-		source = "<html>"+source+"</html>"
-		return source, fileN, mType
-
+		# So, self._cr.page_source appears to be the *compressed* page source as-rendered. Because reasons.
+		content = response['content']
+		return content, fileN, mType
 
 
-	def getHeadTitleChromium(self, url, referrer):
-		self.getHeadChromium(url, referrer)
+
+	def getHeadTitleChromium(self, url, referrer=None):
+		self.log.info("Getting HEAD with Chromium")
+		if not referrer:
+			referrer = url
+
+		if not self._cr:
+			self._initChromium()
+		self._syncIntoChromium()
+
+
+		self._cr.blocking_navigate(referrer)
+		time.sleep(random.uniform(2, 6))
+		self._cr.blocking_navigate(url)
+
+		title, cur_url = self._cr.get_page_url_title()
+
+		self._syncOutOfChromium()
+
 		ret = {
-			'url'   : self.cr_driver.current_url,
-			'title' : self.cr_driver.title,
+			'url'   : cur_url,
+			'title' : title,
 		}
 		return ret
 
-	def getHeadChromium(self, url, referrer):
-		self.log.info("Getting HEAD with PhantomJS")
+	def getHeadChromium(self, url, referrer=None):
+		self.log.info("Getting HEAD with Chromium")
+		if not referrer:
+			referrer = url
 
-		if not self.cr_driver:
-			self._initChrome()
-		self._syncIntoChrome()
+		if not self._cr:
+			self._initChromium()
+		self._syncIntoChromium()
 
-		def try_get(loc_url):
-			tries = 3
-			for x in range(9999):
-				try:
-					self.cr_driver.get(loc_url)
-					time.sleep(random.uniform(2, 6))
-					return
-				except socket.timeout as e:
-					if x > tries:
-						raise e
 
-		try_get(referrer)
-		try_get(url)
+		self._cr.blocking_navigate(referrer)
+		time.sleep(random.uniform(2, 6))
+		self._cr.blocking_navigate(url)
 
-		self._syncOutOfCrWebDriver()
+		dummy_title, cur_url = self._cr.get_page_url_title()
 
-		return self.cr_driver.current_url
+		self._syncOutOfChromium()
 
-	def addSeleniumCookie(self, cookieDict):
-		'''
-		Install a cookie exported from a selenium webdriver into
-		the active opener
-		'''
-		# print cookieDict
-		cookie = http.cookiejar.Cookie(
-				version            = 0,
-				name               = cookieDict['name'],
-				value              = cookieDict['value'],
-				port               = None,
-				port_specified     = False,
-				domain             = cookieDict['domain'],
-				domain_specified   = True,
-				domain_initial_dot = False,
-				path               = cookieDict['path'],
-				path_specified     = False,
-				secure             = cookieDict['secure'],
-				expires            = cookieDict['expiry'] if 'expiry' in cookieDict else None,
-				discard            = False,
-				comment            = None,
-				comment_url        = None,
-				rest               = {"httponly":"%s" % cookieDict['httponly']},
-				rfc2109            = False
-			)
+		return cur_url
 
-		self.addCookie(cookie)
 
+	def close_chromium(self):
+		if self._cr != None:
+			self._cr.close()
+			self._cr = None
 
 	def __del__(self):
-
-		if self.cr_driver != None:
-			self.cr_driver.quit()
+		self.close_chromium()
 
 
-	def stepThroughCloudFlare_cr(self, url, titleContains='', titleNotContains=''):
-		'''
-		Use Selenium+PhantomJS to access a resource behind cloudflare protection.
+	# def stepThroughCloudFlare_cr(self, url, titleContains='', titleNotContains=''):
+	# 	'''
+	# 	Use Selenium+Chromium to access a resource behind cloudflare protection.
 
-		Params:
-			``url`` - The URL to access that is protected by cloudflare
-			``titleContains`` - A string that is in the title of the protected page, and NOT the
-				cloudflare intermediate page. The presence of this string in the page title
-				is used to determine whether the cloudflare protection has been successfully
-				penetrated.
+	# 	Params:
+	# 		``url`` - The URL to access that is protected by cloudflare
+	# 		``titleContains`` - A string that is in the title of the protected page, and NOT the
+	# 			cloudflare intermediate page. The presence of this string in the page title
+	# 			is used to determine whether the cloudflare protection has been successfully
+	# 			penetrated.
 
-		The current WebGetRobust headers are installed into the selenium browser, which
-		is then used to access the protected resource.
+	# 	The current WebGetRobust headers are installed into the selenium browser, which
+	# 	is then used to access the protected resource.
 
-		Once the protected page has properly loaded, the cloudflare access cookie is
-		then extracted from the selenium browser, and installed back into the WebGetRobust
-		instance, so it can continue to use the cloudflare auth in normal requests.
+	# 	Once the protected page has properly loaded, the cloudflare access cookie is
+	# 	then extracted from the selenium browser, and installed back into the WebGetRobust
+	# 	instance, so it can continue to use the cloudflare auth in normal requests.
 
-		'''
+	# 	'''
 
-		if (not titleContains) and (not titleNotContains):
-			raise ValueError("You must pass either a string the title should contain, or a string the title shouldn't contain!")
+	# 	if (not titleContains) and (not titleNotContains):
+	# 		raise ValueError("You must pass either a string the title should contain, or a string the title shouldn't contain!")
 
-		if titleContains and titleNotContains:
-			raise ValueError("You can only pass a single conditional statement!")
-
-
-		self.log.info("Attempting to access page through cloudflare browser verification.")
-
-		dcap = dict(DesiredCapabilities.PHANTOMJS)
-		wgSettings = dict(self.browserHeaders)
-
-		# Install the headers from the WebGet class into phantomjs
-		dcap["phantomjs.page.settings.userAgent"] = wgSettings.pop('User-Agent')
-		for headerName in wgSettings:
-			dcap['phantomjs.page.customHeaders.{header}'.format(header=headerName)] = wgSettings[headerName]
-
-		driver = selenium.webdriver.Chromium(desired_capabilities=dcap)
-		driver.set_window_size(1024, 768)
-
-		driver.get(url)
-
-		if titleContains:
-			condition = EC.title_contains(titleContains)
-		elif titleNotContains:
-			condition = title_not_contains(titleNotContains)
-		else:
-			raise ValueError("Wat?")
+	# 	if titleContains and titleNotContains:
+	# 		raise ValueError("You can only pass a single conditional statement!")
 
 
-		try:
-			WebDriverWait(driver, 20).until(condition)
-			success = True
-			self.log.info("Successfully accessed main page!")
-		except TimeoutException:
-			self.log.error("Could not pass through cloudflare blocking!")
-			success = False
-		# Add cookies to cookiejar
+	# 	self.log.info("Attempting to access page through cloudflare browser verification.")
 
-		for cookie in driver.get_cookies():
-			self.addSeleniumCookie(cookie)
-			#print cookie[u"value"]
+	# 	dcap = dict(DesiredCapabilities.Chromium)
+	# 	wgSettings = dict(self.browserHeaders)
 
-		self.__syncCookiesFromFile()
+	# 	# Install the headers from the WebGet class into Chromium
+	# 	dcap["Chromium.page.settings.userAgent"] = wgSettings.pop('User-Agent')
+	# 	for headerName in wgSettings:
+	# 		dcap['Chromium.page.customHeaders.{header}'.format(header=headerName)] = wgSettings[headerName]
 
-		return success
+	# 	driver = selenium.webdriver.Chromium(desired_capabilities=dcap)
+	# 	driver.set_window_size(1024, 768)
+
+	# 	driver.get(url)
+
+	# 	if titleContains:
+	# 		condition = EC.title_contains(titleContains)
+	# 	elif titleNotContains:
+	# 		condition = title_not_contains(titleNotContains)
+	# 	else:
+	# 		raise ValueError("Wat?")
+
+
+	# 	try:
+	# 		WebDriverWait(driver, 20).until(condition)
+	# 		success = True
+	# 		self.log.info("Successfully accessed main page!")
+	# 	except TimeoutException:
+	# 		self.log.error("Could not pass through cloudflare blocking!")
+	# 		success = False
+	# 	# Add cookies to cookiejar
+
+	# 	for cookie in driver.get_cookies():
+	# 		self.addSeleniumCookie(cookie)
+	# 		#print cookie[u"value"]
+
+	# 	self.__syncCookiesFromFile()
+
+	# 	return success
 
 

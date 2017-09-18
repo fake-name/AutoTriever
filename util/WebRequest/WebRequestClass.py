@@ -132,8 +132,6 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 		else:
 			self.cookie_lock = COOKIEWRITELOCK
 
-		self.pjs_driver = None
-		self.cr_driver = None
 		self.use_socks = use_socks
 		# Override the global default socket timeout, so hung connections will actually time out properly.
 		socket.setdefaulttimeout(5)
@@ -394,7 +392,6 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 					self.log.critical("And the URL could not be printed due to an encoding error")
 
 				time.sleep(self.retryDelay)
-
 
 				continue
 
