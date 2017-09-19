@@ -7,7 +7,6 @@ import socket
 import urllib.parse
 import http.cookiejar
 import bs4
-
 import ChromeController
 
 
@@ -16,12 +15,23 @@ class WebGetCrMixin(object):
 	# it is structured [(top_level_url1, username1, password1), (top_level_url2, username2, password2)]
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-
 		self._cr = None
+		self._cr_port = 9222
+		self._cr_binary = "google-chrome"
+		self._initChromium()
+
+
 
 	def _initChromium(self):
-		crbin = "google-chrome"
-		self._cr = ChromeController.ChromeRemoteDebugInterface(crbin)
+		for _ in range(10):
+			try:
+				self._cr = ChromeController.ChromeRemoteDebugInterface(
+						binary   = self._cr_binary,
+						dbg_port = self._cr_port
+					)
+				return
+			except ChromeController.ChromeStartupException:
+				self._cr_port += 1
 
 	def _syncIntoChromium(self):
 		# Headers are a list of 2-tuples. We need a dict
