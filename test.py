@@ -103,6 +103,6 @@ def test_custom_chrome():
 
 
 if __name__ == "__main__":
-	logging.basicConfig(level=logging.DEBUG)
+	logging.basicConfig(level=logging.INFO)
 	test_custom_chrome()
 	# test()

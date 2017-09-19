@@ -18,16 +18,16 @@ class WebGetCrMixin(object):
 		self._cr = None
 		self._cr_port = 9222
 		self._cr_binary = "google-chrome"
-		self._initChromium()
+		# self._initChromium()
 
 
 
 	def _initChromium(self):
-		for _ in range(10):
+		for _ in range(25):
 			try:
 				self._cr = ChromeController.ChromeRemoteDebugInterface(
-						binary   = self._cr_binary,
-						dbg_port = self._cr_port
+						self._cr_binary,
+						dbg_port = self._cr_port,
 					)
 				return
 			except ChromeController.ChromeStartupException:
