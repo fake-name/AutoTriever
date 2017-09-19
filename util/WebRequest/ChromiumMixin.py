@@ -32,7 +32,7 @@ class WebGetCrMixin(object):
 
 	def _syncOutOfChromium(self):
 		for cookie in self._cr.get_cookies():
-			self.cj.add(cookie)
+			self.cj.set_cookie(cookie)
 
 	def getItemChromium(self, itemUrl):
 		self.log.info("Fetching page for URL: '%s' with Chromium" % itemUrl)
