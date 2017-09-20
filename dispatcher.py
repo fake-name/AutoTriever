@@ -39,6 +39,7 @@ class RpcCallDispatcher(client.RpcHandler):
 						self.log.error("	%s", line.rstrip())
 					self.plugins.pop(plugin_name)
 
+
 		self.log.info("Active post-init plugins: %s", len(self.plugins))
 		for item in self.plugins.keys():
 			self.log.info("Enabled plugin: '%s'", item)
@@ -84,8 +85,6 @@ class RpcCallDispatcher(client.RpcHandler):
 				'cancontinue' : True
 			}
 			return ret
-
-
 
 		args = []
 		kwargs = {}

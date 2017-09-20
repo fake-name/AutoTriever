@@ -119,7 +119,9 @@ class WebGetCrMixin(object):
 			self._cr = None
 
 	def __del__(self):
+		# print("ChromiumMixin destructor")
 		self.close_chromium()
+		super().__del__()
 
 	# def stepThroughCloudFlare_cr(self, url, titleContains='', titleNotContains=''):
 	# 	'''

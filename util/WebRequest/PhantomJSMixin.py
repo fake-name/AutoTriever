@@ -207,9 +207,11 @@ class WebGetPjsMixin(object):
 
 
 	def __del__(self):
-
+		# print("PhantomJS __del__")
 		if self.pjs_driver != None:
 			self.pjs_driver.quit()
+
+		super().__del__()
 
 
 	def stepThroughCloudFlare_pjs(self, url, titleContains='', titleNotContains=''):
