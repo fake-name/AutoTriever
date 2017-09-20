@@ -30,7 +30,8 @@ class WebGetCrMixin(object):
 						dbg_port = self._cr_port,
 					)
 				return
-			except ChromeController.ChromeStartupException:
+			except (ChromeController.ChromeConnectFailure,
+					ChromeController.ChromeStartupException):
 				self._cr_port += 1
 
 	def _syncIntoChromium(self):
