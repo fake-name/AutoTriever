@@ -113,31 +113,7 @@ class RpcHandler(object):
 
 		return partial_capture
 
-
-	def _process(self, body_r, connector):
-		# body = json.loads(body)
-		body = msgpack.unpackb(body_r, use_list=True, encoding='utf-8')
-
-		assert isinstance(body, dict) is True, 'The message must decode to a dict!'
-
-		if "unique_id" in body:
-			with self.seen_lock:
-				mid = body['unique_id']
-				if mid in INSTANCE_SEEN_MESSAGE_IDS:
-					self.log.info("Seen unique message ID: %s. Not fetching again", mid)
-					raise SeenMessageError
-				else:
-					self.log.info("New unique message ID: %s. Fetching.", mid)
-					INSTANCE_SEEN_MESSAGE_IDS.add(mid)
-
-		have_serialize_lock = False
-		if 'serialize' in body and body['serialize']:
-			acquired = self.serialize_lock.acquire(blocking=False)
-			if not acquired:
-				self.log.info("Forcing job to be serialized on worker. Rejecting while a job is active.")
-				raise SeenMessageError
-			have_serialize_lock = True
-
+	def __process(self, body, connector):
 
 		delay = None
 
@@ -202,10 +178,39 @@ class RpcHandler(object):
 		ret.setdefault('partial', False)
 		self.log.info("Returning")
 
-		if have_serialize_lock:
-			self.serialize_lock.release()
-
 		return ret, delay
+
+	def _process(self, body_r, connector):
+		# body = json.loads(body)
+		body = msgpack.unpackb(body_r, use_list=True, encoding='utf-8')
+
+		assert isinstance(body, dict) is True, 'The message must decode to a dict!'
+
+		if "unique_id" in body:
+			with self.seen_lock:
+				mid = body['unique_id']
+				if mid in INSTANCE_SEEN_MESSAGE_IDS:
+					self.log.info("Seen unique message ID: %s. Not fetching again", mid)
+					raise SeenMessageError
+				else:
+					self.log.info("New unique message ID: %s. Fetching.", mid)
+					INSTANCE_SEEN_MESSAGE_IDS.add(mid)
+
+		have_serialize_lock = False
+		if 'serialize' in body and body['serialize']:
+			acquired = self.serialize_lock.acquire(blocking=False)
+			if not acquired:
+				self.log.info("Forcing job to be serialized on worker. Rejecting while a job is active.")
+				raise SeenMessageError
+			have_serialize_lock = True
+
+		try:
+			ret, delay = self.__process(body, connector)
+			return ret, delay
+		finally:
+			if have_serialize_lock:
+				self.serialize_lock.release()
+
 
 		# return json.dumps(ret), delay
 
