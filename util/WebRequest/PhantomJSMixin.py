@@ -211,7 +211,9 @@ class WebGetPjsMixin(object):
 		if self.pjs_driver != None:
 			self.pjs_driver.quit()
 
-		super().__del__()
+		sup = super()
+		if hasattr(sup, '__del__'):
+			sup.__del__()
 
 
 	def stepThroughCloudFlare_pjs(self, url, titleContains='', titleNotContains=''):

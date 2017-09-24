@@ -816,7 +816,10 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 		# print "WGH Destructor called!"
 		# print("WebRequest __del__")
 		self.saveCookies(halting=True)
-		super().__del__()
+
+		sup = super()
+		if hasattr(sup, '__del__'):
+			sup.__del__()
 
 
 
