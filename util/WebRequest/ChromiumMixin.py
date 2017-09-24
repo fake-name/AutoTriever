@@ -1,13 +1,78 @@
 #!/usr/bin/python3
 
 import time
-import os.path
+import logging
 import random
-import socket
+import traceback
 import urllib.parse
-import http.cookiejar
+import threading
+import multiprocessing
+import gc
+
 import bs4
+
+from cachetools import LRUCache
 import ChromeController
+
+
+class ChromeLRUCache(LRUCache):
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.log = logging.getLogger("Main.ChromeInterfaceCache")
+
+	def close_chrome(self, pop_key, to_del):
+		try:
+			self.log.info("LRU Cache is closing chromium interface for %s", pop_key)
+			to_del.close()
+		except Exception:
+			self.log.error("Exception in chromium teardown!")
+			for line in traceback.format_exc().split("\n"):
+				self.log.error("	%s", line)
+
+	def popitem(self):
+		pop_key, to_del = super().popitem()
+		self.close_chrome(pop_key, to_del)
+
+	def close_by_key(self, key):
+		pop_key, to_del = self.pop(key)
+		self.close_chrome(pop_key, to_del)
+
+
+	def get_chromium_instance(self, cr_binary, cr_port):
+		cpid = multiprocessing.current_process().name
+		ctid = threading.current_thread().name
+		csid = "{}-{}".format(cpid, ctid)
+
+		if csid in self:
+			self.log.info("Using existing chromium process.")
+			# We probe the remote chrome to make sure it's not defunct
+			try:
+				self[csid].get_current_url()
+				return self[csid]
+			except ChromeController.ChromeControllerException:
+				self.log.error("Chromium appears to be defunct. Creating new")
+				self.close_by_key(csid)
+
+		self.log.info("Creating Chromium process.")
+		try:
+			instance = ChromeController.ChromeRemoteDebugInterface(cr_binary, dbg_port = cr_port)
+		except Exception as e:
+			self.log.error("Failure creating chromium process!")
+			for line in traceback.format_exc().split("\n"):
+				self.log.error("	%s", line)
+
+			# Sometimes the old process is around because
+			# the GC hasn't seen it, and forcing a collection can fix that.
+			# Yes, this is HORRIBLE.
+			gc.collect()
+
+			raise e
+
+		self[csid] = instance
+		return instance
+
+CHROME_CACHE = ChromeLRUCache(maxsize=2)
+
 
 
 class WebGetCrMixin(object):
@@ -25,9 +90,9 @@ class WebGetCrMixin(object):
 	def _initChromium(self):
 		for _ in range(25):
 			try:
-				self._cr = ChromeController.ChromeRemoteDebugInterface(
+				self._cr = CHROME_CACHE.get_chromium_instance(
 						self._cr_binary,
-						dbg_port = self._cr_port,
+						self._cr_port,
 					)
 				return
 			except (ChromeController.ChromeConnectFailure,

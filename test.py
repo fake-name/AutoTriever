@@ -1,10 +1,11 @@
 
 
-import dispatcher
 import sys
-import deps.logSetup
 import logging
 import time
+import threading
+import dispatcher
+import deps.logSetup
 import util.WebRequest
 
 from selenium import webdriver
@@ -41,10 +42,8 @@ import selenium.webdriver.chrome.options
 # 		except Exception:
 # 			pass
 
-
-
-def test_custom_chrome():
-
+def tfunc(threadnum):
+	print("Thread %s running" % threadnum)
 	wg = util.WebRequest.WebGetRobust()
 	print(wg)
 
@@ -54,6 +53,26 @@ def test_custom_chrome():
 
 	print("Cookies:")
 	print(wg.cj)
+
+	print("Thread %s finished" % threadnum)
+
+
+def test_custom_chrome():
+	t1 = threading.Thread(target=tfunc, args=(1, ))
+	t2 = threading.Thread(target=tfunc, args=(2, ))
+	t3 = threading.Thread(target=tfunc, args=(3, ))
+	t4 = threading.Thread(target=tfunc, args=(4, ))
+	t5 = threading.Thread(target=tfunc, args=(5, ))
+	t1.start()
+	t1.join()
+	t2.start()
+	t2.join()
+	t3.start()
+	t3.join()
+	t4.start()
+	t4.join()
+	t5.start()
+	t5.join()
 
 
 

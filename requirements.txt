@@ -14,6 +14,7 @@ colorama
 selenium
 Faker
 lxml
+cachetools
 msgpack-python==0.4.8
 pytz==2016.10
 
