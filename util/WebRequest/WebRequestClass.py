@@ -285,6 +285,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 		return pgctnt, hName, mime
 
 	def getpage(self, requestedUrl, **kwargs):
+		self.log.info("Fetching content at URL: %s", requestedUrl)
 
 		# strip trailing and leading spaces.
 		requestedUrl = requestedUrl.strip()
