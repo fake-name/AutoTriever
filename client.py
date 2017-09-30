@@ -18,7 +18,7 @@ def chunk_input(inval, chunk_size):
 	for i in range(0, len(inval), chunk_size):
 		yield inval[i:i+chunk_size]
 
-class SeenMessageError(Exception):
+class CannotHandleNow(Exception):
 	pass
 
 INSTANCE_SEEN_MESSAGE_IDS = set()
@@ -190,16 +190,16 @@ class RpcHandler(object):
 		if 'serialize' in body and body['serialize']:
 			acquired = self.serialize_lock.acquire(blocking=False)
 			if not acquired:
-				self.log.info("Forcing job to be serialized on worker. Rejecting while another job is active.")
-				raise SeenMessageError
+				self.log.warning("Forcing job to be serialized on worker. Rejecting while another job is active.")
+				raise CannotHandleNow
 			have_serialize_lock = True
 
 		if "unique_id" in body:
 			with self.seen_lock:
 				mid = body['unique_id']
 				if mid in INSTANCE_SEEN_MESSAGE_IDS:
-					self.log.info("Seen unique message ID: %s (have %s seen items). Not fetching again", mid, len(INSTANCE_SEEN_MESSAGE_IDS))
-					raise SeenMessageError
+					self.log.warning("Seen unique message ID: %s (have %s seen items). Not fetching again", mid, len(INSTANCE_SEEN_MESSAGE_IDS))
+					raise CannotHandleNow
 				else:
 					self.log.info("New unique message ID: %s. Fetching.", mid)
 					INSTANCE_SEEN_MESSAGE_IDS.add(mid)
@@ -283,11 +283,10 @@ class RpcHandler(object):
 					message.ack()
 
 					self.successDelay(postDelay)
-				except SeenMessageError:
-					self.log.warning("Message has uniqueID that has been seen. Returning to processing queue")
+				except CannotHandleNow:
+					self.log.warning("Message cannot be processed at this time. Returning to processing queue")
 					# Push into dead-letter queue.
 					message.reject(requeue=False)
-					time.sleep(1)
 
 			if msg_count > loops:
 				return
