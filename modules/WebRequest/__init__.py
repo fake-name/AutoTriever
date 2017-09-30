@@ -9,17 +9,18 @@ class PluginInterface_WebRequest(WebGetRobust):
 		super().__init__(*args, **kwargs)
 
 		self.calls = {
-			'getpage'               : self.getpage,
-			'getItem'               : self.getItem,
-			'getHead'               : self.getHead,
-			'getFileAndName'        : self.getFileAndName,
-			'addCookie'             : self.addCookie,
-			'addSeleniumCookie'     : self.addSeleniumCookie,
-			'stepThroughCloudFlare' : self.stepThroughCloudFlare,
+			'getpage'                  : self.getpage,
+			'getItem'                  : self.getItem,
+			'getHead'                  : self.getHead,
+			'getFileAndName'           : self.getFileAndName,
+			'addCookie'                : self.addCookie,
+			'addSeleniumCookie'        : self.addSeleniumCookie,
+			'stepThroughCloudFlare'    : self.stepThroughCloudFlare,
 
-			'getHeadChromium'       : self.getHeadChromium,
-			'getHeadTitleChromium'  : self.getHeadTitleChromium,
-			'getItemChromium'       : self.getItemChromium,
+			'chromiumGetRenderedItem'  : self.chromiumGetRenderedItem,
+			'getHeadChromium'          : self.getHeadChromium,
+			'getHeadTitleChromium'     : self.getHeadTitleChromium,
+			'getItemChromium'          : self.getItemChromium,
 		}
 
 	def test(self):
