@@ -122,7 +122,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 
 	# creds is a list of 3-tuples that gets inserted into the password manager.
 	# it is structured [(top_level_url1, username1, password1), (top_level_url2, username2, password2)]
-	def __init__(self, creds=None, logPath="Main.Web", cookie_lock=None,  cloudflare=False, use_socks=False, alt_cookiejar=None):
+	def __init__(self, creds=None, logPath="Main.WebRequest", cookie_lock=None,  cloudflare=False, use_socks=False, alt_cookiejar=None):
 		super().__init__()
 
 		self.rules = {}
