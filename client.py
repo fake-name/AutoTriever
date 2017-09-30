@@ -209,6 +209,7 @@ class RpcHandler(object):
 			return ret, delay
 		finally:
 			if have_serialize_lock:
+				self.log.info("Releasing serialization lock.")
 				self.serialize_lock.release()
 
 

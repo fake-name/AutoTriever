@@ -153,6 +153,8 @@ class WebGetCrMixin(object):
 
 		self._syncOutOfChromium()
 
+		self.log.info("Resolved URL for %s -> %s", url, cur_url)
+
 		ret = {
 			'url': cur_url,
 			'title': title,
