@@ -187,7 +187,7 @@ class Connector:
 
 				dlq_args = {
 					"x-dead-letter-exchange" : self.config['task_exchange'],
-					"x-message-ttl"          : 60 * 1000 * 5
+					"x-message-ttl"          : 30 * 1000
 				}
 				self.channel.exchange_declare(dlex_name, 'direct', auto_delete=False, durable=self.config['durable'])
 				self.channel.queue_declare(dlq_name, auto_delete=False, durable=self.config['durable'], arguments=dlq_args)
