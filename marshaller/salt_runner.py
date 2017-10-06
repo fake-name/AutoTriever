@@ -374,8 +374,11 @@ class VpsHerder(object):
 	def generate_conf(self):
 		gen_calls = [
 				self.generate_do_conf,
+				self.generate_do_conf,
 				self.generate_vultr_conf,
 				self.generate_linode_conf,
+				self.generate_linode_conf,
+				self.generate_gce_conf,
 				self.generate_gce_conf,
 				# self.generate_scaleway_conf,
 			]
