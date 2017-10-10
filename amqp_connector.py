@@ -240,13 +240,16 @@ class Connector:
 		# 	self.log.info("Item fetched from queue.")
 		# return ret
 
-	def put_response(self, out_msg):
+	def put_response(self, out_msg, routing_key_override=None):
 		if self.config['master']:
 			out_queue = self.config['task_exchange']
 			out_key   = self.config['task_queue_name'].split(".")[0]
 		else:
 			out_queue = self.config['response_exchange']
 			out_key   = self.config['response_queue_name'].split(".")[0]
+
+		if routing_key_override:
+			out_key = routing_key_override
 
 		msg_prop = {}
 		if self.config['durable']:

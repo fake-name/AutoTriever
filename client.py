@@ -42,10 +42,10 @@ class RpcHandler(object):
 		self.settings       = settings
 
 		# Require clientID in settings
-		assert 'clientid'     in settings
-		assert "RABBIT_LOGIN" in settings
-		assert "RABBIT_PASWD" in settings
-		assert "RABBIT_SRVER" in settings
+		assert 'clientid'         in settings
+		assert "RABBIT_LOGIN"     in settings
+		assert "RABBIT_PASWD"     in settings
+		assert "RABBIT_SRVER"     in settings
 		assert "RPC_RABBIT_VHOST" in settings
 
 		if not self.settings:
@@ -64,12 +64,12 @@ class RpcHandler(object):
 
 		curDir = os.path.split(curFile)[0]
 		caCert = os.path.abspath(os.path.join(curDir, './deps/cacert.pem'))
-		cert = os.path.abspath(os.path.join(curDir, './deps/cert.pem'))
-		keyf = os.path.abspath(os.path.join(curDir, './deps/key.pem'))
+		cert   = os.path.abspath(os.path.join(curDir, './deps/cert.pem'))
+		keyf   = os.path.abspath(os.path.join(curDir, './deps/key.pem'))
 
 		assert os.path.exists(caCert), "No certificates found on path '%s'" % caCert
-		assert os.path.exists(cert), "No certificates found on path '%s'" % cert
-		assert os.path.exists(keyf), "No certificates found on path '%s'" % keyf
+		assert os.path.exists(cert),   "No certificates found on path '%s'" % cert
+		assert os.path.exists(keyf),   "No certificates found on path '%s'" % keyf
 
 
 		return {"cert_reqs" : ssl.CERT_REQUIRED,
@@ -80,10 +80,11 @@ class RpcHandler(object):
 
 
 
-	def process(self, body, context_responder):
+	def process(self, body, context_responder):  # pylint: disable=unused-argument
 		raise ValueError("This must be subclassed!")
 
-	def partial_response(self, context, connector):
+
+	def partial_response(self, context, connector, response_routing_key):
 		# Hurray for closure abuse.
 		def partial_capture(logs, content):
 			assert isinstance(content, dict), '`partial response` must be passed a dict!'
@@ -109,11 +110,11 @@ class RpcHandler(object):
 			if 'extradat' in context:
 				response['extradat'] = context['extradat']
 
-			self.put_message_chunked(response, connector)
+			self.put_message_chunked(response, connector, routing_key_override=response_routing_key)
 
 		return partial_capture
 
-	def __process(self, body, connector):
+	def _process_internal(self, body, connector, response_routing_key):
 
 		delay = None
 
@@ -122,7 +123,7 @@ class RpcHandler(object):
 				delay = int(body['postDelay'])
 
 			self.log.info("Received request. Processing.")
-			ret = self.process(body, self.partial_response(body, connector))
+			ret = self.process(body, self.partial_response(body, connector, response_routing_key))
 
 			assert isinstance(ret, dict), '`process()` call in child-class must return a dict!'
 
@@ -180,7 +181,7 @@ class RpcHandler(object):
 
 		return ret, delay
 
-	def _process(self, body_r, connector):
+	def _process_binary_message(self, body_r, connector):
 		# body = json.loads(body)
 		body = msgpack.unpackb(body_r, use_list=True, encoding='utf-8')
 
@@ -204,9 +205,11 @@ class RpcHandler(object):
 					self.log.info("New unique message ID: %s. Fetching.", mid)
 					INSTANCE_SEEN_MESSAGE_IDS.add(mid)
 
+		response_routing_key = body.get('response_routing_key', "none")
+
 		try:
-			ret, delay = self.__process(body, connector)
-			return ret, delay
+			ret, delay = self._process_internal(body, connector, response_routing_key)
+			return ret, delay, response_routing_key
 		finally:
 			if have_serialize_lock:
 				self.log.info("Releasing serialization lock.")
@@ -233,7 +236,7 @@ class RpcHandler(object):
 					self.log.info( "Breaking due to exit flag being set")
 					break
 
-	def put_message_chunked(self, message, connector):
+	def put_message_chunked(self, message, connector, routing_key_override=None):
 
 		message_bytes = msgpack.packb(message, use_bin_type=True)
 		if len(message_bytes) < CHUNK_SIZE_BYTES:
@@ -245,7 +248,7 @@ class RpcHandler(object):
 			bmessage = msgpack.packb(message, use_bin_type=True)
 
 			self.log.info("Response message size: %0.3fK. Sending", len(bmessage)/1024.0)
-			connector.put_response(bmessage)
+			connector.put_response(bmessage, routing_key_override=routing_key_override)
 		else:
 			chunked_id = "chunk-merge-key-"+uuid.uuid4().hex
 			chunkl = list(enumerate(chunk_input(message_bytes, CHUNK_SIZE_BYTES)))
@@ -259,7 +262,7 @@ class RpcHandler(object):
 				}
 				bmessage = msgpack.packb(message, use_bin_type=True)
 				self.log.info("Response chunk message size: %0.3fK. Sending", len(bmessage)/1024.0)
-				connector.put_response(bmessage)
+				connector.put_response(bmessage, routing_key_override=routing_key_override)
 
 
 
@@ -275,9 +278,9 @@ class RpcHandler(object):
 				self.log.info("Processing message. (%s of %s before connection reset)", msg_count, loops)
 
 				try:
-					response, postDelay = self._process(message.body, connector_instance)
+					response, postDelay, routing_key_override = self._process_binary_message(message.body, connector_instance)
 
-					self.put_message_chunked(response, connector_instance)
+					self.put_message_chunked(response, connector_instance, routing_key_override=routing_key_override)
 					# connector_instance.put_response(response)
 
 					# Ack /after/ we've done the task.
