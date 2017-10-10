@@ -17,7 +17,7 @@ mkdir -p out/Default
 echo 'import("//build/args/headless.gn")'   > out/Headless/args.gn
 echo 'is_debug = false'                    >> out/Headless/args.gn
 echo 'symbol_level = 0'                    >> out/Headless/args.gn
-echo 'is_component_build = true'           >> out/Headless/args.gn
+echo 'is_component_build = false'           >> out/Headless/args.gn
 # echo 'remove_webcore_debug_symbols = true' >> out/Headless/args.gn
 # echo 'enable_nacl = false'                 >> out/Headless/args.gn
 
@@ -27,6 +27,6 @@ echo 'is_component_build = true'           >> out/Headless/args.gn
 # echo 'enable_nacl = false'                 >> out/Default/args.gn
 gn gen out/Headless
 # gn gen out/Default
-ninja -C out/Headless headless
+ninja -C out/Headless headless_shell
 # ninja -C out/Default
 
