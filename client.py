@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 import logging
 import uuid
@@ -14,12 +13,15 @@ from state import RUN_STATE
 # CHUNK_SIZE_BYTES = 250 * 1024
 CHUNK_SIZE_BYTES = 100 * 1024
 
+
 def chunk_input(inval, chunk_size):
 	for i in range(0, len(inval), chunk_size):
-		yield inval[i:i+chunk_size]
+		yield inval[i:i + chunk_size]
+
 
 class CannotHandleNow(Exception):
 	pass
+
 
 INSTANCE_SEEN_MESSAGE_IDS = set()
 
@@ -36,6 +38,31 @@ def forward_attachments(context, response):
 
 	return response
 
+
+def findCert():
+	'''
+	Verify the SSL cert exists in the proper place.
+	'''
+
+	curFile = os.path.abspath(__file__)
+
+	curDir = os.path.split(curFile)[0]
+	caCert = os.path.abspath(os.path.join(curDir, './deps/cacert.pem'))
+	cert = os.path.abspath(os.path.join(curDir, './deps/cert.pem'))
+	keyf = os.path.abspath(os.path.join(curDir, './deps/key.pem'))
+
+	assert os.path.exists(caCert), "No certificates found on path '%s'" % caCert
+	assert os.path.exists(cert), "No certificates found on path '%s'" % cert
+	assert os.path.exists(keyf), "No certificates found on path '%s'" % keyf
+
+	return {
+					"cert_reqs": ssl.CERT_REQUIRED,
+					"ca_certs": caCert,
+					"keyfile": keyf,
+					"certfile": cert,
+	}
+
+
 class RpcHandler(object):
 	die = False
 
@@ -50,12 +77,12 @@ class RpcHandler(object):
 		self.log = logging.getLogger(logPath)
 		self.log.info("RPC Management class instantiated.")
 
-		self.seen_lock      = seen_lock
+		self.seen_lock = seen_lock
 		self.serialize_lock = serialize_lock
-		self.settings       = settings
+		self.settings = settings
 
 		# Require clientID in settings
-		assert 'clientid'     in settings
+		assert 'clientid' in settings
 		assert "RABBIT_LOGIN" in settings
 		assert "RABBIT_PASWD" in settings
 		assert "RABBIT_SRVER" in settings
@@ -64,38 +91,10 @@ class RpcHandler(object):
 		if not self.settings:
 			raise ValueError("The 'settings.json' file was not found!")
 
-		self.cert = self.findCert()
-
 		self.connector = None
-
-	def findCert(self):
-		'''
-		Verify the SSL cert exists in the proper place.
-		'''
-
-		curFile = os.path.abspath(__file__)
-
-		curDir = os.path.split(curFile)[0]
-		caCert = os.path.abspath(os.path.join(curDir, './deps/cacert.pem'))
-		cert = os.path.abspath(os.path.join(curDir, './deps/cert.pem'))
-		keyf = os.path.abspath(os.path.join(curDir, './deps/key.pem'))
-
-		assert os.path.exists(caCert), "No certificates found on path '%s'" % caCert
-		assert os.path.exists(cert), "No certificates found on path '%s'" % cert
-		assert os.path.exists(keyf), "No certificates found on path '%s'" % keyf
-
-
-		return {"cert_reqs" : ssl.CERT_REQUIRED,
-				"ca_certs" : caCert,
-				"keyfile"  : keyf,
-				"certfile"  : cert,
-			}
-
-
 
 	def process(self, body, context_responder):  # pylint: disable=unused-argument
 		raise ValueError("This must be subclassed!")
-
 
 	def capture_partial_response(self, context, response_routing_key=None):
 		# Hurray for closure abuse.
@@ -103,15 +102,15 @@ class RpcHandler(object):
 			assert isinstance(content, dict), '`partial response` must be passed a dict!'
 			self.log.info("Doing incremental response transmission")
 			response = {
-				'ret'          : (logs, content),
-				'success'      : True,
-				'cancontinue'  : True,
-				'partial'      : True,
-				'dispatch_key' : context['dispatch_key'],
-				'module'       : context['module'],
-				'call'         : context['call'],
-				'user'         : self.settings['clientid'],
-				'user_uuid'    : self.settings['client_key'],
+							'ret': (logs, content),
+							'success': True,
+							'cancontinue': True,
+							'partial': True,
+							'dispatch_key': context['dispatch_key'],
+							'module': context['module'],
+							'call': context['call'],
+							'user': self.settings['clientid'],
+							'user_uuid': self.settings['client_key'],
 			}
 
 			response = forward_attachments(context, response)
@@ -135,12 +134,10 @@ class RpcHandler(object):
 
 			assert isinstance(response, dict), '`process()` call in child-class must return a dict!'
 
-			response.setdefault('success',     True)
+			response.setdefault('success', True)
 			response.setdefault('cancontinue', True)
 
 			self.log.info("Processing complete. Submitting job with id '%s'.", body['jobid'])
-
-
 
 		except Exception as exc:
 			if "unique_id" in body:
@@ -148,10 +145,10 @@ class RpcHandler(object):
 					INSTANCE_SEEN_MESSAGE_IDS.discard(body['unique_id'])
 
 			response = {
-				'success'     : False,
-				'error'       : "unknown",
-				'traceback'   : traceback.format_exc().split("\n"),
-				'cancontinue' : True
+							'success': False,
+							'error': "unknown",
+							'traceback': traceback.format_exc().split("\n"),
+							'cancontinue': True
 			}
 
 			if hasattr(exc, 'log_data'):
@@ -162,7 +159,6 @@ class RpcHandler(object):
 				self.log.error(line)
 
 		return response, delay
-
 
 	def _dispatch_binary_message(self, body_r):
 		# body = json.loads(body)
@@ -178,7 +174,8 @@ class RpcHandler(object):
 				with self.seen_lock:
 					mid = body['unique_id']
 					if mid in INSTANCE_SEEN_MESSAGE_IDS:
-						self.log.warning("Seen unique message ID: %s (have %s seen items). Not fetching again", mid, len(INSTANCE_SEEN_MESSAGE_IDS))
+						self.log.warning("Seen unique message ID: %s (have %s seen items). Not fetching again", mid,
+																							len(INSTANCE_SEEN_MESSAGE_IDS))
 						raise CannotHandleNow
 					else:
 						self.log.info("New unique message ID: %s. Fetching.", mid)
@@ -192,7 +189,6 @@ class RpcHandler(object):
 
 			response_routing_key = body.get('response_routing_key', "none")
 
-
 			response, delay = self._call_dispatcher(body, response_routing_key)
 
 			if 'cancontinue' not in response:
@@ -202,15 +198,12 @@ class RpcHandler(object):
 				self.log.error('Uncaught error in `process()`. Exiting.')
 				self.die = True
 
-
 			response['user'] = self.settings['clientid']
 			response['user_uuid'] = self.settings['client_key']
-
 
 			# Main return path isn't a partial
 			response.setdefault('partial', False)
 			self.log.info("Returning")
-
 
 			response = forward_attachments(body, response)
 
@@ -219,7 +212,6 @@ class RpcHandler(object):
 			if have_serialize_lock:
 				self.log.info("Releasing serialization lock.")
 				self.serialize_lock.release()
-
 
 	def successDelay(self, sleeptime):
 		'''
@@ -236,7 +228,7 @@ class RpcHandler(object):
 				if (sleeptime - x) % 15 == 0:
 					self.log.info("Sleeping %s more seconds....", sleeptime - x)
 				if not RUN_STATE:
-					self.log.info( "Breaking due to exit flag being set")
+					self.log.info("Breaking due to exit flag being set")
 					break
 
 	def put_message_chunked(self, message, routing_key_override=None):
@@ -245,26 +237,26 @@ class RpcHandler(object):
 		if len(message_bytes) < CHUNK_SIZE_BYTES:
 
 			message = {
-				'chunk-type'         : "complete-message",
-				'data'         : message,
+							'chunk-type': "complete-message",
+							'data': message,
 			}
 			bmessage = msgpack.packb(message, use_bin_type=True)
 
-			self.log.info("Response message size: %0.3fK. Sending", len(bmessage)/1024.0)
+			self.log.info("Response message size: %0.3fK. Sending", len(bmessage) / 1024.0)
 			self.connector.put_response(bmessage, routing_key_override=routing_key_override)
 		else:
-			chunked_id = "chunk-merge-key-"+uuid.uuid4().hex
+			chunked_id = "chunk-merge-key-" + uuid.uuid4().hex
 			chunkl = list(enumerate(chunk_input(message_bytes, CHUNK_SIZE_BYTES)))
 			for idx, chunk in chunkl:
 				message = {
-					'chunk-type'   : "chunked-message",
-					'chunk-num'    : idx,
-					'total-chunks' : len(chunkl),
-					'data'         : chunk,
-					'merge-key'    : chunked_id,
+								'chunk-type': "chunked-message",
+								'chunk-num': idx,
+								'total-chunks': len(chunkl),
+								'data': chunk,
+								'merge-key': chunked_id,
 				}
 				bmessage = msgpack.packb(message, use_bin_type=True)
-				self.log.info("Response chunk message size: %0.3fK. Sending", len(bmessage)/1024.0)
+				self.log.info("Response chunk message size: %0.3fK. Sending", len(bmessage) / 1024.0)
 				self.connector.put_response(bmessage, routing_key_override=routing_key_override)
 
 	def process_messages(self, loops):
@@ -307,30 +299,29 @@ class RpcHandler(object):
 		received.
 
 		The AMQP connection is not maintained due to issues with long-lived connections.
-
 		'''
 
-		sslopts = self.findCert()
+		sslopts = findCert()
 		self.connector = None
+
 		try:
 			while RUN_STATE and not self.die:
 				try:
 					self.log.info("Initializing AMQP Connection!")
 					self.connector = amqp_connector.Connector(
-										userid              = self.settings["RABBIT_LOGIN"],
-										password            = self.settings["RABBIT_PASWD"],
-										host                = self.settings["RABBIT_SRVER"],
-										virtual_host        = self.settings["RPC_RABBIT_VHOST"],
-										ssl                 = sslopts,
-										prefetch            = 2,
-										synchronous         = True,
-										task_exchange_type  = "direct",
-										durable             = True,
-									)
+									userid=self.settings["RABBIT_LOGIN"],
+									password=self.settings["RABBIT_PASWD"],
+									host=self.settings["RABBIT_SRVER"],
+									virtual_host=self.settings["RPC_RABBIT_VHOST"],
+									ssl=sslopts,
+									prefetch=2,
+									synchronous=True,
+									task_exchange_type="direct",
+									durable=True, )
 
 					self.log.info("AMQP Connection initialized. Entering runloop!")
 
-					self.process_messages(100)
+					self.process_messages(1000)
 					self.connector.close()
 					self.connector = None
 
@@ -350,7 +341,6 @@ class RpcHandler(object):
 			self.log.info("Keyboard Interrupt exit!")
 			self.die = True
 
-
 		self.log.info("Halting message consumer.")
 		try:
 			self.connector.close()
@@ -358,7 +348,6 @@ class RpcHandler(object):
 			self.log.error("Closing the connector produced an error!")
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
-
 
 		self.log.info("Closed. Exiting")
 
