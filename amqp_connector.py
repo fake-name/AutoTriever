@@ -240,7 +240,7 @@ class Connector:
 		# 	self.log.info("Item fetched from queue.")
 		# return ret
 
-	def put_response(self, out_msg):
+	def put_response(self, out_msg, routing_key_override=None):
 		if self.config['master']:
 			out_queue = self.config['task_exchange']
 			out_key   = self.config['task_queue_name'].split(".")[0]
@@ -248,14 +248,14 @@ class Connector:
 			out_queue = self.config['response_exchange']
 			out_key   = self.config['response_queue_name'].split(".")[0]
 
+		if routing_key_override:
+			self.log.warning("Response routing key overridden with value %s", routing_key_override)
+			out_key = routing_key_override
+
 		msg_prop = {}
 		if self.config['durable']:
 			# Is this supposed to be a hyphen or a underscore?
 			msg_prop["delivery_mode"] = 2
-			# msg_prop["delivery-mode"] = 2
-
-			# # Dead-Letter if dead for more then 15 minutes
-			# msg_prop["expiration "] = 15 * 60 * 1000
 
 		self.channel.basic_publish(body=out_msg, exchange=out_queue, routing_key=out_key, properties=msg_prop)
 

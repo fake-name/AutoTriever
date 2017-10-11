@@ -23,6 +23,19 @@ class CannotHandleNow(Exception):
 
 INSTANCE_SEEN_MESSAGE_IDS = set()
 
+
+def forward_attachments(context, response):
+	# Copy the jobid and dbid across, so we can cross-reference the job
+	# when it's received.
+	if 'jobid' in context:
+		response['jobid'] = context['jobid']
+	if 'jobmeta' in context:
+		response['jobmeta'] = context['jobmeta']
+	if 'extradat' in context:
+		response['extradat'] = context['extradat']
+
+	return response
+
 class RpcHandler(object):
 	die = False
 
@@ -53,7 +66,7 @@ class RpcHandler(object):
 
 		self.cert = self.findCert()
 
-
+		self.connector = None
 
 	def findCert(self):
 		'''
@@ -80,10 +93,11 @@ class RpcHandler(object):
 
 
 
-	def process(self, body, context_responder):
+	def process(self, body, context_responder):  # pylint: disable=unused-argument
 		raise ValueError("This must be subclassed!")
 
-	def partial_response(self, context, connector):
+
+	def capture_partial_response(self, context, response_routing_key=None):
 		# Hurray for closure abuse.
 		def partial_capture(logs, content):
 			assert isinstance(content, dict), '`partial response` must be passed a dict!'
@@ -100,120 +114,112 @@ class RpcHandler(object):
 				'user_uuid'    : self.settings['client_key'],
 			}
 
-			# Copy the jobid and dbid across, so we can cross-reference the job
-			# when it's received.
-			if 'jobid' in context:
-				response['jobid'] = context['jobid']
-			if 'jobmeta' in context:
-				response['jobmeta'] = context['jobmeta']
-			if 'extradat' in context:
-				response['extradat'] = context['extradat']
+			response = forward_attachments(context, response)
 
-			self.put_message_chunked(response, connector)
+			self.put_message_chunked(response, routing_key_override=response_routing_key)
 
 		return partial_capture
 
-	def __process(self, body, connector):
+	def _call_dispatcher(self, body, response_routing_key):
 
-		delay = None
+		# Delay is zero, unless overridden
+		delay = 0
 
 		try:
-			if 'postDelay' in body:
-				delay = int(body['postDelay'])
+
+			delay = int(body.get('postDelay', 0))
 
 			self.log.info("Received request. Processing.")
-			ret = self.process(body, self.partial_response(body, connector))
+			captured_partial = self.capture_partial_response(body, response_routing_key)
+			response = self.process(body, captured_partial)
 
-			assert isinstance(ret, dict), '`process()` call in child-class must return a dict!'
+			assert isinstance(response, dict), '`process()` call in child-class must return a dict!'
 
-			ret.setdefault('success', True)
-			ret.setdefault('cancontinue', True)
-
+			response.setdefault('success',     True)
+			response.setdefault('cancontinue', True)
 
 			self.log.info("Processing complete. Submitting job with id '%s'.", body['jobid'])
-		except Exception as e:
 
+
+
+		except Exception as exc:
 			if "unique_id" in body:
 				with self.seen_lock:
 					INSTANCE_SEEN_MESSAGE_IDS.discard(body['unique_id'])
 
-			ret = {
+			response = {
 				'success'     : False,
 				'error'       : "unknown",
 				'traceback'   : traceback.format_exc().split("\n"),
 				'cancontinue' : True
 			}
-			if hasattr(e, 'log_data'):
-				ret['log'] = e.log_data
+
+			if hasattr(exc, 'log_data'):
+				response['log'] = exc.log_data
 
 			self.log.error("Had exception?")
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
 
-
-			# Disable the delay if the call had an exception.
-			delay = 0
-
-		if 'cancontinue' not in ret:
-			self.log.error('Invalid return value from `process()`')
-		elif not ret['cancontinue']:
-			self.log.error('Uncaught error in `process()`. Exiting.')
-			self.die = True
+		return response, delay
 
 
-		ret['user'] = self.settings['clientid']
-		ret['user_uuid'] = self.settings['client_key']
-
-
-		# Copy the jobid and dbid across, so we can cross-reference the job
-		# when it's received.
-		if 'jobid' in body:
-			ret['jobid'] = body['jobid']
-		if 'jobmeta' in body:
-			ret['jobmeta'] = body['jobmeta']
-		if 'extradat' in body:
-			ret['extradat'] = body['extradat']
-
-		# Main return path isn't a partial
-		ret.setdefault('partial', False)
-		self.log.info("Returning")
-
-		return ret, delay
-
-	def _process(self, body_r, connector):
+	def _dispatch_binary_message(self, body_r):
 		# body = json.loads(body)
-		body = msgpack.unpackb(body_r, use_list=True, encoding='utf-8')
-
-		assert isinstance(body, dict) is True, 'The message must decode to a dict!'
 
 		have_serialize_lock = False
-		if 'serialize' in body and body['serialize']:
-			acquired = self.serialize_lock.acquire(blocking=False)
-			if not acquired:
-				self.log.warning("Forcing job to be serialized on worker. Rejecting while another job is active.")
-				raise CannotHandleNow
-			have_serialize_lock = True
-
-		if "unique_id" in body:
-			with self.seen_lock:
-				mid = body['unique_id']
-				if mid in INSTANCE_SEEN_MESSAGE_IDS:
-					self.log.warning("Seen unique message ID: %s (have %s seen items). Not fetching again", mid, len(INSTANCE_SEEN_MESSAGE_IDS))
-					raise CannotHandleNow
-				else:
-					self.log.info("New unique message ID: %s. Fetching.", mid)
-					INSTANCE_SEEN_MESSAGE_IDS.add(mid)
-
 		try:
-			ret, delay = self.__process(body, connector)
-			return ret, delay
+
+			body = msgpack.unpackb(body_r, use_list=True, encoding='utf-8')
+
+			assert isinstance(body, dict) is True, 'The message must decode to a dict!'
+
+			if "unique_id" in body:
+				with self.seen_lock:
+					mid = body['unique_id']
+					if mid in INSTANCE_SEEN_MESSAGE_IDS:
+						self.log.warning("Seen unique message ID: %s (have %s seen items). Not fetching again", mid, len(INSTANCE_SEEN_MESSAGE_IDS))
+						raise CannotHandleNow
+					else:
+						self.log.info("New unique message ID: %s. Fetching.", mid)
+						INSTANCE_SEEN_MESSAGE_IDS.add(mid)
+
+			if 'serialize' in body and body['serialize']:
+				have_serialize_lock = self.serialize_lock.acquire(blocking=False)
+				if not have_serialize_lock:
+					self.log.warning("Forcing job to be serialized on worker. Rejecting while another job is active.")
+					raise CannotHandleNow
+
+			response_routing_key = body.get('response_routing_key', "none")
+
+
+			response, delay = self._call_dispatcher(body, response_routing_key)
+
+			if 'cancontinue' not in response:
+				self.log.error('Invalid return value from `process()`')
+
+			elif not response['cancontinue']:
+				self.log.error('Uncaught error in `process()`. Exiting.')
+				self.die = True
+
+
+			response['user'] = self.settings['clientid']
+			response['user_uuid'] = self.settings['client_key']
+
+
+			# Main return path isn't a partial
+			response.setdefault('partial', False)
+			self.log.info("Returning")
+
+
+			response = forward_attachments(body, response)
+
+			return response, delay, response_routing_key
 		finally:
 			if have_serialize_lock:
 				self.log.info("Releasing serialization lock.")
 				self.serialize_lock.release()
 
-
-		# return json.dumps(ret), delay
 
 	def successDelay(self, sleeptime):
 		'''
@@ -233,7 +239,7 @@ class RpcHandler(object):
 					self.log.info( "Breaking due to exit flag being set")
 					break
 
-	def put_message_chunked(self, message, connector):
+	def put_message_chunked(self, message, routing_key_override=None):
 
 		message_bytes = msgpack.packb(message, use_bin_type=True)
 		if len(message_bytes) < CHUNK_SIZE_BYTES:
@@ -245,7 +251,7 @@ class RpcHandler(object):
 			bmessage = msgpack.packb(message, use_bin_type=True)
 
 			self.log.info("Response message size: %0.3fK. Sending", len(bmessage)/1024.0)
-			connector.put_response(bmessage)
+			self.connector.put_response(bmessage, routing_key_override=routing_key_override)
 		else:
 			chunked_id = "chunk-merge-key-"+uuid.uuid4().hex
 			chunkl = list(enumerate(chunk_input(message_bytes, CHUNK_SIZE_BYTES)))
@@ -259,14 +265,12 @@ class RpcHandler(object):
 				}
 				bmessage = msgpack.packb(message, use_bin_type=True)
 				self.log.info("Response chunk message size: %0.3fK. Sending", len(bmessage)/1024.0)
-				connector.put_response(bmessage)
+				self.connector.put_response(bmessage, routing_key_override=routing_key_override)
 
-
-
-	def process_messages(self, connector_instance, loops):
+	def process_messages(self, loops):
 
 		msg_count = 0
-		for message in connector_instance.get_iterator():
+		for message in self.connector.get_iterator():
 			if not RUN_STATE or self.die:
 				return
 
@@ -275,22 +279,28 @@ class RpcHandler(object):
 				self.log.info("Processing message. (%s of %s before connection reset)", msg_count, loops)
 
 				try:
-					response, postDelay = self._process(message.body, connector_instance)
+					response, postDelay, routing_key_override = self._dispatch_binary_message(message.body)
 
-					self.put_message_chunked(response, connector_instance)
+					self.put_message_chunked(response, routing_key_override=routing_key_override)
 					# connector_instance.put_response(response)
 
 					# Ack /after/ we've done the task.
 					message.ack()
-
 					self.successDelay(postDelay)
+
 				except CannotHandleNow:
 					self.log.warning("Message cannot be processed at this time. Returning to processing queue")
 					# Push into dead-letter queue.
 					message.reject(requeue=False)
 
+				except Exception:
+					self.log.warning("Failure when processing message!")
+					# Push into dead-letter queue.
+					message.reject(requeue=False)
+
 			if msg_count > loops:
 				return
+
 	def processEvents(self):
 		'''
 		Connect to the server, wait for a task, and then disconnect untill another job is
@@ -301,12 +311,13 @@ class RpcHandler(object):
 		'''
 
 		sslopts = self.findCert()
-		connector_instance = None
+		self.connector = None
 		try:
 			while RUN_STATE and not self.die:
 				try:
 					self.log.info("Initializing AMQP Connection!")
-					connector_instance = amqp_connector.Connector(userid              = self.settings["RABBIT_LOGIN"],
+					self.connector = amqp_connector.Connector(
+										userid              = self.settings["RABBIT_LOGIN"],
 										password            = self.settings["RABBIT_PASWD"],
 										host                = self.settings["RABBIT_SRVER"],
 										virtual_host        = self.settings["RPC_RABBIT_VHOST"],
@@ -319,9 +330,9 @@ class RpcHandler(object):
 
 					self.log.info("AMQP Connection initialized. Entering runloop!")
 
-					self.process_messages(connector_instance, 100)
-					connector_instance.close()
-					connector_instance = None
+					self.process_messages(100)
+					self.connector.close()
+					self.connector = None
 
 				except IOError:
 					self.log.error("Error while connecting to server.")
@@ -330,6 +341,7 @@ class RpcHandler(object):
 						self.log.error(line)
 					self.log.error("Trying again in 30 seconds.")
 					time.sleep(30)
+					self.connector = None
 					continue
 
 				self.log.info("Connection Established. Awaiting RPC requests")
@@ -341,7 +353,7 @@ class RpcHandler(object):
 
 		self.log.info("Halting message consumer.")
 		try:
-			connector_instance.close()
+			self.connector.close()
 		except Exception:
 			self.log.error("Closing the connector produced an error!")
 			for line in traceback.format_exc().split("\n"):
