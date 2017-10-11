@@ -187,7 +187,7 @@ class RpcHandler(object):
 					self.log.warning("Forcing job to be serialized on worker. Rejecting while another job is active.")
 					raise CannotHandleNow
 
-			response_routing_key = body.get('response_routing_key', "none")
+			response_routing_key = body.get('response_routing_key', None)
 
 			response, delay = self._call_dispatcher(body, response_routing_key)
 
