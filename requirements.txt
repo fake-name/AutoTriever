@@ -5,7 +5,7 @@ git+https://github.com/fake-name/ChromeController.git
 
 PySocks==1.6.7
 dill==0.2.7.1
-rabbitpy
+rabbitpy==1.0.0
 
 APScheduler==3.3.0
 beautifulsoup4==4.5.1
