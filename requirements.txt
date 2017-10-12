@@ -4,7 +4,7 @@ git+https://github.com/berkerpeksag/astor.git
 git+https://github.com/fake-name/ChromeController.git
 
 PySocks==1.6.7
-dill
+dill==0.2.7.1
 rabbitpy
 
 APScheduler==3.3.0
