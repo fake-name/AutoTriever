@@ -1,22 +1,22 @@
 
-requests
+requests==2.18.4
 git+https://github.com/berkerpeksag/astor.git
 git+https://github.com/fake-name/ChromeController.git
 
-PySocks
-dill
-rabbitpy
+PySocks==1.6.7
+dill==0.2.7.1
+rabbitpy==1.0.0
 
-APScheduler==3.3.0
-beautifulsoup4==4.5.1
-cchardet
-colorama
-selenium
-Faker
-lxml
-cachetools
+APScheduler==3.3.1
+beautifulsoup4==4.6.0
+cchardet==2.1.1
+colorama==0.3.9
+selenium==3.6.0
+Faker==0.8.4
+lxml==4.0.0
+cachetools==2.0.1
 msgpack-python==0.4.8
-pytz==2016.10
+pytz==2017.2
 
 
 
