@@ -201,7 +201,7 @@ class VpsHerder(object):
 			'location'           : place,
 
 			'script'             : fqscript,
-			'script_args'        : "-D",
+			# 'script_args'        : "-D",
 		}
 
 		return provider, kwargs
@@ -246,7 +246,7 @@ class VpsHerder(object):
 			'location' : random.choice(places),
 
 			'script'             : fqscript,
-			'script_args'        : "-D",
+			# 'script_args'        : "-D",
 
 			'password'           : gen_random_string(32),
 		}
@@ -312,7 +312,7 @@ class VpsHerder(object):
 			'location' : random.choice(places),
 
 			'script'             : fqscript,
-			'script_args'        : "-D",
+			# 'script_args'        : "-D",
 
 			# I think the gce driver maps 'preemptible' to 'ex_preemptible'
 			# Pass both anyways.
@@ -356,7 +356,7 @@ class VpsHerder(object):
 			'location' : location,
 
 			'script'             : fqscript,
-			'script_args'        : "-D",
+			# 'script_args'        : "-D",
 
 			# 'password'           : gen_random_string(32),
 		}

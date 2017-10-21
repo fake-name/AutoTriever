@@ -70,7 +70,11 @@ class ColourHandler(logging.Handler):
 			record.style = clr.Style.NORMAL
 
 		record.padding = ""
-		print((self.format(record)))
+
+		try:
+			print((self.format(record)))
+		except UnicodeDecodeError:
+			print("Failed to pring log entry!")
 
 class RobustFileHandler(logging.FileHandler):
 	"""
