@@ -450,8 +450,6 @@ class VpsHerder(object):
 			['cmd.run', [dirmake_oneliner, ],      {}],
 			['cmd.run', ["apt-get update", ],      {}],
 			['cmd.run', ["apt-get install -y build-essential git screen", ],      {}],
-			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}],
-			['cmd.run', ["ls /scraper", ], {}],
 			['cmd.run', ["whoami", ], {}],
 
 			# Make swap so
@@ -471,11 +469,23 @@ class VpsHerder(object):
 			['cmd.run', ["locale", ], {}],
 			['cmd.run', ["bash -c locale", ], {}],
 
-			# Install settings
+
+			# Clone and Install settings
+			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}],
+			['cmd.run', ["ls /scraper", ], {}],
 			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}],
 
+
 			# Finally, run the thing
-			['cmd.run', ["./configure.sh", ], {"cwd" : '/scraper'}],
+
+
+			['cmd.run', ["adduser scrapeworker --disabled-password", ], {}],
+			['cmd.run', ["usermod -a -G sudo scrapeworker", ], {}],
+			['cmd.run', ["echo 'scrapeworker ALL=(ALL) NOPASSWD: ALL' | tee -a /etc/sudoers", ], {}],
+
+			['cmd.run', ["chown -R scrapeworker:scrapeworker /scraper", ], {}],
+
+			['cmd.run', ["./configure.sh", ], {"cwd" : '/scraper', 'runas' : 'scrapeworker'}],
 		]
 
 		failures = 0
@@ -516,7 +526,7 @@ class VpsHerder(object):
 			raise VmInitError("Setup command did not return success!")
 
 		self.log.info("Node configured! Starting scraper client!")
-		jobid = self.local.cmd_async(tgt=clientname, fun='cmd.run', arg=["screen -d -m ./run.sh", ], kwarg={"cwd" : '/scraper'})
+		jobid = self.local.cmd_async(tgt=clientname, fun='cmd.run', arg=["screen -d -m ./run.sh", ], kwarg={"cwd" : '/scraper', 'runas' : 'scrapeworker'})
 		self.log.info("Job id: '%s'", jobid)
 
 	################################################################################################
