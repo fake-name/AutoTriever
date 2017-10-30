@@ -8,6 +8,7 @@ class PluginInterface_WebRequest(WebGetRobust):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
+
 		self.calls = {
 			'getpage'                  : self.getpage,
 			'getItem'                  : self.getItem,

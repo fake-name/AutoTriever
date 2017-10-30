@@ -81,15 +81,22 @@ class RpcHandler(object):
 		self.serialize_lock = serialize_lock
 		self.settings = settings
 
-		# Require clientID in settings
-		assert 'clientid' in settings
-		assert "RABBIT_LOGIN" in settings
-		assert "RABBIT_PASWD" in settings
-		assert "RABBIT_SRVER" in settings
-		assert "RPC_RABBIT_VHOST" in settings
+		if settings:
+			# Require clientID in settings
+			assert 'clientid' in settings
+			assert "RABBIT_LOGIN" in settings
+			assert "RABBIT_PASWD" in settings
+			assert "RABBIT_SRVER" in settings
+			assert "RPC_RABBIT_VHOST" in settings
 
-		if not self.settings:
-			raise ValueError("The 'settings.json' file was not found!")
+
+			if not self.settings:
+				raise ValueError("The 'settings.json' file was not found!")
+
+		else:
+			self.log.warning("Settings is NULL")
+			self.log.warning("Assuming running in test mode!")
+
 
 		self.connector = None
 
