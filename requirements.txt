@@ -16,7 +16,7 @@ Faker==0.8.6
 lxml==4.1.0
 cachetools==2.0.1
 msgpack-python==0.4.8
-pytz==2017.2
+pytz==2017.3
 feedgen==0.6.1
 feedparser==5.2.1
 
