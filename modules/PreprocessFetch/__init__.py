@@ -110,6 +110,7 @@ class QidianProcessor(ProcessorBase):
 
 			ent = feed.add_entry()
 
+			ent.title(release['title'])
 			ent.summary(release['summary'])
 			ent.published(release['published'])
 			ent.id(release['guid'])
