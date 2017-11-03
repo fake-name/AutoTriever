@@ -7,7 +7,7 @@ from feedgen.feed import FeedGenerator
 from util.WebRequest import WebGetRobust
 from util.WebRequest import Exceptions as WgExceptions
 
-from . import ProcessorBase
+from modules.PreprocessFetch import ProcessorBase
 
 class QidianProcessor(ProcessorBase.ProcessorBase):
 
@@ -25,6 +25,7 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 		entry.setdefault('authors', "")
 
 		have = have_info.get(entry['guid'], {})
+		have['original_url'] = entry['link']
 
 		if 'resolved_url' not in have:
 			if '/rssbook/' in entry['link']:
@@ -115,8 +116,10 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 	def process_release_list(self, url_list):
 		ret = []
 		for item in url_list:
+
 			tmp = self._check_qidian_release(item, {})
-			ret.append(tmp)
+			if tmp:
+				ret.append(tmp)
 		return ret
 
 

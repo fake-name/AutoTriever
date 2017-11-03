@@ -10,7 +10,7 @@ from feedgen.feed import FeedGenerator
 from util.WebRequest import WebGetRobust
 from util.WebRequest import Exceptions as WgExceptions
 
-from . import QidianTools
+from modules.PreprocessFetch import QidianTools
 
 class PluginInterface_PreprocessFetch(object):
 
@@ -38,7 +38,7 @@ class PluginInterface_PreprocessFetch(object):
 		proc = QidianTools.QidianProcessor()
 		content = proc.process_release_list(feed_urls)
 
-		return content, '', 'application/rss+xml'
+		return content
 
 	def test(self):
 		print("Exec()ing `runTest.sh` from directory root!")
