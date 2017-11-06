@@ -210,7 +210,7 @@ def run():
 	last_zero = time.time()
 
 
-	new_create_timeout_secs = hrs_to_sec(1.5)
+	new_create_timeout_secs = hrs_to_sec(settings.VPS_LIFETIME_HOURS + 1.5)
 
 
 	while 1:
