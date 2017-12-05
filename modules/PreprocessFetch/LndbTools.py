@@ -3,7 +3,7 @@ import logging
 from util.WebRequest import WebGetRobust
 from util.WebRequest import Exceptions as WgExceptions
 
-from . import ProcessorBase
+from modules.PreprocessFetch import ProcessorBase
 
 class LndbProcessor(ProcessorBase.ProcessorBase):
 
