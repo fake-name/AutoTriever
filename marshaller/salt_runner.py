@@ -534,8 +534,8 @@ class VpsHerder(object):
 				self.log.info("Received empty response")
 
 
-		print("Response:")
-		print(resp)
+		# print("Response:")
+		# print(resp)
 
 
 		if resp[clientname] and not resp[clientname].strip().endswith('Setup OK! System is configured for launch'):
@@ -557,7 +557,7 @@ class VpsHerder(object):
 		try:
 			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
 
-			self.log.info("Response: %s", ret)
+			# self.log.info("Response: %s", ret)
 			self.log.info("Instance created!")
 
 			if provider == 'linode' and clientname in ret and ret[clientname] is False:
