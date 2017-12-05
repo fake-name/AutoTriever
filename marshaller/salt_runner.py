@@ -410,6 +410,19 @@ class VpsHerder(object):
 
 		return json.dumps(conf)
 
+	def validate_expect(self, resp, expect):
+		self.log.info("Response: %s", resp)
+
+		assert isinstance(expect, list), "Expect must be a list!"
+
+		for expect_val in expect:
+			if isinstance(expect_val, str):
+				if not expect_val in resp:
+					raise marshaller_exceptions.InvalidDeployResponse("Expected '%s' in response '%s'" % (expect_val, resp))
+			else:
+				raise marshaller_exceptions.InvalidExpectParameter("Invalid expect parameter: '%s' (type: %s)." % (expect_val, type(expect_val)))
+
+
 
 	def configure_client(self, clientname, client_idx, provider=None, provider_kwargs=None):
 		assert "_" not in clientname, "VM names cannot contain _ on digital ocean, I think?"
@@ -419,7 +432,7 @@ class VpsHerder(object):
 			# splat in public keys.
 			['cmd.run', ['mkdir .ssh/', ],      {}, None],
 			['cmd.run', [dirmake_ssh_oneliner, ],      {}, None],
-			['cmd.run', ['pwd', ],      {}, None],
+			['cmd.run', ['pwd', ],      {}, ['/root']],
 			['cmd.run', ['ls -la ', ],      {}, None],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
 				+ 'LKb/iJkABH+hxq8ZL7kXiKuGgeHsI60I2wECMxg17Qs918ND626AkXqlMIUW1SchcAi3rYRMVY0OaGSOutIcjR+mJ6liogTv1DLRD0eRbuollz7XsYz4ILb'
@@ -440,7 +453,7 @@ class VpsHerder(object):
 				+ 'l1O2Tco2FYhfvCiyZvAHv25LLrGzePidR59SzTP7/fLxK7FgmH0m79AOKvjuZaNjb7njmgDhyQggOLU6bJwiiJ7MqldPlic2qCKyQVavLv2nXGIGVXEovtM'
 				+ '9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a .ssh/authorized_keys', ],      {}, None],
 			['cmd.run', ["chmod 0600 .ssh/authorized_keys", ],      {}, None],
-			['cmd.run', ["cat .ssh/authorized_keys", ],      {}, None],
+			['cmd.run', ["cat .ssh/authorized_keys", ],      {}, [' Neko@ODO', ' rwpscrape@fake-url.com', ' durr@mainnas', ]],
 			# So something is missing some of the keys, somehow
 			['cmd.run', ["eval ssh-agent $SHELL", ],      {}, None],
 			['cmd.run', ["ssh-add .ssh/authorized_keys", ],      {}, None],
@@ -450,7 +463,7 @@ class VpsHerder(object):
 			['cmd.run', [dirmake_oneliner, ],      {}, None],
 			['cmd.run', ["apt-get update", ],      {}, None],
 			['cmd.run', ["apt-get install -y build-essential git screen", ],      {}, None],
-			['cmd.run', ["whoami", ], {}, None],
+			['cmd.run', ["whoami", ], {}, ['root']],
 
 			# Make swap so
 			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=4096", ], {}, None],
@@ -465,27 +478,28 @@ class VpsHerder(object):
 			# and break all the things.
 			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ], {}, None],
 			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ], {}, None],
-			['cmd.run', ["dpkg-reconfigure locales", ], {}, None],
+			['cmd.run', ["dpkg-reconfigure locales", ], {}, ['Generating locales...']],
 			['cmd.run', ["locale", ], {}, None],
 			['cmd.run', ["bash -c locale", ], {}, None],
 
 
 			# Clone and Install settings
-			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}, None],
-			['cmd.run', ["ls /scraper", ], {}, None],
+			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}, ["Cloning into '/scraper'"]],
+			['cmd.run', ["ls /scraper", ], {}, ['README.md', 'amqp_connector.py', 'client.py', 'configure.sh',
+							'deps', 'dispatcher.py', 'main.py', 'marshaller', 'modules', 'modules_disabled',
+							'plugin_loader.py', 'requirements.txt', 'run.sh', 'runTests.sh', 'settings.example.json',
+							'state.py', 'test.py', 'util', 'vendored', ]],
 			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}, None],
-
 
 			# Finally, run the thing
 
-
-			['cmd.run', ["adduser scrapeworker --disabled-password", ], {}, None],
+			['cmd.run', ["adduser scrapeworker --disabled-password", ], {}, ["Adding user `scrapeworker'"]],
 			['cmd.run', ["usermod -a -G sudo scrapeworker", ], {}, None],
 			['cmd.run', ["echo 'scrapeworker ALL=(ALL) NOPASSWD: ALL' | tee -a /etc/sudoers", ], {}, None],
 
 			['cmd.run', ["chown -R scrapeworker:scrapeworker /scraper", ], {}, None],
 
-			['cmd.run', ["./configure.sh", ], {"cwd" : '/scraper', 'runas' : 'scrapeworker'}, None],
+			['cmd.run', ["./configure.sh", ], {"cwd" : '/scraper', 'runas' : 'scrapeworker'}, ['Setup OK! System is configured for launch']],
 		]
 
 		failures = 0
@@ -500,9 +514,8 @@ class VpsHerder(object):
 					)
 				self.log.info("Command executed. Clientname in response: %s", clientname in resp)
 				if clientname in resp:
-					self.log.info("Response: %s", resp)
 					if expect:
-						print("Expect: ", expect, expect in resp)
+						self.validate_expect(resp[clientname], expect)
 					failures = 0
 					break
 				else:
