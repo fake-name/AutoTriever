@@ -422,7 +422,7 @@ class VpsHerder(object):
 			else:
 				raise marshaller_exceptions.InvalidExpectParameter("Invalid expect parameter: '%s' (type: %s)." % (expect_val, type(expect_val)))
 
-
+		self.log.info("Command response passed validation.")
 
 	def configure_client(self, clientname, client_idx, provider=None, provider_kwargs=None):
 		assert "_" not in clientname, "VM names cannot contain _ on digital ocean, I think?"
@@ -478,7 +478,7 @@ class VpsHerder(object):
 			# and break all the things.
 			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ], {}, None],
 			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ], {}, None],
-			['cmd.run', ["dpkg-reconfigure locales", ], {}, ['Generating locales...']],
+			['cmd.run', ["dpkg-reconfigure locales", ], {}, None],
 			['cmd.run', ["locale", ], {}, None],
 			['cmd.run', ["bash -c locale", ], {}, None],
 
