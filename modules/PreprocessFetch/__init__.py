@@ -11,6 +11,7 @@ from util.WebRequest import WebGetRobust
 from util.WebRequest import Exceptions as WgExceptions
 
 from modules.PreprocessFetch import QidianTools
+from modules.PreprocessFetch import LndbTools
 
 class PluginInterface_PreprocessFetch(object):
 
@@ -22,7 +23,10 @@ class PluginInterface_PreprocessFetch(object):
 
 		self.calls = {
 			'qidianSmartFeedFetch'                  : self.qidianSmartFeedFetch,
-			'qidianProcessReleaseList'                  : self.qidianProcessReleaseList,
+			'qidianProcessReleaseList'              : self.qidianProcessReleaseList,
+
+			'lndbRenderFetch'                       : self.lndbRenderFetch,
+
 		}
 
 
@@ -39,6 +43,12 @@ class PluginInterface_PreprocessFetch(object):
 		content = proc.process_release_list(feed_urls)
 
 		return content
+
+	def lndbRenderFetch(self, *args, **kwargs):
+		proc = LndbTools.LndbProcessor()
+
+		ret = proc.forward_render_fetch(*args, **kwargs)
+		return ret
 
 	def test(self):
 		print("Exec()ing `runTest.sh` from directory root!")

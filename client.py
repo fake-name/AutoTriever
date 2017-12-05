@@ -249,7 +249,7 @@ class RpcHandler(object):
 			}
 			bmessage = msgpack.packb(message, use_bin_type=True)
 
-			self.log.info("Response message size: %0.3fK. Sending", len(bmessage) / 1024.0)
+			self.log.info("Response message size: %0.3fK. Sending with routing key %s", len(bmessage) / 1024.0, routing_key_override)
 			self.connector.put_response(bmessage, routing_key_override=routing_key_override)
 		else:
 			chunked_id = "chunk-merge-key-" + uuid.uuid4().hex

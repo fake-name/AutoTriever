@@ -68,11 +68,15 @@ class VpsScheduler(object):
 		except stopit.TimeoutException:
 			self.log.info("Timeout instantiating VM %s.", vm_name)
 			traceback.print_exc()
-			self.destroy_vm(vm_name)
+			for _ in range(5):
+				self.destroy_vm(vm_name)
+				time.sleep(2.5)
 		except marshaller_exceptions.VmCreateFailed:
 			self.log.info("Failure instantiating VM %s.", vm_name)
 			traceback.print_exc()
-			self.destroy_vm(vm_name)
+			for _ in range(5):
+				self.destroy_vm(vm_name)
+				time.sleep(2.5)
 
 		self.interface.list_nodes()
 

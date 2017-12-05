@@ -417,80 +417,80 @@ class VpsHerder(object):
 
 		commands = [
 			# splat in public keys.
-			['cmd.run', ['mkdir .ssh/', ],      {}],
-			['cmd.run', [dirmake_ssh_oneliner, ],      {}],
-			['cmd.run', ['pwd', ],      {}],
-			['cmd.run', ['ls -la ', ],      {}],
+			['cmd.run', ['mkdir .ssh/', ],      {}, None],
+			['cmd.run', [dirmake_ssh_oneliner, ],      {}, None],
+			['cmd.run', ['pwd', ],      {}, None],
+			['cmd.run', ['ls -la ', ],      {}, None],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
 				+ 'LKb/iJkABH+hxq8ZL7kXiKuGgeHsI60I2wECMxg17Qs918ND626AkXqlMIUW1SchcAi3rYRMVY0OaGSOutIcjR+mJ6liogTv1DLRD0eRbuollz7XsYz4ILb'
 				+ 'i9kEsqwaly92vK6vlIVlAWtDoNf95c6jk/lh0M5p1LV0lwrEtfCreuv1rrOldUdwgU4wCFgRI+p6FXs69+OsNWxZSOSr28eE9sbsHxIxthcRHMtsnDxzeJ1'
-				+ 'PVhvC4JclFEHEZSlYaemI6zOezVuBuipwSv Neko@ODO | tee -a .ssh/authorized_keys', ],      {}],
+				+ 'PVhvC4JclFEHEZSlYaemI6zOezVuBuipwSv Neko@ODO | tee -a .ssh/authorized_keys', ],      {}, None],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCi7/9jOHVJj0ODnPqinqFbOaErT2pNaeq0pYKapcG2DHGrvVlX3ZUO8z7uY1QZX0OiC3y'
 				+ '7rv4c7NEl7/OtmRDfNPd5YgpAuXelbwu5Pj1BjQq1pn3CeP4zhw4gcEPx2UAc5Rw1jzH8vE7NMf2iReBiHr2SfSLh8T/jt5bEAVDCnhMS/8YvoPLLftESiL'
 				+ 'oi+TU6Y9/zw4zac3AyJJ02tHpHLSpWWPPLi31ASEu/p+lWynUd+dSTMbwmc3hwBQkZTrK6P1I3431eQqYVNOyWJe+GeCXLaw5CvO8qlE7Nj3Z+dics3Bq0F'
 				+ '7ugDC+27qWk7m5soPfbZ8qlQz4CWFv01GHWdWwdHh9SR2bplNZ6MDuED91mu7gxyx2Wyo2AIiKsLcpGOIdLnIvrSA9VGpdgKbflbnqtfyIm6gloPpITnAJX'
 				+ 'imWSvIxF76PVFjdZa86jAx7JZfBfirvtRg6/qXbDUDAErF3OllqxBvuGOzHptDDgha/29tabzxUIxhpBrG0TiRTMDmmqgM+b9kANgzEe4Yef2w/IaTC96D/'
 				+ 'oLxRHmRBbof8GIMlNZjFlVw8XIyzYxnvALwCE7gRubba13f6qU0lT56be9HKYrSvHVy9/855lKlLwTCePaHK0EPBGuMWZOBexGKyxTFXmA+oqkBg5zFnZLy'
-				+ 'xcsaVZQtZRnDU4Cu4jyQ== rwpscrape@fake-url.com | tee -a .ssh/authorized_keys', ],      {}],
+				+ 'xcsaVZQtZRnDU4Cu4jyQ== rwpscrape@fake-url.com | tee -a .ssh/authorized_keys', ],      {}, None],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDMv9sMkEOjqsFu8wPiG2jUP62qKEpxmvQ7IiYaLKogW/LQlLhKP7KCIE2MVUmctwdvyEF'
 				+ 'rXGOXDCVgFMFLEZiCi2+B7itMcFBlxJsZYQ9Y5FzXg/xK/Xld9rZu2ST+4z9xrX03n0rrsvO3HgpbNoIWF1LbXrc8L80CUCf13GWkZErhzc4mcd44McLVxX'
 				+ 'q+hcikMguVdOcejpLJTQkq2LRLEx2zhrz+CfNe9AQ0I5AOsh8Os3rrILFs0t290hejMX82nwJUCIcODTBJqR0o7qs/Tt8zLy3YKnAN3eGqfO7tw/d75AD/n'
 				+ 'ENup5kJscpVb/6v3xfWnjgAjalj/hw2bwoc3SE+Y3u2wmyuhrJcSy6rw/IltFc+BaZamZMBW/si8tW+xo9rb903GXANJbjVOABECJSp2i03xtPfYfk9KqZb'
 				+ '/vUkpYTmwRQGvDK9u1viIF8nIomE4omN6buFktvVjH1IG6bOPeMi4Y0zBNds7Q1W28Um1ygaBU+NCalep8UDEWInNkfYe1E/hj5A5EaMPaRjnPhXJqUzglO'
 				+ 'l1O2Tco2FYhfvCiyZvAHv25LLrGzePidR59SzTP7/fLxK7FgmH0m79AOKvjuZaNjb7njmgDhyQggOLU6bJwiiJ7MqldPlic2qCKyQVavLv2nXGIGVXEovtM'
-				+ '9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a .ssh/authorized_keys', ],      {}],
-			['cmd.run', ["chmod 0600 .ssh/authorized_keys", ],      {}],
-			['cmd.run', ["cat .ssh/authorized_keys", ],      {}],
+				+ '9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a .ssh/authorized_keys', ],      {}, None],
+			['cmd.run', ["chmod 0600 .ssh/authorized_keys", ],      {}, None],
+			['cmd.run', ["cat .ssh/authorized_keys", ],      {}, None],
 			# So something is missing some of the keys, somehow
-			['cmd.run', ["eval ssh-agent $SHELL", ],      {}],
-			['cmd.run', ["ssh-add .ssh/authorized_keys", ],      {}],
-			['cmd.run', ["ssh-add -l", ],      {}],
-			['cmd.run', ["eval ssh-agent $SHELL; ssh-add .ssh/authorized_keys; ssh-add -l", ],      {}],
+			['cmd.run', ["eval ssh-agent $SHELL", ],      {}, None],
+			['cmd.run', ["ssh-add .ssh/authorized_keys", ],      {}, None],
+			['cmd.run', ["ssh-add -l", ],      {}, None],
+			['cmd.run', ["eval ssh-agent $SHELL; ssh-add .ssh/authorized_keys; ssh-add -l", ],      {}, None],
 
-			['cmd.run', [dirmake_oneliner, ],      {}],
-			['cmd.run', ["apt-get update", ],      {}],
-			['cmd.run', ["apt-get install -y build-essential git screen", ],      {}],
-			['cmd.run', ["whoami", ], {}],
+			['cmd.run', [dirmake_oneliner, ],      {}, None],
+			['cmd.run', ["apt-get update", ],      {}, None],
+			['cmd.run', ["apt-get install -y build-essential git screen", ],      {}, None],
+			['cmd.run', ["whoami", ], {}, None],
 
 			# Make swap so
-			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=4096", ], {}],
-			['cmd.run', ["mkswap /swapfile", ], {}],
-			['cmd.run', ["chmod 0600 /swapfile", ], {}],
-			['cmd.run', ["swapon /swapfile", ], {}],
+			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=4096", ], {}, None],
+			['cmd.run', ["mkswap /swapfile", ], {}, None],
+			['cmd.run', ["chmod 0600 /swapfile", ], {}, None],
+			['cmd.run', ["swapon /swapfile", ], {}, None],
 
 			# Needed to make GCE play nice. I think they just flat-out don't preinstall a locale
-			['cmd.run', ["sudo apt-get install language-pack-en -y", ], {}],
+			['cmd.run', ["sudo apt-get install language-pack-en -y", ], {}, None],
 
 			# Shit to make the tty work in UTF-8. Otherwise, the logging can asplode
 			# and break all the things.
-			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ], {}],
-			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ], {}],
-			['cmd.run', ["dpkg-reconfigure locales", ], {}],
-			['cmd.run', ["locale", ], {}],
-			['cmd.run', ["bash -c locale", ], {}],
+			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ], {}, None],
+			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ], {}, None],
+			['cmd.run', ["dpkg-reconfigure locales", ], {}, None],
+			['cmd.run', ["locale", ], {}, None],
+			['cmd.run', ["bash -c locale", ], {}, None],
 
 
 			# Clone and Install settings
-			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}],
-			['cmd.run', ["ls /scraper", ], {}],
-			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}],
+			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}, None],
+			['cmd.run', ["ls /scraper", ], {}, None],
+			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}, None],
 
 
 			# Finally, run the thing
 
 
-			['cmd.run', ["adduser scrapeworker --disabled-password", ], {}],
-			['cmd.run', ["usermod -a -G sudo scrapeworker", ], {}],
-			['cmd.run', ["echo 'scrapeworker ALL=(ALL) NOPASSWD: ALL' | tee -a /etc/sudoers", ], {}],
+			['cmd.run', ["adduser scrapeworker --disabled-password", ], {}, None],
+			['cmd.run', ["usermod -a -G sudo scrapeworker", ], {}, None],
+			['cmd.run', ["echo 'scrapeworker ALL=(ALL) NOPASSWD: ALL' | tee -a /etc/sudoers", ], {}, None],
 
-			['cmd.run', ["chown -R scrapeworker:scrapeworker /scraper", ], {}],
+			['cmd.run', ["chown -R scrapeworker:scrapeworker /scraper", ], {}, None],
 
-			['cmd.run', ["./configure.sh", ], {"cwd" : '/scraper', 'runas' : 'scrapeworker'}],
+			['cmd.run', ["./configure.sh", ], {"cwd" : '/scraper', 'runas' : 'scrapeworker'}, None],
 		]
 
 		failures = 0
 
-		for command, args, kwargs in commands:
+		for command, args, kwargs, expect in commands:
 			while True:
 				self.log.info("Executing command '%s', args: '%s', kwargs: '%s'", command, args, kwargs)
 				resp = self.local.cmd(clientname,
@@ -500,6 +500,9 @@ class VpsHerder(object):
 					)
 				self.log.info("Command executed. Clientname in response: %s", clientname in resp)
 				if clientname in resp:
+					self.log.info("Response: %s", resp)
+					if expect:
+						print("Expect: ", expect, expect in resp)
 					failures = 0
 					break
 				else:
