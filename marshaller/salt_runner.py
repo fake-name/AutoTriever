@@ -485,11 +485,11 @@ class VpsHerder(object):
 
 			# Clone and Install settings
 			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}, ["Cloning into '/scraper'"]],
-			['cmd.run', ["ls /scraper", ], {}, ['README.md', 'amqp_connector.py', 'client.py', 'configure.sh',
-							'deps', 'dispatcher.py', 'main.py', 'marshaller', 'modules', 'modules_disabled',
-							'plugin_loader.py', 'requirements.txt', 'run.sh', 'runTests.sh', 'settings.example.json',
-							'state.py', 'test.py', 'util', 'vendored', ]],
 			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}, None],
+
+			# Make sure it all checked out at least somewhat
+			['cmd.run', ["ls /", ], {}, ['scraper', ]],
+			['cmd.run', ["ls /scraper", ], {}, ['configure.sh', 'run.sh', 'settings.json']],
 
 			# Finally, run the thing
 
