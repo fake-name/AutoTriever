@@ -7,7 +7,7 @@ from feedgen.feed import FeedGenerator
 from util.WebRequest import WebGetRobust
 from util.WebRequest import Exceptions as WgExceptions
 
-from modules.PreprocessFetch import ProcessorBase
+import modules.PreprocessFetch.ProcessorBase as ProcessorBase
 
 class QidianProcessor(ProcessorBase.ProcessorBase):
 
