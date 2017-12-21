@@ -3,7 +3,7 @@ requests==2.18.4
 git+https://github.com/berkerpeksag/astor.git
 git+https://github.com/fake-name/ChromeController.git
 
-PySocks==1.6.7
+PySocks==1.6.8
 dill==0.2.7.1
 rabbitpy==1.0.0
 
