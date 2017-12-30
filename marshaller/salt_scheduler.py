@@ -66,14 +66,24 @@ class VpsScheduler(object):
 				self.log.info("VM %s created.", vm_name)
 				CREATE_WATCHDOG.value += 1
 		except stopit.TimeoutException:
-			self.log.info("Timeout instantiating VM %s.", vm_name)
-			traceback.print_exc()
+			self.log.error("Timeout instantiating VM %s.", vm_name)
+			for line in traceback.format_exc().split("\n"):
+				self.log.error(line)
 			for _ in range(5):
 				self.destroy_vm(vm_name)
 				time.sleep(2.5)
 		except marshaller_exceptions.VmCreateFailed:
-			self.log.info("Failure instantiating VM %s.", vm_name)
-			traceback.print_exc()
+			self.log.warning("Failure instantiating VM %s.", vm_name)
+			for line in traceback.format_exc().split("\n"):
+				self.log.warning(line)
+			for _ in range(5):
+				self.destroy_vm(vm_name)
+				time.sleep(2.5)
+		except Exception as e:
+			self.log.error("Unknown failure instantiating VM %s!", vm_name)
+			for line in traceback.format_exc().split("\n"):
+				self.log.error(line)
+
 			for _ in range(5):
 				self.destroy_vm(vm_name)
 				time.sleep(2.5)
