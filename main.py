@@ -40,12 +40,12 @@ def loadSettings():
 	return settings
 
 
-def launchThread(settings, seen_lock, serialize_lock):
+def launchThread(settings, lock_dict):
 	rpc = None
 	while 1:
 		try:
 			if not rpc:
-				rpc = dispatcher.RpcCallDispatcher(settings, seen_lock, serialize_lock)
+				rpc = dispatcher.RpcCallDispatcher(settings, lock_dict)
 			rpc.processEvents()
 		except KeyboardInterrupt:
 			break
@@ -55,14 +55,14 @@ def launchThread(settings, seen_lock, serialize_lock):
 			rpc = None
 			time.sleep(60*3)
 
-def multithread(numThreads, settings, seen_lock, serialize_lock):
+def multithread(numThreads, settings, lock_dict):
 
 	print("Launching {num} threads.".format(num=numThreads))
 
 	with concurrent.futures.ThreadPoolExecutor(max_workers=numThreads) as executor:
 		for thnum in range(numThreads):
 			print("Launching thread {num}".format(num=thnum))
-			executor.submit(launchThread, settings, seen_lock, serialize_lock)
+			executor.submit(launchThread, settings, lock_dict)
 		try:
 			while 1:
 				time.sleep(1)
@@ -87,13 +87,20 @@ def go():
 		print("Running in single thread mode.")
 
 
+	manager_lock   = threading.Lock()
 	seen_lock      = threading.Lock()
 	serialize_lock = threading.Lock()
 
+	lock_dict = {
+		'manager_lock'   : manager_lock,
+		'seen_lock'      : seen_lock,
+		'serialize_lock' : serialize_lock,
+		}
+
 	if threads == 1:
-		launchThread(settings, seen_lock, serialize_lock)
+		launchThread(settings, lock_dict)
 	else:
-		multithread(threads, settings, seen_lock, serialize_lock)
+		multithread(threads, settings, lock_dict)
 
 if __name__ == "__main__":
 	go()

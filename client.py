@@ -66,7 +66,7 @@ def findCert():
 class RpcHandler(object):
 	die = False
 
-	def __init__(self, settings, seen_lock, serialize_lock):
+	def __init__(self, settings, lock_dict):
 
 		thName = threading.current_thread().name
 		if "-" in thName:
@@ -77,8 +77,9 @@ class RpcHandler(object):
 		self.log = logging.getLogger(logPath)
 		self.log.info("RPC Management class instantiated.")
 
-		self.seen_lock = seen_lock
-		self.serialize_lock = serialize_lock
+		self.lock_dict = lock_dict
+		# self.seen_lock = seen_lock
+		# self.serialize_lock = serialize_lock
 		self.settings = settings
 
 		if settings:
@@ -148,7 +149,7 @@ class RpcHandler(object):
 
 		except Exception as exc:
 			if "unique_id" in body:
-				with self.seen_lock:
+				with self.lock_dict['seen_lock']:
 					INSTANCE_SEEN_MESSAGE_IDS.discard(body['unique_id'])
 
 			response = {
@@ -178,7 +179,7 @@ class RpcHandler(object):
 			assert isinstance(body, dict) is True, 'The message must decode to a dict!'
 
 			if "unique_id" in body:
-				with self.seen_lock:
+				with self.lock_dict['seen_lock']:
 					mid = body['unique_id']
 					if mid in INSTANCE_SEEN_MESSAGE_IDS:
 						self.log.warning("Seen unique message ID: %s (have %s seen items). Not fetching again", mid,
@@ -189,7 +190,20 @@ class RpcHandler(object):
 						INSTANCE_SEEN_MESSAGE_IDS.add(mid)
 
 			if 'serialize' in body and body['serialize']:
-				have_serialize_lock = self.serialize_lock.acquire(blocking=False)
+				lockname = body['serialize'] if isinstance(body['serialize'], str) else 'serialize_lock'
+
+				# Don't allow the serialization interface to acquire locks for
+				# other things.
+				assert lockname not in ['manager_lock', 'seen_lock']
+
+				# If the lock is new, insert it into the lock
+				# dict in a thread-safe manner
+				if not lockname in self.lock_dict:
+					with self.lock_dict['manager_lock']:
+						if not lockname in self.lock_dict:
+							self.lock_dict[lockname] = threading.Lock()
+
+				have_serialize_lock = self.lock_dict[lockname].acquire(blocking=False)
 				if not have_serialize_lock:
 					self.log.warning("Forcing job to be serialized on worker. Rejecting while another job is active.")
 					raise CannotHandleNow
@@ -218,7 +232,7 @@ class RpcHandler(object):
 		finally:
 			if have_serialize_lock:
 				self.log.info("Releasing serialization lock.")
-				self.serialize_lock.release()
+				self.lock_dict[lockname].release()
 
 	def successDelay(self, sleeptime):
 		'''
