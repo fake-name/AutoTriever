@@ -20,8 +20,8 @@ nosetests                       \
 	--with-coverage                              \
 	--exe                                        \
 	--cover-package=util.WebRequest             \
-	--stop                                      \
-	--nocapture
+	--stop
+	# --nocapture
 
 coverage report --show-missing
 
