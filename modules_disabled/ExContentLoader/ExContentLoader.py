@@ -186,7 +186,7 @@ class ExContentLoader(object):
 
 
 	def getDownloadInfo(self, sourceUrl):
-		self.log.info("Retreiving item: %s", sourceUrl)
+		self.log.info("retrieving item: %s", sourceUrl)
 
 		try:
 			soup = self.wg.getSoup(sourceUrl, addlHeaders={'Referer': self.urlBase})
@@ -308,7 +308,7 @@ class ExContentLoader(object):
 				u'traceback'   : traceback.format_exc(),
 				u'cancontinue' : True
 			}
-			self.log.error("Failure retreiving content for link %s", sourceUrl)
+			self.log.error("Failure retrieving content for link %s", sourceUrl)
 			self.log.error("Traceback: %s", traceback.format_exc())
 			return response
 
