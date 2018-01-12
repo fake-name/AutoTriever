@@ -344,7 +344,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 			except Exceptions.GarbageSiteWrapper as e:
 				print("garbage site:")
 				raise e
-				
+
 			except urllib.error.HTTPError as e:								# Lotta logging
 				self.log.warning("Error opening page: %s at %s On Attempt %s.", pgreq.get_full_url(), time.ctime(time.time()), retryCount)
 				self.log.warning("Error Code: %s", e)
@@ -381,7 +381,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 				self.log.critical("	binaryForm:   '%s'", binaryForm)
 
 				break
-				
+
 			except Exception:
 				errored = True
 				#traceback.print_exc()
@@ -427,7 +427,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 	def getpage(self, requestedUrl, *args, **kwargs):
 		try:
 			return self.__getpage(requestedUrl, *args, **kwargs)
-			
+
 		except Exceptions.CloudFlareWrapper:
 			print("Failure?")
 			if self.rules['cloudflare']:
@@ -435,7 +435,7 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 					raise Exceptions.FetchFailureError("Could not step through cloudflare!")
 				# Cloudflare cookie set, retrieve again
 				return self.__getpage(requestedUrl, *args, **kwargs)
-				
+
 			else:
 				raise
 
@@ -686,7 +686,8 @@ class WebGetRobust(PhantomJSMixin.WebGetPjsMixin, ChromiumMixin.WebGetCrMixin):
 
 		except:
 
-			self.log.error(sys.exc_info())
+			self.log.error("Exception!")
+			self.log.error(str(sys.exc_info()))
 			traceback.print_exc()
 			self.log.error("Error Retrieving Page! - Transfer failed. Waiting %s seconds before retrying", self.retryDelay)
 
