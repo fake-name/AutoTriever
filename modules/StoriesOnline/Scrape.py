@@ -1,10 +1,10 @@
 
-from util.Mailinator import MailinatorClient
-from util.WebRequest import WebGetRobust
 import logging
 import time
-
 import bs4
+import WebRequest
+
+from util.Mailinator import MailinatorClient
 
 class StoriesOnlineFetch(object):
 
@@ -12,7 +12,7 @@ class StoriesOnlineFetch(object):
 		print("StoriesOnlineFetch __init__()")
 		self.log = logging.getLogger("Main.Text.StoriesOnline")
 		super().__init__()
-		self.wg = WebGetRobust()
+		self.wg = WebRequest.WebGetRobust()
 
 	def activate_account(self, mc, mailid):
 		self.log.info("Received account validation mail. Validating.")

@@ -4,7 +4,7 @@ import msgpack
 
 from modules.RemoteExec import serialize
 from modules.RemoteExec import run_test
-from util.WebRequest import WebGetRobust
+import WebRequest
 
 
 class PluginInterface_RemoteExec():
@@ -15,7 +15,7 @@ class PluginInterface_RemoteExec():
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.log = logging.getLogger("Main.RemoteExec.Caller")
-		self.wg = WebGetRobust()
+		self.wg = WebRequest.WebGetRobust()
 
 		self.calls = {
 			'callCode'               : self.call_code,

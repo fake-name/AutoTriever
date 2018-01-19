@@ -1,6 +1,6 @@
 
 
-import util.WebRequest as webFunc
+import WebRequest
 import uuid
 import base64
 import os
@@ -42,7 +42,7 @@ class MailinatorClient(object):
 		self.postfix = random.choice(SUFFIXES)
 		self.log.info("email: '%s%s'" % (self.prefix, self.postfix))
 
-		self.wg = webFunc.WebGetRobust()
+		self.wg = WebRequest.WebGetRobust()
 
 	def get_address(self):
 		return "%s%s" % (self.prefix, self.postfix)

@@ -6,7 +6,7 @@ import time
 import threading
 import dispatcher
 import deps.logSetup
-import util.WebRequest
+import WebRequest
 
 from selenium import webdriver
 import selenium.webdriver.chrome.service
@@ -44,7 +44,7 @@ import selenium.webdriver.chrome.options
 
 def tfunc(threadnum):
 	print("Thread %s running" % threadnum)
-	wg = util.WebRequest.WebGetRobust()
+	wg = WebRequest.WebGetRobust()
 	print(wg)
 
 	wg.getItemChromium("http://www.google.com")

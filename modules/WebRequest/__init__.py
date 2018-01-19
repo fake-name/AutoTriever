@@ -1,7 +1,7 @@
 
-from util.WebRequest import WebGetRobust
+import WebRequest
 
-class PluginInterface_WebRequest(WebGetRobust):
+class PluginInterface_WebRequest(WebRequest.WebGetRobust):
 
 	name = 'WebRequest'
 

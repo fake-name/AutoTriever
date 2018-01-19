@@ -4,8 +4,8 @@ import re
 import json
 import feedparser
 from feedgen.feed import FeedGenerator
-from util.WebRequest import WebGetRobust
-from util.WebRequest import Exceptions as WgExceptions
+import WebRequest
+from WebRequest import Exceptions as WebRequest
 
 from modules.PreprocessFetch import ProcessorBase
 
@@ -15,7 +15,7 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 
 	def __init__(self):
 		super().__init__()
-		self.wg = WebGetRobust()
+		self.wg = WebRequest.WebGetRobust()
 
 
 	def _check_qidian_release(self, entry, have_info):
@@ -137,7 +137,7 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 					filtered.append(ok)
 				else:
 					bad += 1
-			except WgExceptions.FetchFailureError:
+			except WebRequest.FetchFailureError:
 				bad += 1
 
 			self.log.info("Have %s OK releases, %s bad ones.", len(filtered), bad)

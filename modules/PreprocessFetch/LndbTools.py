@@ -1,7 +1,6 @@
 
 import logging
-from util.WebRequest import WebGetRobust
-from util.WebRequest import Exceptions as WgExceptions
+import WebRequest
 
 from modules.PreprocessFetch import ProcessorBase
 
@@ -11,7 +10,7 @@ class LndbProcessor(ProcessorBase.ProcessorBase):
 
 	def __init__(self):
 		super().__init__()
-		self.wg = WebGetRobust()
+		self.wg = WebRequest.WebGetRobust()
 
 
 	def forwad_render_fetch(self, *args, **kwargs):

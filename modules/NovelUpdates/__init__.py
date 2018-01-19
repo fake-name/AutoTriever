@@ -1,8 +1,8 @@
 
-from util.WebRequest import WebGetRobust
 import urllib.error
+import WebRequest
 
-class PluginInterface_NovelUpdates(WebGetRobust):
+class PluginInterface_NovelUpdates(WebRequest.WebGetRobust):
 
 	name = 'NUWebRequest'
 
