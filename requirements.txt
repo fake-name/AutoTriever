@@ -7,12 +7,12 @@ PySocks==1.6.8
 dill==0.2.7.1
 rabbitpy==1.0.0
 
-APScheduler==3.5.0
+APScheduler==3.5.1
 beautifulsoup4==4.6.0
 cchardet==2.1.1
 colorama==0.3.9
 selenium==3.8.1
-Faker==0.8.8
+Faker==0.8.10
 lxml==4.1.1
 cachetools==2.0.1
 msgpack-python==0.5.0
