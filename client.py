@@ -168,15 +168,20 @@ class RpcHandler(object):
 
 		return response, delay
 
-	def _dispatch_binary_message(self, body_r):
+	def _dispatch_binary_message(self, message):
 		# body = json.loads(body)
 
 		have_serialize_lock = False
+		early_acked = False
 		try:
 
-			body = msgpack.unpackb(body_r, use_list=True, encoding='utf-8')
+			body = msgpack.unpackb(message.body, use_list=True, encoding='utf-8')
 
 			assert isinstance(body, dict) is True, 'The message must decode to a dict!'
+
+			if "early_ack" in body and body['early_ack']:
+				message.ack()
+				early_acked = True
 
 			if "unique_id" in body:
 				with self.lock_dict['seen_lock']:
@@ -228,7 +233,7 @@ class RpcHandler(object):
 
 			response = forward_attachments(body, response)
 
-			return response, delay, response_routing_key
+			return early_acked, response, delay, response_routing_key
 		finally:
 			if have_serialize_lock:
 				self.log.info("Releasing serialization lock.")
@@ -292,13 +297,14 @@ class RpcHandler(object):
 				self.log.info("Processing message. (%s of %s before connection reset)", msg_count, loops)
 
 				try:
-					response, postDelay, routing_key_override = self._dispatch_binary_message(message.body)
+					early_acked, response, postDelay, routing_key_override = self._dispatch_binary_message(message)
 
 					self.put_message_chunked(response, routing_key_override=routing_key_override)
 					# connector_instance.put_response(response)
 
-					# Ack /after/ we've done the task.
-					message.ack()
+					if not early_acked:
+						# Ack /after/ we've done the task.
+						message.ack()
 					self.successDelay(postDelay)
 
 				except CannotHandleNow:
