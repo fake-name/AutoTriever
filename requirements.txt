@@ -20,7 +20,7 @@ pytz==2017.3
 feedgen==0.6.1
 feedparser==5.2.1
 
-webrequest==0.0.1
+webrequest==0.0.2
 
 
 ## Testing requirements:
