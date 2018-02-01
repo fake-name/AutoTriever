@@ -52,6 +52,9 @@ function setup_headless_chrome() {
 	sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
 	sudo apt-get update
 	sudo apt-get install google-chrome-stable -y
+	sudo apt-get install chromium-chromedriver -y
+
+	sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
 
 	# set +e
 	# tar tf ./vendored/MinimalHeadless.tar.gz

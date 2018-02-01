@@ -5,7 +5,6 @@ import json
 import feedparser
 from feedgen.feed import FeedGenerator
 import WebRequest
-from WebRequest import Exceptions as WebRequest
 
 from modules.PreprocessFetch import ProcessorBase
 
