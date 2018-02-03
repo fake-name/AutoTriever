@@ -55,8 +55,8 @@ class RpcCallDispatcher(client.RpcHandler):
 
 		self.log.info("Calling module '%s'", module)
 		self.log.info("internal call name '%s'", call)
-		# self.log.info("Args '%s'", call_args)
-		# self.log.info("Kwargs '%s'", call_kwargs)
+		self.log.info("Args '%s'", call_args)
+		self.log.info("Kwargs '%s'", call_kwargs)
 
 		if hasattr(self.classCache[module], "can_send_partials"):
 			call_kwargs['partial_resp_interface'] = context_responder

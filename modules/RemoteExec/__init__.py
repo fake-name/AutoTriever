@@ -34,6 +34,7 @@ class PluginInterface_RemoteExec():
 
 		instantiated = class_def(**call_env)
 		self.log.info("Instantiated instance of %s. Calling member function %s.", class_def, call_name)
+		self.log.info("Call args: '%s', kwargs: '%s'.", call_args, call_kwargs)
 
 		return getattr(instantiated, call_name)(*call_args, **call_kwargs)
 
