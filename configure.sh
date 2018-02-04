@@ -73,9 +73,11 @@ then
 else
 	echo "No Venv! Checking dependencies are installed."
 	sudo apt-get update
+	sudo apt-get install dist-upgrade -y
 	sudo apt-get install build-essential -y
 	sudo apt-get install libfontconfig -y
 	sudo apt-get install wget -y
+	sudo apt-get install htop -y
 	sudo apt-get install libxml2 libxslt1-dev python3-dev libz-dev -y
 
 
