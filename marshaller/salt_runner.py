@@ -430,57 +430,58 @@ class VpsHerder(object):
 
 		commands = [
 			# splat in public keys.
-			['cmd.run', ['mkdir .ssh/', ],      {}, None],
-			['cmd.run', [dirmake_ssh_oneliner, ],      {}, None],
+			['cmd.run', ['mkdir .ssh/', ],                                                                                                        {}, None],
+			['cmd.run', [dirmake_ssh_oneliner, ],                                                                                                 {}, None],
 			['cmd.run', ['pwd', ],      {}, ['/root']],
-			['cmd.run', ['ls -la ', ],      {}, None],
+			['cmd.run', ['ls -la ', ],                                                                                                            {}, None],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
 				+ 'LKb/iJkABH+hxq8ZL7kXiKuGgeHsI60I2wECMxg17Qs918ND626AkXqlMIUW1SchcAi3rYRMVY0OaGSOutIcjR+mJ6liogTv1DLRD0eRbuollz7XsYz4ILb'
 				+ 'i9kEsqwaly92vK6vlIVlAWtDoNf95c6jk/lh0M5p1LV0lwrEtfCreuv1rrOldUdwgU4wCFgRI+p6FXs69+OsNWxZSOSr28eE9sbsHxIxthcRHMtsnDxzeJ1'
-				+ 'PVhvC4JclFEHEZSlYaemI6zOezVuBuipwSv Neko@ODO | tee -a .ssh/authorized_keys', ],      {}, None],
+				+ 'PVhvC4JclFEHEZSlYaemI6zOezVuBuipwSv Neko@ODO | tee -a .ssh/authorized_keys', ],                                                {}, None],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCi7/9jOHVJj0ODnPqinqFbOaErT2pNaeq0pYKapcG2DHGrvVlX3ZUO8z7uY1QZX0OiC3y'
 				+ '7rv4c7NEl7/OtmRDfNPd5YgpAuXelbwu5Pj1BjQq1pn3CeP4zhw4gcEPx2UAc5Rw1jzH8vE7NMf2iReBiHr2SfSLh8T/jt5bEAVDCnhMS/8YvoPLLftESiL'
 				+ 'oi+TU6Y9/zw4zac3AyJJ02tHpHLSpWWPPLi31ASEu/p+lWynUd+dSTMbwmc3hwBQkZTrK6P1I3431eQqYVNOyWJe+GeCXLaw5CvO8qlE7Nj3Z+dics3Bq0F'
 				+ '7ugDC+27qWk7m5soPfbZ8qlQz4CWFv01GHWdWwdHh9SR2bplNZ6MDuED91mu7gxyx2Wyo2AIiKsLcpGOIdLnIvrSA9VGpdgKbflbnqtfyIm6gloPpITnAJX'
 				+ 'imWSvIxF76PVFjdZa86jAx7JZfBfirvtRg6/qXbDUDAErF3OllqxBvuGOzHptDDgha/29tabzxUIxhpBrG0TiRTMDmmqgM+b9kANgzEe4Yef2w/IaTC96D/'
 				+ 'oLxRHmRBbof8GIMlNZjFlVw8XIyzYxnvALwCE7gRubba13f6qU0lT56be9HKYrSvHVy9/855lKlLwTCePaHK0EPBGuMWZOBexGKyxTFXmA+oqkBg5zFnZLy'
-				+ 'xcsaVZQtZRnDU4Cu4jyQ== rwpscrape@fake-url.com | tee -a .ssh/authorized_keys', ],      {}, None],
+				+ 'xcsaVZQtZRnDU4Cu4jyQ== rwpscrape@fake-url.com | tee -a .ssh/authorized_keys', ],                                               {}, None],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDMv9sMkEOjqsFu8wPiG2jUP62qKEpxmvQ7IiYaLKogW/LQlLhKP7KCIE2MVUmctwdvyEF'
 				+ 'rXGOXDCVgFMFLEZiCi2+B7itMcFBlxJsZYQ9Y5FzXg/xK/Xld9rZu2ST+4z9xrX03n0rrsvO3HgpbNoIWF1LbXrc8L80CUCf13GWkZErhzc4mcd44McLVxX'
 				+ 'q+hcikMguVdOcejpLJTQkq2LRLEx2zhrz+CfNe9AQ0I5AOsh8Os3rrILFs0t290hejMX82nwJUCIcODTBJqR0o7qs/Tt8zLy3YKnAN3eGqfO7tw/d75AD/n'
 				+ 'ENup5kJscpVb/6v3xfWnjgAjalj/hw2bwoc3SE+Y3u2wmyuhrJcSy6rw/IltFc+BaZamZMBW/si8tW+xo9rb903GXANJbjVOABECJSp2i03xtPfYfk9KqZb'
 				+ '/vUkpYTmwRQGvDK9u1viIF8nIomE4omN6buFktvVjH1IG6bOPeMi4Y0zBNds7Q1W28Um1ygaBU+NCalep8UDEWInNkfYe1E/hj5A5EaMPaRjnPhXJqUzglO'
 				+ 'l1O2Tco2FYhfvCiyZvAHv25LLrGzePidR59SzTP7/fLxK7FgmH0m79AOKvjuZaNjb7njmgDhyQggOLU6bJwiiJ7MqldPlic2qCKyQVavLv2nXGIGVXEovtM'
-				+ '9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a .ssh/authorized_keys', ],      {}, None],
-			['cmd.run', ["chmod 0600 .ssh/authorized_keys", ],      {}, None],
+				+ '9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a .ssh/authorized_keys', ],                                                         {}, None],
+			['cmd.run', ["chmod 0600 .ssh/authorized_keys", ],                                                                                    {}, None],
 			['cmd.run', ["cat .ssh/authorized_keys", ],      {}, [' Neko@ODO', ' rwpscrape@fake-url.com', ' durr@mainnas', ]],
 			# So something is missing some of the keys, somehow
-			['cmd.run', ["eval ssh-agent $SHELL", ],      {}, None],
-			['cmd.run', ["ssh-add .ssh/authorized_keys", ],      {}, None],
-			['cmd.run', ["ssh-add -l", ],      {}, None],
-			['cmd.run', ["eval ssh-agent $SHELL; ssh-add .ssh/authorized_keys; ssh-add -l", ],      {}, None],
+			['cmd.run', ["eval ssh-agent $SHELL", ],                                                                                              {}, None],
+			['cmd.run', ["ssh-add .ssh/authorized_keys", ],                                                                                       {}, None],
+			['cmd.run', ["ssh-add -l", ],                                                                                                         {}, None],
+			['cmd.run', ["eval ssh-agent $SHELL; ssh-add .ssh/authorized_keys; ssh-add -l", ],                                                    {}, None],
 
-			['cmd.run', [dirmake_oneliner, ],      {}, None],
-			['cmd.run', ["apt-get update", ],      {}, None],
-			['cmd.run', ["apt-get install -y build-essential git screen", ],      {}, None],
+			['cmd.run', [dirmake_oneliner, ],                                                                                                     {}, None],
+			['cmd.run', ["apt-get update", ],                                                                                                     {}, None],
+			['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {}, None],
+			['cmd.run', ["apt-get install -y build-essential git screen", ],                                                                      {}, None],
 			['cmd.run', ["whoami", ], {}, ['root']],
 
 			# Make swap so
-			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=4096", ], {}, None],
-			['cmd.run', ["mkswap /swapfile", ], {}, None],
-			['cmd.run', ["chmod 0600 /swapfile", ], {}, None],
-			['cmd.run', ["swapon /swapfile", ], {}, None],
+			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=4096", ],                                                                      {}, None],
+			['cmd.run', ["mkswap /swapfile", ],                                                                                                   {}, None],
+			['cmd.run', ["chmod 0600 /swapfile", ],                                                                                               {}, None],
+			['cmd.run', ["swapon /swapfile", ],                                                                                                   {}, None],
 
 			# Needed to make GCE play nice. I think they just flat-out don't preinstall a locale
-			['cmd.run', ["sudo apt-get install language-pack-en -y", ], {}, None],
+			['cmd.run', ["sudo apt-get install language-pack-en -y", ],                                                                           {}, None],
 
 			# Shit to make the tty work in UTF-8. Otherwise, the logging can asplode
 			# and break all the things.
-			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ], {}, None],
-			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ], {}, None],
-			['cmd.run', ["dpkg-reconfigure locales", ], {}, None],
-			['cmd.run', ["locale", ], {}, None],
-			['cmd.run', ["bash -c locale", ], {}, None],
+			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ],                                                                   {}, None],
+			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ],                                                                 {}, None],
+			['cmd.run', ["dpkg-reconfigure locales", ],                                                                                           {}, None],
+			['cmd.run', ["locale", ],                                                                                                             {}, None],
+			['cmd.run', ["bash -c locale", ],                                                                                                     {}, None],
 
 
 			# Clone and Install settings
@@ -494,10 +495,10 @@ class VpsHerder(object):
 			# Finally, run the thing
 
 			['cmd.run', ["adduser scrapeworker --disabled-password", ], {}, ["Adding user `scrapeworker'"]],
-			['cmd.run', ["usermod -a -G sudo scrapeworker", ], {}, None],
-			['cmd.run', ["echo 'scrapeworker ALL=(ALL) NOPASSWD: ALL' | tee -a /etc/sudoers", ], {}, None],
+			['cmd.run', ["usermod -a -G sudo scrapeworker", ],                                                                                    {}, None],
+			['cmd.run', ["echo 'scrapeworker ALL=(ALL) NOPASSWD: ALL' | tee -a /etc/sudoers", ],                                                  {}, None],
 
-			['cmd.run', ["chown -R scrapeworker:scrapeworker /scraper", ], {}, None],
+			['cmd.run', ["chown -R scrapeworker:scrapeworker /scraper", ],                                                                        {}, None],
 
 			['cmd.run', ["./configure.sh", ], {"cwd" : '/scraper', 'runas' : 'scrapeworker'}, ['Setup OK! System is configured for launch']],
 		]
