@@ -192,7 +192,7 @@ class RpcHandler(object):
 						INSTANCE_SEEN_MESSAGE_IDS.add(mid)
 
 			if 'serialize' in body and body['serialize']:
-				lockname = body['serialize'] if isinstance(body['serialize'], str) else 'serialize_lock'
+				lockname = body['serialize'] if isinstance(body['serialize'], str) else 'generic_job'
 
 				# Don't allow the serialization interface to acquire locks for
 				# other things.
@@ -207,7 +207,7 @@ class RpcHandler(object):
 
 				have_serialize_lock = self.lock_dict[lockname].acquire(blocking=False)
 				if not have_serialize_lock:
-					self.log.warning("Forcing job to be serialized on worker. Rejecting while another job is active.")
+					self.log.warning("Forcing job to be serialized on worker (lock: %s). Rejecting while another job is active.", lockname)
 					raise CannotHandleNow
 
 			if "early_ack" in body and body['early_ack']:
