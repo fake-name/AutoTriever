@@ -179,9 +179,6 @@ class RpcHandler(object):
 
 			assert isinstance(body, dict) is True, 'The message must decode to a dict!'
 
-			if "early_ack" in body and body['early_ack']:
-				message.ack()
-				early_acked = True
 
 			if "unique_id" in body:
 				with self.lock_dict['seen_lock']:
@@ -212,6 +209,10 @@ class RpcHandler(object):
 				if not have_serialize_lock:
 					self.log.warning("Forcing job to be serialized on worker. Rejecting while another job is active.")
 					raise CannotHandleNow
+
+			if "early_ack" in body and body['early_ack']:
+				message.ack()
+				early_acked = True
 
 			response_routing_key = body.get('response_routing_key', None)
 
@@ -305,6 +306,7 @@ class RpcHandler(object):
 					if not early_acked:
 						# Ack /after/ we've done the task.
 						message.ack()
+
 					self.successDelay(postDelay)
 
 				except CannotHandleNow:
