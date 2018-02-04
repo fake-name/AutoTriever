@@ -193,6 +193,8 @@ class RpcHandler(object):
 
 			if 'serialize' in body and body['serialize']:
 				lockname = body['serialize'] if isinstance(body['serialize'], str) else 'generic_job'
+				if not isinstance(body['serialize'], (str, bool)):
+					self.log.warning("Unknown serialization lock type: %s (%s)", type(body['serialize']), body['serialize'])
 
 				# Don't allow the serialization interface to acquire locks for
 				# other things.
