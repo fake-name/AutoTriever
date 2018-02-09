@@ -417,8 +417,12 @@ class VpsHerder(object):
 
 		for expect_val in expect:
 			if isinstance(expect_val, str):
-				if not expect_val in resp:
-					raise marshaller_exceptions.InvalidDeployResponse("Expected '%s' in response '%s'" % (expect_val, resp))
+				if isinstance(resp, bool):
+					raise marshaller_exceptions.InvalidDeployResponse("Expected '%s' response: '%s'" % (expect_val, resp))
+
+				elif isinstance(resp, str):
+					if not expect_val in resp:
+						raise marshaller_exceptions.InvalidDeployResponse("Expected '%s' in response '%s'" % (expect_val, resp))
 			else:
 				raise marshaller_exceptions.InvalidExpectParameter("Invalid expect parameter: '%s' (type: %s)." % (expect_val, type(expect_val)))
 
