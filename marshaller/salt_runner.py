@@ -220,7 +220,7 @@ class VpsHerder(object):
 				sizel.append(name)
 
 
-		for name, loc_meta in locations.items():
+		for name, _ in locations.items():
 			locl.append(name)
 
 		return sizel, locl
@@ -548,9 +548,8 @@ class VpsHerder(object):
 
 	################################################################################################
 
-	def make_client(self, clientname):
+	def make_client(self, clientname, provider, kwargs):
 
-		provider, kwargs = self.generate_conf()
 		self.log.info("Creating instance...")
 		self.log.info("	Client name: '%s'", clientname)
 		self.log.info("	using provider: '%s'", provider)

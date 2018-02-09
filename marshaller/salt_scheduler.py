@@ -54,19 +54,23 @@ class VpsScheduler(object):
 
 
 		vm_idx = int(vm_name.split("-")[-1])-1
-
+		provider = "unknown"
 		self.log.info("Creating VM named: %s, index: %s", vm_name, vm_idx)
 		try:
 			# VM Create time is 30 minutes, max
 			with stopit.ThreadingTimeout(60 * 30, swallow_exc=False):
 				# This is slightly horrible.
 				with self.interface.mon_con.timer("VM-Creation"):
-					self.interface.make_client(vm_name)
+
+					provider, kwargs = self.interface.generate_conf()
+					self.interface.make_client(vm_name, provider, kwargs)
 					self.interface.configure_client(vm_name, vm_idx)
 				self.log.info("VM %s created.", vm_name)
 				CREATE_WATCHDOG.value += 1
+			self.interface.mon_con.incr("vm-create.{provider}.ok".format(provider=provider))
 		except stopit.TimeoutException:
 			self.log.error("Timeout instantiating VM %s.", vm_name)
+			self.interface.mon_con.incr("vm-create.{provider}.fail.timeout".format(provider=provider))
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
 			for _ in range(5):
@@ -74,12 +78,14 @@ class VpsScheduler(object):
 				time.sleep(2.5)
 		except marshaller_exceptions.VmCreateFailed:
 			self.log.warning("Failure instantiating VM %s.", vm_name)
+			self.interface.mon_con.incr("vm-create.{provider}.fail.vmcreatefailed".format(provider=provider))
 			for line in traceback.format_exc().split("\n"):
 				self.log.warning(line)
 			for _ in range(5):
 				self.destroy_vm(vm_name)
 				time.sleep(2.5)
 		except Exception as e:
+			self.interface.mon_con.incr("vm-create.{provider}.fail.unknown-error".format(provider=provider))
 			self.log.error("Unknown failure instantiating VM %s!", vm_name)
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
