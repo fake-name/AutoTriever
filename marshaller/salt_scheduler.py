@@ -94,11 +94,13 @@ class VpsScheduler(object):
 				self.destroy_vm(vm_name)
 				time.sleep(2.5)
 
+
+		self.log.info("VM Creation complete.")
 		self.interface.list_nodes()
 
 	def destroy_vm(self, vm_name):
 		self.interface.list_nodes()
-		self.log.info("Destroying VM named: %s", vm_name)
+		self.log.info("Destroying VM named: %s, current workers: %s", vm_name, [worker for provider, worker in self.interface.list_nodes()])
 		dest_cnt = 0
 		while vm_name in [worker for provider, worker in self.interface.list_nodes()]:
 			self.interface.destroy_client(vm_name)
