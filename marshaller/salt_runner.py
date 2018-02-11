@@ -439,6 +439,7 @@ class VpsHerder(object):
 			# splat in public keys.
 			['cmd.run', ["bash -c whoami", ], {}, ['root']],
 			['cmd.run', ['mkdir .ssh/', ],                                                                                                        {}, None],
+			['cmd.run', [dirmake_oneliner, ],                                                                                                     {}, None],
 			['cmd.run', [dirmake_ssh_oneliner, ],                                                                                                 {}, None],
 			['cmd.run', ["ls /", ], {}, ['scraper', ]],
 			['cmd.run', ['pwd', ],      {}, ['/root']],
@@ -469,7 +470,6 @@ class VpsHerder(object):
 			['cmd.run', ["ssh-add -l", ],                                                                                                         {}, None],
 			['cmd.run', ["eval ssh-agent $SHELL; ssh-add .ssh/authorized_keys; ssh-add -l", ],                                                    {}, None],
 
-			['cmd.run', [dirmake_oneliner, ],                                                                                                     {}, None],
 			['cmd.run', ["apt-get update", ],                                                                                                     {}, None],
 			['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {}, None],
 			['cmd.run', ["apt-get install -y build-essential git screen", ],                                                                      {}, None],
