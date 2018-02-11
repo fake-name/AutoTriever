@@ -76,6 +76,11 @@ class VpsScheduler(object):
 			for _ in range(5):
 				self.destroy_vm(vm_name)
 				time.sleep(2.5)
+		except marshaller_exceptions.LocationNotAvailableResponse:
+			self.log.warning("Failure instantiating VM %s.", vm_name)
+			self.interface.mon_con.incr("vm-create.{provider}.fail.locationnotavilable".format(provider=provider))
+			for line in traceback.format_exc().split("\n"):
+				self.log.warning(line)
 		except marshaller_exceptions.VmCreateFailed:
 			self.log.warning("Failure instantiating VM %s.", vm_name)
 			self.interface.mon_con.incr("vm-create.{provider}.fail.vmcreatefailed".format(provider=provider))

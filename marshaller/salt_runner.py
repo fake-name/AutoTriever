@@ -148,7 +148,7 @@ class VpsHerder(object):
 		try:
 			planid, place = self.get_5_dollar_do_meta()
 		except TypeError as e:
-			raise  marshaller_exceptions.VmCreateFailed("Failed when creating VM configuration? Exception: %s" % e)
+			raise  marshaller_exceptions.VmCreateFailed("Failed when generating VM configuration? Exception: %s" % e)
 
 		provider = "digital_ocean"
 		kwargs = {
@@ -185,7 +185,7 @@ class VpsHerder(object):
 		try:
 			planid, place = self.get_5_dollar_vultr_meta()
 		except TypeError as e:
-			raise  marshaller_exceptions.VmCreateFailed("Failed when creating VM configuration? Exception: %s" % e)
+			raise  marshaller_exceptions.VmCreateFailed("Failed when generating VM configuration? Exception: %s" % e)
 
 		if not planid:
 			raise marshaller_exceptions.VmCreateFailed("No vultr plan available?")
@@ -569,10 +569,16 @@ class VpsHerder(object):
 			self.log.info("Instance created!")
 
 			if provider == 'linode' and clientname in ret and ret[clientname] is False:
-				raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
+				raise marshaller_exceptions.VmCreateFailed("Failed when creating Linode VM?")
 
 		except Exception as e:
 			traceback.format_exc()
+
+			# DO Doesn't list the lcoation where they temporarily disabled VM creation, so if that specific thing
+			# happens, raise a more specific error.
+			if " The specified location, " in str(e) and ", could not be found." in str(e) and provider == 'digital_ocean':
+				raise marshaller_exceptions.LocationNotAvailableResponse("Location error when creating VM. Exception: %s" % e)
+
 			raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
 
 		return provider, kwargs
