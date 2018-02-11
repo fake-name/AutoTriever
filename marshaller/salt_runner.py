@@ -507,11 +507,11 @@ class VpsHerder(object):
 
 
 			# Clone and Install settings
-			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}, ["Cloning into '/scraper'"]],
+			['cmd.run', ["ls /", ], {}, ['scraper', ]],
+			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}, []],
 			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}, None],
 
 			# Make sure it all checked out at least somewhat
-			['cmd.run', ["ls /", ], {}, ['scraper', ]],
 			['cmd.run', ["ls /scraper", ], {}, ['configure.sh', 'run.sh', 'settings.json']],
 
 			# Finally, run the thing
