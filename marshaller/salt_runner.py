@@ -264,7 +264,10 @@ class VpsHerder(object):
 		# sizes     = self.cc.list_sizes(provider='gce')['gce']['gce']
 		locations = self.cc.list_locations(provider='gce')['gce']['gce']
 
-		images = self.cc.list_images(provider='gce')['gce']['gce']
+		gce_images = self.cc.list_images(provider='gce')
+
+
+		images = gce_images['gce']['gce']
 
 		image = None
 		for key in images:
@@ -434,8 +437,10 @@ class VpsHerder(object):
 
 		commands = [
 			# splat in public keys.
+			['cmd.run', ["bash -c whoami", ], {}, ['root']],
 			['cmd.run', ['mkdir .ssh/', ],                                                                                                        {}, None],
 			['cmd.run', [dirmake_ssh_oneliner, ],                                                                                                 {}, None],
+			['cmd.run', ["ls /", ], {}, ['scraper', ]],
 			['cmd.run', ['pwd', ],      {}, ['/root']],
 			['cmd.run', ['ls -la ', ],                                                                                                            {}, None],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
@@ -468,7 +473,6 @@ class VpsHerder(object):
 			['cmd.run', ["apt-get update", ],                                                                                                     {}, None],
 			['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {}, None],
 			['cmd.run', ["apt-get install -y build-essential git screen", ],                                                                      {}, None],
-			['cmd.run', ["whoami", ], {}, ['root']],
 
 			# Make swap so
 			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=4096", ],                                                                      {}, None],
