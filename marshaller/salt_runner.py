@@ -129,16 +129,30 @@ class VpsHerder(object):
 		self.log.info("Generating DO Configuration")
 
 		sizes = self.cc.list_sizes(provider='digital_ocean')['digital_ocean']['digital_ocean']
+		locs = self.cc.list_locations(provider='digital_ocean')['digital_ocean']['digital_ocean']
 		items = []
+
+		avail_locs = {}
+		for name, loc_meta in locs.items():
+			if loc_meta['available']:
+				# Why the fuck is this a string?
+				if isinstance(loc_meta['sizes'], str):
+					loc_meta['sizes'] = ast.literal_eval(loc_meta['sizes'])
+				if isinstance(loc_meta['sizes'], list):
+					avail_locs.setdefault(loc_meta['slug'], set())
+					for size in loc_meta['sizes']:
+						avail_locs[loc_meta['slug']].add(size)
 
 		for name, size_meta in sizes.items():
 			if float(size_meta['price_monthly']) <= MAX_MONTHLY_PRICE_DOLLARS:
-
 				# Why the fuck is this a string?
-				size_meta['regions'] = ast.literal_eval(size_meta['regions'])
-
+				if isinstance(size_meta['regions'], str):
+					size_meta['regions'] = ast.literal_eval(size_meta['regions'])
 				for loc in size_meta['regions']:
-					items.append((name, loc))
+					if loc in avail_locs:
+						if name in avail_locs[loc]:
+							items.append((name, loc))
+
 
 		self.log.info("Found %s potential VPS location/configurations", len(items))
 		return random.choice(items)
