@@ -430,7 +430,8 @@ class VpsHerder(object):
 		return json.dumps(conf)
 
 	def validate_expect(self, resp, expect):
-		self.log.info("Response: %s", resp)
+		# Print as a tuple, so literal "\n"s don't produde line-breaks in the log output
+		self.log.info("Response: %s", (resp, ))
 
 		assert isinstance(expect, list), "Expect must be a list!"
 
@@ -499,7 +500,13 @@ class VpsHerder(object):
 			['cmd.run', ["eval ssh-agent $SHELL; ssh-add .ssh/authorized_keys; ssh-add -l", ],                                                    {}, None],
 
 			['cmd.run', ["apt-get update", ],                                                                                                     {}, None],
-			['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {}, None],
+
+			# So trying to have salt update itself makes it poop itself,
+			# and never come back.
+			# Siiiiiigh.
+			# Anyways, I moved this command to my custom bootstrap script.
+			# ['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {'env' : {'DEBIAN_FRONTEND' : 'noninteractive'}}, None],
+
 			['cmd.run', ["apt-get install -y build-essential git screen", ],                                                                      {}, None],
 
 			# Make swap so
@@ -517,11 +524,11 @@ class VpsHerder(object):
 			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ],                                                                 {}, None],
 			['cmd.run', ["dpkg-reconfigure locales", ],                                                                                           {}, None],
 			['cmd.run', ["locale", ],                                                                                                             {}, None],
-			['cmd.run', ["bash -c locale", ],                                                                                                     {}, None],
+			['cmd.run', ["bash -c \"locale\"", ],                                                                                                 {}, None],
 
 
 			# Clone and Install settings
-			['cmd.run', ["bash -c ls /", ],                                                                                                       {}, ['scraper', ]],
+			['cmd.run', ["bash -c \"ls /\"", ],                                                                                                   {}, ['scraper', ]],
 			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"],                                                      {}, []],
 			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}, None],
 
@@ -553,6 +560,8 @@ class VpsHerder(object):
 				if clientname in resp:
 					if expect:
 						self.validate_expect(resp[clientname], expect)
+					elif resp is False:
+						raise marshaller_exceptions.InvalidDeployResponse("Command returned a failure result: '%s' (%s, %s)" % (command, args, kwargs))
 					failures = 0
 					break
 				else:
@@ -773,7 +782,7 @@ def destroy_all():
 			print("Destroy call for node: '%s'" % node)
 			herder.destroy_client(node)
 
-def destroy():
+def destroy_test_minions():
 	herder = VpsHerder()
 
 	bad = ["test-1", "test-2", "test-3", "test-4", "test-5"]
@@ -852,7 +861,7 @@ def go():
 		"dtest" : dtest,
 		"gtest" : gtest,
 
-		"destroy"     : destroy,
+		"destroy-test-minions"     : destroy_test_minions,
 		'destroy-all' : destroy_all,
 		"list"        : list_nodes,
 		"vultr-opts"  : list_vultr_options,
