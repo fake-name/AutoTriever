@@ -51,8 +51,6 @@ class VpsScheduler(object):
 
 
 	def create_vm(self, vm_name):
-
-
 		vm_idx = int(vm_name.split("-")[-1])-1
 		provider = "unknown"
 		self.log.info("Creating VM named: %s, index: %s", vm_name, vm_idx)
@@ -60,9 +58,8 @@ class VpsScheduler(object):
 			# VM Create time is 30 minutes, max
 			with stopit.ThreadingTimeout(60 * 30, swallow_exc=False):
 				# This is slightly horrible.
-				with self.interface.mon_con.timer("VM-Creation"):
-
-					provider, kwargs = self.interface.generate_conf()
+				provider, kwargs = self.interface.generate_conf()
+				with self.interface.mon_con.timer("VM-Creation-{}".format(provider)):
 					self.interface.make_client(vm_name, provider, kwargs)
 					self.interface.configure_client(vm_name, vm_idx)
 				self.log.info("VM %s created.", vm_name)
@@ -81,6 +78,25 @@ class VpsScheduler(object):
 			self.interface.mon_con.incr("vm-create.{provider}.fail.locationnotavilable".format(provider=provider))
 			for line in traceback.format_exc().split("\n"):
 				self.log.warning(line)
+			for _ in range(5):
+				self.destroy_vm(vm_name)
+				time.sleep(2.5)
+		except marshaller_exceptions.InvalidDeployResponse:
+			self.log.warning("Failure instantiating VM %s.", vm_name)
+			self.interface.mon_con.incr("vm-create.{provider}.fail.invaliddeployresponse".format(provider=provider))
+			for line in traceback.format_exc().split("\n"):
+				self.log.warning(line)
+			for _ in range(5):
+				self.destroy_vm(vm_name)
+				time.sleep(2.5)
+		except marshaller_exceptions.InvalidExpectParameter:
+			self.log.warning("Failure instantiating VM %s.", vm_name)
+			self.interface.mon_con.incr("vm-create.{provider}.fail.invalidexpectparameter".format(provider=provider))
+			for line in traceback.format_exc().split("\n"):
+				self.log.warning(line)
+			for _ in range(5):
+				self.destroy_vm(vm_name)
+				time.sleep(2.5)
 		except marshaller_exceptions.VmCreateFailed:
 			self.log.warning("Failure instantiating VM %s.", vm_name)
 			self.interface.mon_con.incr("vm-create.{provider}.fail.vmcreatefailed".format(provider=provider))

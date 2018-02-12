@@ -2744,6 +2744,13 @@ install_debian_deps() {
 
     apt-get update
 
+    # Do a dist-upgrade so we're up-to-date.
+    # We have to do this before installing salt, since
+    # trying to do an dist-upgrade within the context of
+    # a `salt.run` command can cause salt to die and
+    # not come back.
+    apt-get dist-upgrade -y
+
     # Install Keys
     __apt_get_install_noinput debian-archive-keyring && apt-get update
 
