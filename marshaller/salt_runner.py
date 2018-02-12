@@ -455,7 +455,7 @@ class VpsHerder(object):
 			['cmd.run', ['mkdir .ssh/', ],                                                                                                        {}, None],
 			['cmd.run', [dirmake_oneliner, ],                                                                                                     {}, None],
 			['cmd.run', [dirmake_ssh_oneliner, ],                                                                                                 {}, None],
-			['cmd.run', ["ls /", ], {}, ['scraper', ]],
+			['cmd.run', ["bash -c ls /", ], {}, ['scraper', ]],
 			['cmd.run', ['pwd', ],      {}, ['/root']],
 			['cmd.run', ['ls -la ', ],                                                                                                            {}, None],
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
@@ -507,12 +507,12 @@ class VpsHerder(object):
 
 
 			# Clone and Install settings
-			['cmd.run', ["ls /", ], {}, ['scraper', ]],
+			['cmd.run', ["bash -c ls /", ], {}, ['scraper', ]],
 			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}, []],
 			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}, None],
 
 			# Make sure it all checked out at least somewhat
-			['cmd.run', ["ls /scraper", ], {}, ['configure.sh', 'run.sh', 'settings.json']],
+			['cmd.run', ["bash -c ls /scraper", ], {}, ['configure.sh', 'run.sh', 'settings.json']],
 
 			# Finally, run the thing
 
