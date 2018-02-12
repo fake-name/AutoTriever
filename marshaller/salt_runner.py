@@ -100,7 +100,9 @@ dirmake_oneliner = 'python -c \'import os.path, sys, os; os.makedirs("/scraper")
 
 class VpsHerder(object):
 
-	def __init__(self):
+	def __init__(self, debug=False):
+
+		self.debug = debug
 		self.log = logging.getLogger("Main.VpsHerder")
 		try:
 			self.local = salt.client.LocalClient()
@@ -435,12 +437,21 @@ class VpsHerder(object):
 		for expect_val in expect:
 			if isinstance(expect_val, str):
 				if isinstance(resp, bool):
+					if self.debug:
+						import pdb
+						pdb.set_trace()
 					raise marshaller_exceptions.InvalidDeployResponse("Expected '%s' response: '%s'" % (expect_val, resp))
 
 				elif isinstance(resp, str):
 					if not expect_val in resp:
+						if self.debug:
+							import pdb
+							pdb.set_trace()
 						raise marshaller_exceptions.InvalidDeployResponse("Expected '%s' in response '%s'" % (expect_val, resp))
 			else:
+				if self.debug:
+					import pdb
+					pdb.set_trace()
 				raise marshaller_exceptions.InvalidExpectParameter("Invalid expect parameter: '%s' (type: %s)." % (expect_val, type(expect_val)))
 
 		self.log.info("Command response passed validation.")
@@ -449,15 +460,18 @@ class VpsHerder(object):
 		assert "_" not in clientname, "VM names cannot contain _ on digital ocean, I think?"
 		self.log.info("Configuring client")
 
+
+		# [Command, [shell command], {execution context}, ['strings', 'expected', 'in', 'response']],
 		commands = [
-			# splat in public keys.
-			['cmd.run', ["bash -c whoami", ], {}, ['root']],
+			['cmd.run', ["bash -c \'whoami\'", ],                                                                                                 {}, ['root']],
 			['cmd.run', ['mkdir .ssh/', ],                                                                                                        {}, None],
 			['cmd.run', [dirmake_oneliner, ],                                                                                                     {}, None],
 			['cmd.run', [dirmake_ssh_oneliner, ],                                                                                                 {}, None],
-			['cmd.run', ["bash -c ls /", ], {}, ['scraper', ]],
-			['cmd.run', ['pwd', ],      {}, ['/root']],
-			['cmd.run', ['ls -la ', ],                                                                                                            {}, None],
+			['cmd.run', ["bash -c \"ls /\"", ],                                                                                                   {}, ['scraper', ]],
+			['cmd.run', ['bash -c \"pwd\"', ],                                                                                                    {}, ['/root']],
+			['cmd.run', ['bash -c \"ls -la\"', ],                                                                                                 {}, None],
+
+			# splat in public keys.
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
 				+ 'LKb/iJkABH+hxq8ZL7kXiKuGgeHsI60I2wECMxg17Qs918ND626AkXqlMIUW1SchcAi3rYRMVY0OaGSOutIcjR+mJ6liogTv1DLRD0eRbuollz7XsYz4ILb'
 				+ 'i9kEsqwaly92vK6vlIVlAWtDoNf95c6jk/lh0M5p1LV0lwrEtfCreuv1rrOldUdwgU4wCFgRI+p6FXs69+OsNWxZSOSr28eE9sbsHxIxthcRHMtsnDxzeJ1'
@@ -477,7 +491,7 @@ class VpsHerder(object):
 				+ 'l1O2Tco2FYhfvCiyZvAHv25LLrGzePidR59SzTP7/fLxK7FgmH0m79AOKvjuZaNjb7njmgDhyQggOLU6bJwiiJ7MqldPlic2qCKyQVavLv2nXGIGVXEovtM'
 				+ '9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a .ssh/authorized_keys', ],                                                         {}, None],
 			['cmd.run', ["chmod 0600 .ssh/authorized_keys", ],                                                                                    {}, None],
-			['cmd.run', ["cat .ssh/authorized_keys", ],      {}, [' Neko@ODO', ' rwpscrape@fake-url.com', ' durr@mainnas', ]],
+			['cmd.run', ["cat .ssh/authorized_keys", ],                                                                                           {}, [' Neko@ODO', ' rwpscrape@fake-url.com', ' durr@mainnas', ]],
 			# So something is missing some of the keys, somehow
 			['cmd.run', ["eval ssh-agent $SHELL", ],                                                                                              {}, None],
 			['cmd.run', ["ssh-add .ssh/authorized_keys", ],                                                                                       {}, None],
@@ -507,22 +521,22 @@ class VpsHerder(object):
 
 
 			# Clone and Install settings
-			['cmd.run', ["bash -c ls /", ], {}, ['scraper', ]],
-			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"], {}, []],
+			['cmd.run', ["bash -c ls /", ],                                                                                                       {}, ['scraper', ]],
+			['cmd.run', ["git clone https://github.com/fake-name/AutoTriever.git /scraper"],                                                      {}, []],
 			['cmd.run', ["cat << EOF > /scraper/settings.json \n{content}\nEOF".format(content=self.__make_conf_file(clientname, client_idx)), ], {}, None],
 
 			# Make sure it all checked out at least somewhat
-			['cmd.run', ["bash -c ls /scraper", ], {}, ['configure.sh', 'run.sh', 'settings.json']],
+			['cmd.run', ["bash -c \"ls /scraper\"", ],                                                                                            {}, ['configure.sh', 'run.sh', 'settings.json']],
 
 			# Finally, run the thing
 
-			['cmd.run', ["adduser scrapeworker --disabled-password", ], {}, ["Adding user `scrapeworker'"]],
+			['cmd.run', ["adduser scrapeworker --disabled-password", ],                                                                           {}, ["Adding user `scrapeworker'"]],
 			['cmd.run', ["usermod -a -G sudo scrapeworker", ],                                                                                    {}, None],
 			['cmd.run', ["echo 'scrapeworker ALL=(ALL) NOPASSWD: ALL' | tee -a /etc/sudoers", ],                                                  {}, None],
 
 			['cmd.run', ["chown -R scrapeworker:scrapeworker /scraper", ],                                                                        {}, None],
 
-			['cmd.run', ["./configure.sh", ], {"cwd" : '/scraper', 'runas' : 'scrapeworker'}, ['Setup OK! System is configured for launch']],
+			['cmd.run', ["./configure.sh", ],                                                     {"cwd" : '/scraper', 'runas' : 'scrapeworker'}, ['Setup OK! System is configured for launch']],
 		]
 
 		failures = 0
@@ -675,7 +689,7 @@ class VpsHerder(object):
 # Waiting on https://github.com/saltstack/salt/issues/37040
 
 def vtest():
-	herder = VpsHerder()
+	herder = VpsHerder(debug=True)
 
 	clientname = "test-1"
 	provider, kwargs = herder.generate_vultr_conf()
@@ -684,13 +698,13 @@ def vtest():
 	herder.log.info("	using provider: '%s'", provider)
 	herder.log.info("	kwargs: '%s'", kwargs)
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	print("Create response:", ret)
+	# print("Create response:", ret)
 
 	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
 
 def dtest():
-	herder = VpsHerder()
+	herder = VpsHerder(debug=True)
 
 	clientname = "test-2"
 	provider, kwargs = herder.generate_do_conf()
@@ -699,13 +713,13 @@ def dtest():
 	herder.log.info("	using provider: '%s'", provider)
 	herder.log.info("	kwargs: '%s'", kwargs)
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	print("Create response:", ret)
+	# print("Create response:", ret)
 
 	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
 
 def ltest():
-	herder = VpsHerder()
+	herder = VpsHerder(debug=True)
 
 	clientname = "test-3"
 	provider, kwargs = herder.generate_linode_conf()
@@ -714,13 +728,13 @@ def ltest():
 	herder.log.info("	using provider: '%s'", provider)
 	herder.log.info("	kwargs: '%s'", kwargs)
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	print("Create response:", ret)
+	# print("Create response:", ret)
 
 	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
 
 def stest():
-	herder = VpsHerder()
+	herder = VpsHerder(debug=True)
 
 	clientname = "test-4"
 	provider, kwargs = herder.generate_scaleway_conf()
@@ -729,7 +743,7 @@ def stest():
 	herder.log.info("	using provider: '%s'", provider)
 	herder.log.info("	kwargs: '%s'", kwargs)
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	print("Create response:", ret)
+	# print("Create response:", ret)
 
 	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
@@ -737,7 +751,7 @@ def stest():
 
 
 def gtest():
-	herder = VpsHerder()
+	herder = VpsHerder(debug=True)
 
 	clientname = "test-5"
 	provider, kwargs = herder.generate_gce_conf()
@@ -746,7 +760,7 @@ def gtest():
 	herder.log.info("	using provider: '%s'", provider)
 	herder.log.info("	kwargs: '%s'", kwargs)
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	print("Create response:", ret)
+	# print("Create response:", ret)
 
 	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
