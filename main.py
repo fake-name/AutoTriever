@@ -1,18 +1,21 @@
 
 
-import dispatcher
+import queue
 import time
 import threading
 import traceback
 import concurrent.futures
 import json
-import deps.logSetup
 import logging
 import os.path
 import os
 
+import deps.logSetup
+import dispatcher
 
-from state import RUN_STATE
+import state
+
+
 
 class SettingsLoadFailed(ValueError):
 	pass
@@ -68,8 +71,7 @@ def multithread(numThreads, settings, lock_dict):
 				time.sleep(1)
 		except KeyboardInterrupt:
 			print("Main thread interrupt!")
-			RUN_STATE = False
-
+			state.RUN_STATE = False
 
 	print("Main thread exited.")
 
@@ -79,6 +81,8 @@ def go():
 	deps.logSetup.initLogging(logLevel=logging.INFO)
 	settings = loadSettings()
 
+
+
 	threads = 1
 	if 'threads' in settings and settings['threads']:
 		threads = settings['threads']
@@ -86,7 +90,7 @@ def go():
 	else:
 		print("Running in single thread mode.")
 
-
+	settings['aux_message_queue'] = queue.Queue()
 	manager_lock   = threading.Lock()
 	seen_lock      = threading.Lock()
 	serialize_lock = threading.Lock()
