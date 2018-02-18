@@ -220,9 +220,8 @@ class VpsScheduler(object):
 		vms = self.build_target_vm_list()
 		hours = time.time() / (60 * 60)
 
-		# These values need to be floats.
+		# The lifetime value needs to be a float.
 		settings.VPS_LIFETIME_HOURS = float(settings.VPS_LIFETIME_HOURS)
-		settings.VPS_ACTIVE_WORKERS = float(settings.VPS_ACTIVE_WORKERS)
 
 		restart_interval = settings.VPS_LIFETIME_HOURS / settings.VPS_ACTIVE_WORKERS
 		basetime = time.time()
