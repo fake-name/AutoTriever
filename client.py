@@ -5,6 +5,7 @@ import os.path
 import threading
 import ssl
 import time
+import queue
 import traceback
 import msgpack
 import amqp_connector
@@ -320,6 +321,13 @@ class RpcHandler(object):
 					self.log.warning("Failure when processing message!")
 					# Push into dead-letter queue.
 					message.reject(requeue=False)
+
+			try:
+				extra = self.settings['aux_message_queue'].get_nowait()
+				if extra:
+					self.put_message_chunked(extra)
+			except queue.Empty:
+				pass
 
 			if msg_count > loops:
 				return

@@ -10,6 +10,7 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 import logSetup
 import marshaller_exceptions
 import stopit
+import statsd
 import settings
 
 if "test" in sys.argv:
@@ -45,6 +46,13 @@ class VpsScheduler(object):
 				'apscheduler.timezone': 'UTC',
 			})
 
+
+		self.stats_con = statsd.StatsClient(
+				host = settings.GRAPHITE_DB_IP,
+				port = 8125,
+				prefix = 'ReadableWebProxy.VpsHerder',
+				)
+
 		self.sched.add_job(poke_statsd,         'interval', seconds=60)
 		self.sched.add_job(self.ensure_active_workers, 'interval', seconds=60 * 5)
 		self.install_destroyer_jobs()
@@ -59,54 +67,59 @@ class VpsScheduler(object):
 			with stopit.ThreadingTimeout(60 * 30, swallow_exc=False):
 				# This is slightly horrible.
 				provider, kwargs = self.interface.generate_conf()
-				with self.interface.mon_con.timer("VM-Creation-{}".format(provider)):
+				with self.stats_con.timer("VM-Creation-{}".format(provider)):
 					self.interface.make_client(vm_name, provider, kwargs)
 					self.interface.configure_client(vm_name, vm_idx)
 				self.log.info("VM %s created.", vm_name)
 				CREATE_WATCHDOG.value += 1
-			self.interface.mon_con.incr("vm-create.{provider}.ok".format(provider=provider))
+			self.stats_con.incr("vm-create.{provider}.ok".format(provider=provider))
 		except stopit.TimeoutException:
 			self.log.error("Timeout instantiating VM %s.", vm_name)
-			self.interface.mon_con.incr("vm-create.{provider}.fail.timeout".format(provider=provider))
+			self.stats_con.incr("vm-create.{provider}.fail.timeout".format(provider=provider))
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
 			for _ in range(5):
 				self.destroy_vm(vm_name)
 				time.sleep(2.5)
+			return
 		except marshaller_exceptions.LocationNotAvailableResponse:
 			self.log.warning("Failure instantiating VM %s.", vm_name)
-			self.interface.mon_con.incr("vm-create.{provider}.fail.locationnotavilable".format(provider=provider))
+			self.stats_con.incr("vm-create.{provider}.fail.locationnotavilable".format(provider=provider))
 			for line in traceback.format_exc().split("\n"):
 				self.log.warning(line)
 			for _ in range(5):
 				self.destroy_vm(vm_name)
 				time.sleep(2.5)
+			return
 		except marshaller_exceptions.InvalidDeployResponse:
 			self.log.warning("Failure instantiating VM %s.", vm_name)
-			self.interface.mon_con.incr("vm-create.{provider}.fail.invaliddeployresponse".format(provider=provider))
+			self.stats_con.incr("vm-create.{provider}.fail.invaliddeployresponse".format(provider=provider))
 			for line in traceback.format_exc().split("\n"):
 				self.log.warning(line)
 			for _ in range(5):
 				self.destroy_vm(vm_name)
 				time.sleep(2.5)
+			return
 		except marshaller_exceptions.InvalidExpectParameter:
 			self.log.warning("Failure instantiating VM %s.", vm_name)
-			self.interface.mon_con.incr("vm-create.{provider}.fail.invalidexpectparameter".format(provider=provider))
+			self.stats_con.incr("vm-create.{provider}.fail.invalidexpectparameter".format(provider=provider))
 			for line in traceback.format_exc().split("\n"):
 				self.log.warning(line)
 			for _ in range(5):
 				self.destroy_vm(vm_name)
 				time.sleep(2.5)
+			return
 		except marshaller_exceptions.VmCreateFailed:
 			self.log.warning("Failure instantiating VM %s.", vm_name)
-			self.interface.mon_con.incr("vm-create.{provider}.fail.vmcreatefailed".format(provider=provider))
+			self.stats_con.incr("vm-create.{provider}.fail.vmcreatefailed".format(provider=provider))
 			for line in traceback.format_exc().split("\n"):
 				self.log.warning(line)
 			for _ in range(5):
 				self.destroy_vm(vm_name)
 				time.sleep(2.5)
+			return
 		except Exception as e:
-			self.interface.mon_con.incr("vm-create.{provider}.fail.unknown-error".format(provider=provider))
+			self.stats_con.incr("vm-create.{provider}.fail.unknown-error".format(provider=provider))
 			self.log.error("Unknown failure instantiating VM %s!", vm_name)
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
@@ -114,10 +127,10 @@ class VpsScheduler(object):
 			for _ in range(5):
 				self.destroy_vm(vm_name)
 				time.sleep(2.5)
+			return
 
 
 		self.log.info("VM Creation complete.")
-		self.interface.list_nodes()
 
 	def destroy_vm(self, vm_name):
 		self.interface.list_nodes()
@@ -191,8 +204,10 @@ class VpsScheduler(object):
 
 		for vm_name in extra:
 			self.destroy_vm(vm_name)
+			self.interface.list_nodes()
 		for vm_name in missing:
 			self.create_vm(vm_name)
+			self.interface.list_nodes()
 
 		existing = self.sched.get_jobs()
 		for job in existing:
@@ -205,11 +220,18 @@ class VpsScheduler(object):
 		vms = self.build_target_vm_list()
 		hours = time.time() / (60 * 60)
 
+		# These values need to be floats.
+		settings.VPS_LIFETIME_HOURS = float(settings.VPS_LIFETIME_HOURS)
+		settings.VPS_ACTIVE_WORKERS = float(settings.VPS_ACTIVE_WORKERS)
+
 		restart_interval = settings.VPS_LIFETIME_HOURS / settings.VPS_ACTIVE_WORKERS
 		basetime = time.time()
 		basetime = basetime - (basetime % hrs_to_sec(settings.VPS_LIFETIME_HOURS))
 
-		print(hours % settings.VPS_LIFETIME_HOURS, restart_interval, basetime)
+		self.log.info("VPS Lifetime (hours): %s. Step interval: %s. Modulo start-time: %s",
+			hours % settings.VPS_LIFETIME_HOURS, restart_interval, basetime
+			)
+
 		for vm in vms:
 			vm_num = int(vm.split("-")[-1])
 			start_offset = vm_num * restart_interval
@@ -224,7 +246,7 @@ class VpsScheduler(object):
 				args          = (vm, ),
 				seconds       = hrs_to_sec(settings.VPS_LIFETIME_HOURS),
 				next_run_time = datetime.datetime.fromtimestamp(nextrun, tz=pytz.utc))
-			print("Item nextrun: ", nextrun, nextrun - time.time())
+			self.log.info("VM %s next run: %s (in %s seconds): ", vm, nextrun, nextrun - time.time())
 
 	def run(self):
 		self.sched.start()
