@@ -547,6 +547,7 @@ class VpsHerder(object):
 		]
 
 		failures = 0
+		err = None
 
 		for command, args, kwargs, expect in commands:
 			while True:
@@ -556,21 +557,29 @@ class VpsHerder(object):
 					arg=args,
 					kwarg=kwargs
 					)
+
+
 				self.log.info("Command executed. Clientname in response: %s", clientname in resp)
-				if clientname in resp:
-					if expect:
-						self.validate_expect(resp[clientname], expect)
-					elif resp is False:
-						raise marshaller_exceptions.InvalidDeployResponse("Command returned a failure result: '%s' (%s, %s)" % (command, args, kwargs))
-					failures = 0
-					break
-				else:
+				try:
+					if clientname in resp:
+						if expect:
+							self.validate_expect(resp[clientname], expect)
+						elif resp is False:
+							raise marshaller_exceptions.InvalidDeployResponse("Command returned a failure result: '%s' (%s, %s)" % (command, args, kwargs))
+						failures = 0
+						break
+				except (marshaller_exceptions.InvalidDeployResponse, marshaller_exceptions.InvalidExpectParameter) as e:
 					failures += 1
-					tries = 3
-					self.log.error("Command failed (attempt %s of %s)!", failures, tries)
-					self.log.error("Response:")
-					self.log.error("%s", resp)
-					if failures > tries:
+					err = e
+				failures += 1
+				tries = 3
+				self.log.error("Command failed (attempt %s of %s)!", failures, tries)
+				self.log.error("Response:")
+				self.log.error("%s", resp)
+				if failures > tries:
+					if err is not None:
+						raise err
+					else:
 						raise marshaller_exceptions.VmCreateFailed("Failed to create VM!")
 
 			if resp[clientname]:
