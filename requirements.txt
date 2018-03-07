@@ -11,16 +11,16 @@ APScheduler==3.5.1
 beautifulsoup4==4.6.0
 cchardet==2.1.1
 colorama==0.3.9
-selenium==3.9.0
+selenium==3.10.0
 Faker==0.8.11
 lxml==4.1.1
 cachetools==2.0.1
-msgpack-python==0.5.4
+msgpack-python==0.5.5
 pytz==2018.3
 feedgen==0.6.1
 feedparser==5.2.1
 
-webrequest==0.0.14
+webrequest==0.0.19
 
 psutil
 
