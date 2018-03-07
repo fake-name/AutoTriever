@@ -181,16 +181,6 @@ class RpcHandler(object):
 			assert isinstance(body, dict) is True, 'The message must decode to a dict!'
 
 
-			if "unique_id" in body:
-				with self.lock_dict['seen_lock']:
-					mid = body['unique_id']
-					if mid in INSTANCE_SEEN_MESSAGE_IDS:
-						self.log.warning("Seen unique message ID: %s (have %s seen items). Not fetching again", mid,
-																							len(INSTANCE_SEEN_MESSAGE_IDS))
-						raise CannotHandleNow
-					else:
-						self.log.info("New unique message ID: %s. Fetching.", mid)
-						INSTANCE_SEEN_MESSAGE_IDS.add(mid)
 
 			if 'serialize' in body and body['serialize']:
 				lockname = body['serialize'] if isinstance(body['serialize'], str) else 'generic_job'
@@ -212,6 +202,17 @@ class RpcHandler(object):
 				if not have_serialize_lock:
 					self.log.warning("Forcing job to be serialized on worker (lock: %s). Rejecting while another job is active.", lockname)
 					raise CannotHandleNow
+
+			if "unique_id" in body:
+				with self.lock_dict['seen_lock']:
+					mid = body['unique_id']
+					if mid in INSTANCE_SEEN_MESSAGE_IDS:
+						self.log.warning("Seen unique message ID: %s (have %s seen items). Not fetching again", mid,
+																							len(INSTANCE_SEEN_MESSAGE_IDS))
+						raise CannotHandleNow
+					else:
+						self.log.info("New unique message ID: %s. Fetching.", mid)
+						INSTANCE_SEEN_MESSAGE_IDS.add(mid)
 
 			if "early_ack" in body and body['early_ack']:
 				message.ack()
