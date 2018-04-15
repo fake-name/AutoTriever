@@ -537,7 +537,7 @@ class VpsHerder(object):
 
 			# Finally, run the thing
 
-			['cmd.run', ["adduser scrapeworker --disabled-password", ],                                                                           {}, ["Adding user `scrapeworker'"]],
+			['cmd.run', ["adduser scrapeworker --disabled-password --gecos \"\"", ],                                                                           {}, ["Adding user `scrapeworker'"]],
 			['cmd.run', ["usermod -a -G sudo scrapeworker", ],                                                                                    {}, None],
 			['cmd.run', ["echo 'scrapeworker ALL=(ALL) NOPASSWD: ALL' | tee -a /etc/sudoers", ],                                                  {}, None],
 
