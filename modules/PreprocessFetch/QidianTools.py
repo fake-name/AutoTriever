@@ -61,7 +61,7 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 				bad_script.decompose()
 
 			print("Checking for ad")
-			if 'Watch ad to get chapter' in soup.prettify():
+			if 'Unlock This Chapter' in soup.prettify():
 				print("Item still ad-wrapped. Not adding.")
 				return None
 			else:
