@@ -60,6 +60,11 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 			for bad_script in soup.find_all("script"):
 				bad_script.decompose()
 
+			header_span = soup.find("span", class_='cha-hd-mn-text')
+			if header_span and header_span.a:
+				have['series_name'] = header_span.a.get("title", None).strip()
+				print("Extracted series name: '%s'" % have['series_name'])
+
 			print("Checking for ad")
 			soupstr = soup.prettify()
 			if 'Unlock This Chapter' in soupstr or 'Watch ad to get chapter' in soupstr:
