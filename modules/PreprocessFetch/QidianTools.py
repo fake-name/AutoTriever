@@ -34,8 +34,8 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 				url = url_re.search(content)
 
 				if not url:
-					print("No actual content URL found")
-					print(content)
+					self.log.info("No actual content URL found")
+					self.log.info("Content: %s", content)
 					return None
 
 
@@ -43,19 +43,21 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 				if url.startswith("//"):
 					url = 'https:' + url
 
-				print("resolved item url out to %s" % url)
+				self.log.info("resolved item url out to %s", url)
 
 				have['resolved_url'] = url
 			else:
 				have['resolved_url'] = entry['link']
 
 		else:
-			print("Already have resolved URL: %s" % have['resolved_url'])
+			self.log.info("Already have resolved URL: %s", have['resolved_url'])
 
 		entry['link'] = have['resolved_url']
 
 		if 'ad_free' not in have:
 			soup = self.wg.getSoup(entry['link'])
+
+			rawsoupstr = str(soup)
 
 			for bad_script in soup.find_all("script"):
 				bad_script.decompose()
@@ -63,18 +65,30 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 			header_span = soup.find("span", class_='cha-hd-mn-text')
 			if header_span and header_span.a:
 				have['series_name'] = header_span.a.get("title", None).strip()
-				print("Extracted series name: '%s'" % have['series_name'])
+				self.log.info("Extracted series name: '%s'", have['series_name'])
 
-			print("Checking for ad")
-			soupstr = soup.prettify()
+			self.log.info("Checking for ad")
+			soupstr = str(soup)
 			if 'Unlock This Chapter' in soupstr or 'Watch ad to get chapter' in soupstr:
-				print("Item still ad-wrapped. Not adding.")
+				self.log.info("Item still ad-wrapped. Not adding.")
 				return None
 			else:
-				print("Item has no ad.")
+				self.log.info("Item has no ad.")
 				have['ad_free'] = True
 
+			book_type = re.search(r"g_data\.isOriginal = '(\d)';", rawsoupstr)
+			if book_type:
+				self.log.info("Book Type: %s", book_type.group(1))
+				typeint = book_type.group(1)
+				if typeint == "1":
+					have['type'] = 'translated'
+				elif typeint == '2':
+					have['type'] = 'oel'
+				else:
+					have['type'] = 'unknown!'
 
+
+		self.log.info("have: %s", have)
 		entry['extra-info'] = have
 
 		return entry
