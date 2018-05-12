@@ -28,6 +28,7 @@ class PluginInterface_RemoteExec():
 		call_env = {
 			'wg'     : self.wg,
 		}
+
 		if extra_env:
 			for key, value in extra_env.items():
 				extra_env[key] = value

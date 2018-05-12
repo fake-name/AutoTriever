@@ -56,6 +56,8 @@ function setup_headless_chrome() {
 
 	sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
 
+	curl https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts | sudo tee -a /etc/hosts
+
 	# set +e
 	# tar tf ./vendored/MinimalHeadless.tar.gz
 	# if [ $? -eq 0 ]
