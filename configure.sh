@@ -37,6 +37,11 @@ function setup_phantomjs() {
 		done;
 	fi;
 	set -e
+
+
+	sudo mv ./phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/
+	rm -rf phantomjs-2.1.1-linux-x86_64
+
 }
 
 
@@ -80,7 +85,10 @@ else
 	sudo apt-get install libfontconfig -y
 	sudo apt-get install wget -y
 	sudo apt-get install htop -y
-	sudo apt-get install libxml2 libxslt1-dev python3-dev libz-dev -y
+	sudo apt-get install libxml2 -y
+	sudo apt-get install libxslt1-dev -y
+	sudo apt-get install python3-dev -y
+	sudo apt-get install libz-dev -y
 
 
 	# Needed for chromedriver
@@ -98,11 +106,7 @@ else
 	setup_phantomjs
 	setup_headless_chrome
 
-
-	sudo mv ./phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/
-	rm -rf phantomjs-2.1.1-linux-x86_64
 	echo "Creating venv."
-
 	python3 -m venv --without-pip venv
 	wget https://bootstrap.pypa.io/get-pip.py
 	./venv/bin/python3 get-pip.py --force-reinstall
