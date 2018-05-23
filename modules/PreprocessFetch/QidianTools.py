@@ -1,8 +1,11 @@
 
 import logging
+import pprint
 import re
+import ast
 import json
 import feedparser
+import traceback
 from feedgen.feed import FeedGenerator
 import WebRequest
 
@@ -16,6 +19,49 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 		super().__init__()
 		self.wg = WebRequest.WebGetRobust()
 
+	def extract_from_meta(self, meta):
+
+		 #                 '/274367222/msite-read-video3',
+		 #                 '/274367222/msite-read-video4',
+		 #                 '/274367222/msite-read-video5',
+		 #                 '/274367222/web-read-video',
+		 #                 '/274367222/web-read-video2',
+		 #                 '/274367222/web-read-video3',
+		 #                 '/274367222/web-read-video4',
+		 #                 '/274367222/web-read-video5']},
+		 # 'bookInfo': {'actionStatus': '30',
+		 #              'authorItems': [{'guid': '2426086308',
+		 #                               'id': '10411317206384101',
+		 #                               'name': 'Azure_god_monarch'}],
+		 #              'bookId': '10411326706031905',
+		 #              'bookName': 'Modern day transcender',
+		 #              'patreonLink': '',
+		 #              'reviewTotal': 2,
+		 #              'totalChapterNum': 7,
+		 #              'totalPreChapterNum': 1,
+		 #              'type': 2},
+		 # 'chapterInfo': {'SSPrice': 4,
+		 #                 'chapterId': '28432475277543235',
+		if not "bookInfo" in meta:
+			return {}
+		if not "authorItems" in meta["bookInfo"]:
+			return {}
+
+		auth_names = [
+			tmp.get("name", None) for tmp in meta['bookInfo']["authorItems"]
+		]
+
+
+		auth_names = [tmp for tmp in auth_names if tmp]
+
+		ret = {
+			'authors'     : auth_names,
+			'source_name' : meta["bookInfo"].get("bookName", None),
+			'bookInfo'    : meta['bookInfo'],
+			'chapterInfo' : meta['chapterInfo'],
+		}
+
+		return ret
 
 	def _check_qidian_release(self, entry, have_info):
 
@@ -67,6 +113,7 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 				have['series_name'] = header_span.a.get("title", None).strip()
 				self.log.info("Extracted series name: '%s'", have['series_name'])
 
+
 			self.log.info("Checking for ad")
 			soupstr = str(soup)
 			if 'Unlock This Chapter' in soupstr or 'Watch ad to get chapter' in soupstr:
@@ -75,6 +122,31 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 			else:
 				self.log.info("Item has no ad.")
 				have['ad_free'] = True
+
+			title_div = soup.find("div", class_='cha-tit')
+			if title_div and title_div.h3:
+				have['chap_title'] = title_div.h3.get_text(strip=True)
+
+
+			chap_info = re.search(r"var chapInfo = (.*?);", rawsoupstr)
+			if chap_info:
+				chap_info_str = chap_info.group(1)
+
+				# Qidian does a bunch of escaping I don't understand, that breaks shit.
+				chap_info_str = chap_info_str.replace("\\ ", " ")
+				chap_info_str = chap_info_str.replace("\\'", "'")
+				chap_info_str = chap_info_str.replace("\\/", "/")
+
+				try:
+					cont = json.loads(chap_info_str)
+					print("Extracted meta:", cont)
+					for k, v in self.extract_from_meta(cont).items():
+						have[k] = v
+				except ValueError:
+					print("Bad chapInfo")
+					traceback.print_exc()
+					print(chap_info_str)
+					have['invalid_meta'] = chap_info.group(1)
 
 			book_type = re.search(r"g_data\.isOriginal = '(\d)';", rawsoupstr)
 			if book_type:
