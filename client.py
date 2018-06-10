@@ -361,7 +361,7 @@ class RpcHandler(object):
 
 					self.log.info("AMQP Connection initialized. Entering runloop!")
 
-					self.process_messages(1000)
+					self.process_messages(5000)
 					self.connector.close()
 					self.connector = None
 
