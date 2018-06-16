@@ -465,7 +465,7 @@ class VpsHerder(object):
 		# [Command, [shell command], {execution context}, ['strings', 'expected', 'in', 'response']],
 		commands = [
 			['cmd.run', ["bash -c \'whoami\'", ],                                                                                                 {}, ['root']],
-			['cmd.run', ['mkdir .ssh/', ],                                                                                                        {}, None],
+			['cmd.run', ['mkdir -p .ssh/', ],                                                                                                     {}, None],
 			['cmd.run', [dirmake_oneliner, ],                                                                                                     {}, None],
 			['cmd.run', [dirmake_ssh_oneliner, ],                                                                                                 {}, None],
 			['cmd.run', ["bash -c \"ls /\"", ],                                                                                                   {}, ['scraper', ]],
@@ -507,7 +507,7 @@ class VpsHerder(object):
 			# Anyways, I moved this command to my custom bootstrap script.
 			# ['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {'env' : {'DEBIAN_FRONTEND' : 'noninteractive'}}, None],
 
-			['cmd.run', ["apt-get install -y build-essential git screen", ],                                                                      {}, None],
+			['cmd.run', ["apt-get install -y build-essential git screen", ],                                                                      {}, ['The following NEW packages will be installed:', "g++", "gcc"]],
 
 			# Make swap so
 			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=4096", ],                                                                      {}, None],
@@ -516,13 +516,13 @@ class VpsHerder(object):
 			['cmd.run', ["swapon /swapfile", ],                                                                                                   {}, None],
 
 			# Needed to make GCE play nice. I think they just flat-out don't preinstall a locale
-			['cmd.run', ["sudo apt-get install language-pack-en -y", ],                                                                           {}, None],
+			['cmd.run', ["sudo apt-get install language-pack-en -y", ],                                                                           {}, ['The following NEW packages will be installed:', 'language-pack-en-base']],
 
 			# Shit to make the tty work in UTF-8. Otherwise, the logging can asplode
 			# and break all the things.
 			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ],                                                                   {}, None],
 			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ],                                                                 {}, None],
-			['cmd.run', ["dpkg-reconfigure locales", ],                                                                                           {}, None],
+			['cmd.run', ["dpkg-reconfigure locales", ],                                                                                           {}, ['en_US.UTF-8']],
 			['cmd.run', ["locale", ],                                                                                                             {}, None],
 			['cmd.run', ["bash -c \"locale\"", ],                                                                                                 {}, None],
 

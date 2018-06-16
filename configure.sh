@@ -82,6 +82,9 @@ else
 	sudo apt-get update
 	# sudo apt-get dist-upgrade -y
 	sudo apt-get install build-essential -y
+
+	# Apparently at least one VPS host has separated git from build-essential?
+	sudo apt-get install git -y
 	sudo apt-get install libfontconfig -y
 	sudo apt-get install wget -y
 	sudo apt-get install htop -y
