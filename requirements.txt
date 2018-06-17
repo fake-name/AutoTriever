@@ -1,7 +1,9 @@
 
 requests==2.19.1
-git+https://github.com/berkerpeksag/astor.git
-git+https://github.com/fake-name/ChromeController.git
+
+astor>=0.6.0
+
+ChromeController
 
 PySocks==1.6.8
 dill==0.2.7.1
