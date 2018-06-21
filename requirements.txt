@@ -6,7 +6,7 @@ astor>=0.6.0
 ChromeController==0.3.7
 
 PySocks==1.6.8
-dill==0.2.7.1
+dill==0.2.8
 rabbitpy==1.0.0
 
 APScheduler==3.5.1
