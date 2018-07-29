@@ -10,7 +10,7 @@ dill==0.2.8.2
 rabbitpy==1.0.0
 
 APScheduler==3.5.1
-beautifulsoup4==4.6.0
+beautifulsoup4==4.6.1
 cchardet==2.1.1
 colorama==0.3.9
 selenium==3.13.0
