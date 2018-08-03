@@ -15,7 +15,7 @@ cchardet==2.1.1
 colorama==0.3.9
 selenium==3.14.0
 Faker==0.8.17
-lxml==4.2.3
+lxml==4.2.4
 cachetools==2.1.0
 msgpack==0.5.6
 pytz==2018.5
