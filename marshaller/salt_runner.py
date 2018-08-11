@@ -523,7 +523,7 @@ class VpsHerder(object):
 			['cmd.run', ["swapon /swapfile", ],                                                                                                   {}, None],
 
 			# Needed to make GCE play nice. I think they just flat-out don't preinstall a locale
-			['cmd.run', ["sudo apt-get install language-pack-en -y", ],                                                                           {}, ['The following NEW packages will be installed:', 'language-pack-en-base']],
+			# ['cmd.run', ["sudo apt-get install language-pack-en -y", ],                                                                           {}, ['The following NEW packages will be installed:', 'language-pack-en-base']],
 
 			# Shit to make the tty work in UTF-8. Otherwise, the logging can asplode
 			# and break all the things.
