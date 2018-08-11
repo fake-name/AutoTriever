@@ -51,6 +51,10 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 			tmp.get("name", None) for tmp in meta['bookInfo']["authorItems"]
 		]
 
+		# The content string is large, and we're not using it, so
+		# don't waste message space withit.
+		if 'content' in meta['bookInfo']:
+			meta['bookInfo'].pop('content')
 
 		auth_names = [tmp for tmp in auth_names if tmp]
 
