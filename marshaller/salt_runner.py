@@ -130,15 +130,17 @@ class VpsHerder(object):
 	def get_5_dollar_do_meta(self):
 		self.log.info("Generating DO Configuration")
 
-		sizes = self.cc.list_sizes(provider='digital_ocean')['digital_ocean']['digital_ocean']
-		locs = self.cc.list_locations(provider='digital_ocean')['digital_ocean']['digital_ocean']
+		sizes = self.cc.list_sizes(provider='digitalocean')['digitalocean']['digitalocean']
+		locs = self.cc.list_locations(provider='digitalocean')['digitalocean']['digitalocean']
+
+		self.log.info("Found %s sizes, %s locations", len(sizes), len(locs))
 		items = []
 
 		avail_locs = {}
 		for name, loc_meta in locs.items():
 			if loc_meta['available']:
 				# Why the fuck is this a string?
-				if isinstance(loc_meta['sizes'], str):
+				if isinstance(loc_meta['sizes'], (str, unicode)):
 					loc_meta['sizes'] = ast.literal_eval(loc_meta['sizes'])
 				if isinstance(loc_meta['sizes'], list):
 					avail_locs.setdefault(loc_meta['slug'], set())
@@ -148,7 +150,7 @@ class VpsHerder(object):
 		for name, size_meta in sizes.items():
 			if float(size_meta['price_monthly']) <= MAX_MONTHLY_PRICE_DOLLARS:
 				# Why the fuck is this a string?
-				if isinstance(size_meta['regions'], str):
+				if isinstance(size_meta['regions'], (str, unicode)):
 					size_meta['regions'] = ast.literal_eval(size_meta['regions'])
 				for loc in size_meta['regions']:
 					if loc in avail_locs:
@@ -166,7 +168,7 @@ class VpsHerder(object):
 		except TypeError as e:
 			raise  marshaller_exceptions.VmCreateFailed("Failed when generating VM configuration? Exception: %s" % e)
 
-		provider = "digital_ocean"
+		provider = "digitalocean"
 		kwargs = {
 			'image': 'ubuntu-14-04-x64',
 			'size': planid,
@@ -308,8 +310,8 @@ class VpsHerder(object):
 
 		return image, size, locl
 
-	def generate_gce_conf(self):
-
+	# def generate_gce_conf(self):
+#
 		provider = "gce"
 
 		image, size, places = self.get_gce_5_bux_meta()
@@ -397,8 +399,8 @@ class VpsHerder(object):
 				self.generate_vultr_conf,
 				self.generate_linode_conf,
 				self.generate_linode_conf,
-				self.generate_gce_conf,
-				self.generate_gce_conf,
+				# self.generate_gce_conf,
+				# self.generate_gce_conf,
 				# self.generate_scaleway_conf,
 			]
 
@@ -436,20 +438,25 @@ class VpsHerder(object):
 		assert isinstance(expect, list), "Expect must be a list!"
 
 		for expect_val in expect:
-			if isinstance(expect_val, str):
+			if isinstance(expect_val, (str, unicode)):
 				if isinstance(resp, bool):
 					if self.debug:
 						import pdb
 						pdb.set_trace()
 					raise marshaller_exceptions.InvalidDeployResponse("Expected '%s' response: '%s'" % (expect_val, resp))
 
-				elif isinstance(resp, str):
+				elif isinstance(resp, (str, unicode)):
 					if not expect_val in resp:
 						if self.debug:
 							import pdb
 							pdb.set_trace()
 						raise marshaller_exceptions.InvalidDeployResponse("Expected '%s' in response '%s'" % (expect_val, resp))
+					else:
+						self.log.info("Found %s in response!", expect)
+				else:
+					self.log.error("Unknown response type: %s!", type(resp))
 			else:
+				self.log.error("Unknown expect type: %s!", type(resp))
 				if self.debug:
 					import pdb
 					pdb.set_trace()
@@ -618,7 +625,7 @@ class VpsHerder(object):
 
 			# DO Doesn't list the lcoation where they temporarily disabled VM creation, so if that specific thing
 			# happens, raise a more specific error.
-			if " The specified location, " in str(e) and ", could not be found." in str(e) and provider == 'digital_ocean':
+			if " The specified location, " in str(e) and ", could not be found." in str(e) and provider == 'digitalocean':
 				raise marshaller_exceptions.LocationNotAvailableResponse("Location error when creating VM. Exception: %s" % e)
 
 			raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
@@ -649,7 +656,7 @@ class VpsHerder(object):
 	def list_nodes(self):
 
 		sources = [
-			'digital_ocean',
+			'digitalocean',
 			'vultr',
 			'linode',
 			'scaleway',
@@ -693,8 +700,8 @@ class VpsHerder(object):
 
 	def list_do_options(self):
 		self.log.info("DO test")
-		images = self.cc.list_images(provider='digital_ocean')
-		sizes = self.cc.list_sizes(provider='digital_ocean')
+		images = self.cc.list_images(provider='digitalocean')
+		sizes = self.cc.list_sizes(provider='digitalocean')
 		pprint.pprint(images)
 		pprint.pprint(sizes)
 
