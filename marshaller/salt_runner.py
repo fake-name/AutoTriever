@@ -548,6 +548,11 @@ class VpsHerder(object):
 			['cmd.run', ["usermod -a -G sudo scrapeworker", ],                                                                                    {}, None],
 			['cmd.run', ["echo 'scrapeworker ALL=(ALL) NOPASSWD: ALL' | tee -a /etc/sudoers", ],                                                  {}, None],
 
+			['cmd.run', ["wget https://raw.githubusercontent.com/solarkennedy/instant-py-bt/master/py-bt -O /usr/local/bin/py-bt", ],             {}, None],
+			['cmd.run', ["wget https://raw.githubusercontent.com/aurora/rmate/master/rmate -O /usr/local/bin/rmate", ],                           {}, None],
+			['cmd.run', ["chmod +x /usr/local/bin/py-bt", ],                                                                                      {}, None],
+			['cmd.run', ["chmod +x /usr/local/bin/rmate", ],                                                                                      {}, None],
+
 			['cmd.run', ["chown -R scrapeworker:scrapeworker /scraper", ],                                                                        {}, None],
 
 			['cmd.run', ["./configure.sh", ],                                                     {"cwd" : '/scraper', 'runas' : 'scrapeworker'}, ['Setup OK! System is configured for launch']],
