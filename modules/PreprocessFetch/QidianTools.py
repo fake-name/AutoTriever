@@ -136,6 +136,8 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 				chap_info_str = chap_info_str.replace("\\ ", " ")
 				chap_info_str = chap_info_str.replace("\\'", "'")
 				chap_info_str = chap_info_str.replace("\\/", "/")
+				chap_info_str = chap_info_str.replace("\\<", "<")
+				chap_info_str = chap_info_str.replace("\\>", ">")
 
 				try:
 					cont = json.loads(chap_info_str)
