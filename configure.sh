@@ -91,6 +91,7 @@ else
 	sudo apt-get install libxml2 -y
 	sudo apt-get install libxslt1-dev -y
 	sudo apt-get install python3-dev -y
+	sudo apt-get install python3-dbg -y
 	sudo apt-get install libz-dev -y
 
 
