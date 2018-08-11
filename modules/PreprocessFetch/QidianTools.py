@@ -53,8 +53,10 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 
 		# The content string is large, and we're not using it, so
 		# don't waste message space withit.
-		if 'content' in meta['bookInfo']:
-			meta['bookInfo'].pop('content')
+		if 'content' in meta['chapterInfo']:
+			self.log.info("Removing content entry")
+			meta['chapterInfo'].pop('content')
+			meta['chapterInfo']['content'] = None
 
 		auth_names = [tmp for tmp in auth_names if tmp]
 
@@ -80,7 +82,7 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 			if '/rssbook/' in entry['link']:
 				content = self.wg.getpage(entry['link'])
 
-				url_re = re.compile(r"g_data\.url ?= ?\'(.+?)';")
+				url_re = re.compile(r"g_data\.url ?= ?\'(.+?)\';")
 				url = url_re.search(content)
 
 				if not url:
