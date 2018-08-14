@@ -24,7 +24,7 @@ feedparser==5.2.1
 
 webrequest==0.0.46
 
-psutil==5.4.6
+psutil==5.4.7
 
 ## Testing requirements:
 # nose
