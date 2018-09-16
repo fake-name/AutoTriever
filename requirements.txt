@@ -26,6 +26,8 @@ webrequest==0.0.46
 
 psutil==5.4.6
 
+netifaces
+
 ## Testing requirements:
 # nose
 # coverage
