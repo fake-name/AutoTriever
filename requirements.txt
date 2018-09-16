@@ -26,7 +26,7 @@ webrequest==0.0.49
 
 psutil==5.4.7
 
-netifaces
+netifaces==0.10.7
 
 ## Testing requirements:
 # nose
