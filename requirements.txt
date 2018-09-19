@@ -10,7 +10,7 @@ dill==0.2.8.2
 rabbitpy==1.0.0
 
 netdisco==2.0.0
-zeroconf==0.20.0
+zeroconf==0.21.1
 
 APScheduler==3.5.3
 beautifulsoup4==4.6.3
