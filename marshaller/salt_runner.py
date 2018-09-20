@@ -170,7 +170,7 @@ class VpsHerder(object):
 
 		provider = "digitalocean"
 		kwargs = {
-			'image': 'ubuntu-14-04-x64',
+			'image': 'ubuntu-16-04-x64',
 			'size': planid,
 			# 'vm_size': planid,
 			'private_networking' : False,
@@ -241,6 +241,8 @@ class VpsHerder(object):
 		for name, _ in locations.items():
 			locl.append(name)
 
+		self.log.info("Found %s potential linode locations, %s sizes", len(locl), len(sizel))
+
 		return sizel, locl
 
 	def generate_linode_conf(self):
@@ -310,8 +312,8 @@ class VpsHerder(object):
 
 		return image, size, locl
 
-	# def generate_gce_conf(self):
-#
+	def generate_gce_conf(self):
+
 		provider = "gce"
 
 		image, size, places = self.get_gce_5_bux_meta()
