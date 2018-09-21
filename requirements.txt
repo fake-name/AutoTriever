@@ -9,12 +9,15 @@ PySocks==1.6.8
 dill==0.2.8.2
 rabbitpy==1.0.0
 
-APScheduler==3.5.2
-beautifulsoup4==4.6.1
+netdisco==2.0.0
+zeroconf==0.20.0
+
+APScheduler==3.5.3
+beautifulsoup4==4.6.3
 cchardet==2.1.1
 colorama==0.3.9
-selenium==3.14.0
-Faker==0.8.17
+selenium==3.14.1
+Faker==0.8.18
 lxml==4.2.4
 cachetools==2.1.0
 msgpack==0.5.6
@@ -22,9 +25,11 @@ pytz==2018.5
 feedgen==0.7.0
 feedparser==5.2.1
 
-webrequest==0.0.44
+webrequest==0.0.49
 
-psutil==5.4.6
+psutil==5.4.7
+
+netifaces==0.10.7
 
 ## Testing requirements:
 # nose
