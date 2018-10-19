@@ -9,7 +9,7 @@ PySocks==1.6.8
 dill==0.2.8.2
 rabbitpy==1.0.0
 
-netdisco==2.0.0
+netdisco==2.1.0
 zeroconf==0.20.0
 
 APScheduler==3.5.3
