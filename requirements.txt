@@ -1,5 +1,5 @@
 
-requests==2.19.1
+requests==2.20.0
 
 astor>=0.6.0
 
