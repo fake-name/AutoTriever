@@ -168,6 +168,10 @@ class VpsHerder(object):
 		except TypeError as e:
 			raise  marshaller_exceptions.VmCreateFailed("Failed when generating VM configuration? Exception: %s" % e)
 
+		scriptname = "bootstrap-salt-delay.sh"
+		scriptdir  = os.path.dirname(os.path.realpath(__file__))
+		fqscript = os.path.join(scriptdir, scriptname)
+
 		provider = "digitalocean"
 		kwargs = {
 			'image': 'ubuntu-16-04-x64',
@@ -175,6 +179,8 @@ class VpsHerder(object):
 			# 'vm_size': planid,
 			'private_networking' : False,
 			'location' : place,
+
+			'script'             : fqscript,
 		}
 
 		return provider, kwargs

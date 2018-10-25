@@ -1408,7 +1408,7 @@ __ubuntu_codename_translation() {
             DISTRO_CODENAME="bionic"
             ;;
         *)
-            echo "Unknown distro major version!"
+            echo "Unknown distro major version!: $DISTRO_MAJOR_VERSION - $DISTRO_MINOR_VERSION"
             DISTRO_CODENAME="xenial"
             ;;
     esac
@@ -2690,6 +2690,9 @@ install_ubuntu_deps() {
 }
 
 install_ubuntu_stable_deps() {
+
+    echo "Dostrp major version!: $DISTRO_MAJOR_VERSION - $DISTRO_MINOR_VERSION"
+
     if [ "${_SLEEP}" -eq "${__DEFAULT_SLEEP}" ] && [ "$DISTRO_MAJOR_VERSION" -lt 16 ]; then
         # The user did not pass a custom sleep value as an argument, let's increase the default value
         echodebug "On Ubuntu systems we increase the default sleep value to 10."
