@@ -553,7 +553,7 @@ fi
 echoinfo "Running version: ${__ScriptVersion}"
 echoinfo "Executed by: ${CALLER}"
 echoinfo "Command line: '${__ScriptFullName} ${__ScriptArgs}'"
-echowarn "Running the unstable version of ${__ScriptName}"
+#echowarn "Running the unstable version of ${__ScriptName}"
 
 # Define installation type
 if [ "$#" -gt 0 ];then
@@ -3415,32 +3415,35 @@ install_debian_check_services() {
 #
 
 install_fedora_deps() {
-    if [ "$_UPGRADE_SYS" -eq $BS_TRUE ]; then
-        dnf -y update || return 1
-    fi
-
-    __PACKAGES="${__PACKAGES:=}"
     if [ -n "$_PY_EXE" ] && [ "$_PY_MAJOR_VERSION" -eq 3 ]; then
         # Packages are named python3-<whatever>
         PY_PKG_VER=3
-        __PACKAGES="${__PACKAGES} python3-m2crypto python3-PyYAML"
+        __PACKAGES="python3-m2crypto python3-PyYAML"
     else
         PY_PKG_VER=2
-        __PACKAGES="${__PACKAGES} m2crypto"
+        __PACKAGES="m2crypto"
         if [ "$DISTRO_MAJOR_VERSION" -ge 28 ]; then
           __PACKAGES="${__PACKAGES} python2-pyyaml"
         else
           __PACKAGES="${__PACKAGES} PyYAML"
        fi
     fi
-    __PACKAGES="${__PACKAGES} dnf-utils libyaml procps-ng python${PY_PKG_VER}-crypto python${PY_PKG_VER}-jinja2"
+
+    __PACKAGES="${__PACKAGES} procps-ng dnf-utils libyaml python${PY_PKG_VER}-crypto python${PY_PKG_VER}-jinja2"
     __PACKAGES="${__PACKAGES} python${PY_PKG_VER}-msgpack python${PY_PKG_VER}-requests python${PY_PKG_VER}-zmq"
-    if [ "${_EXTRA_PACKAGES}" != "" ]; then
-        echoinfo "Installing the following extra packages as requested: ${_EXTRA_PACKAGES}"
-    fi
 
     # shellcheck disable=SC2086
-    dnf install -y ${__PACKAGES} ${_EXTRA_PACKAGES} || return 1
+    dnf install -y ${__PACKAGES} || return 1
+
+    if [ "$_UPGRADE_SYS" -eq $BS_TRUE ]; then
+        dnf -y update || return 1
+    fi
+
+    if [ "${_EXTRA_PACKAGES}" != "" ]; then
+        echoinfo "Installing the following extra packages as requested: ${_EXTRA_PACKAGES}"
+        # shellcheck disable=SC2086
+        dnf install -y ${_EXTRA_PACKAGES} || return 1
+    fi
 
     return 0
 }
@@ -3491,37 +3494,35 @@ install_fedora_git_deps() {
         PY_PKG_VER=2
     fi
 
-    __PACKAGES="${__PACKAGES:=}"
     if [ "$_INSECURE_DL" -eq $BS_FALSE ] && [ "${_SALT_REPO_URL%%://*}" = "https" ]; then
-        __PACKAGES="${__PACKAGES} ca-certificates"
-    fi
-    if ! __check_command_exists git; then
-        __PACKAGES="${__PACKAGES} git"
-    fi
-    if [ "$_INSTALL_CLOUD" -eq $BS_TRUE ]; then
-        __PACKAGES="${__PACKAGES} python${PY_PKG_VER}-libcloud python${PY_PKG_VER}-netaddr"
-    fi
-    __PACKAGES="${__PACKAGES} python${PY_PKG_VER}-systemd"
-
-    # Fedora 28+ ships with tornado 5.0+ which is broken for salt on py3
-    # https://github.com/saltstack/salt-bootstrap/issues/1220
-    if [ "${PY_PKG_VER}" -lt 3 ] || [ "$DISTRO_MAJOR_VERSION" -lt 28 ]; then
-        __PACKAGES="${__PACKAGES} python${PY_PKG_VER}-tornado"
+        dnf install -y ca-certificates || return 1
     fi
 
     install_fedora_deps || return 1
 
+    if ! __check_command_exists git; then
+        dnf install -y git || return 1
+    fi
+
     __git_clone_and_checkout || return 1
 
-    # Fedora 28+ needs tornado <5.0 from pip
-    # https://github.com/saltstack/salt-bootstrap/issues/1220
+    __PACKAGES="python${PY_PKG_VER}-systemd"
     if [ "${PY_PKG_VER}" -eq 3 ] && [ "$DISTRO_MAJOR_VERSION" -ge 28 ]; then
         __check_pip_allowed "You need to allow pip based installations (-P) for Tornado <5.0 in order to install Salt on Python 3"
         grep tornado "${_SALT_GIT_CHECKOUT_DIR}/requirements/base.txt" | while IFS='
 '         read -r dep; do
             "${_PY_EXE}" -m pip install "${dep}" || return 1
         done
+    else
+        __PACKAGES="${__PACKAGES} python${PY_PKG_VER}-tornado"
     fi
+
+    if [ "$_INSTALL_CLOUD" -eq $BS_TRUE ]; then
+        __PACKAGES="${__PACKAGES} python${PY_PKG_VER}-libcloud python${PY_PKG_VER}-netaddr"
+    fi
+
+    # shellcheck disable=SC2086
+    dnf install -y ${__PACKAGES} || return 1
 
     # Let's trigger config_salt()
     if [ "$_TEMP_CONFIG_DIR" = "null" ]; then
@@ -5335,8 +5336,7 @@ install_openbsd_restart_daemons() {
 #   SmartOS Install Functions
 #
 install_smartos_deps() {
-    smartos_deps="$(pkgin show-deps salt | grep '^\s' | grep -v '\snot' | xargs) py27-m2crypto"
-    pkgin -y install "${smartos_deps}" || return 1
+    pkgin -y install zeromq py27-crypto py27-m2crypto py27-msgpack py27-yaml py27-jinja2 py27-zmq py27-requests || return 1
 
     # Set _SALT_ETC_DIR to SmartOS default if they didn't specify
     _SALT_ETC_DIR=${BS_SALT_ETC_DIR:-/opt/local/etc/salt}
