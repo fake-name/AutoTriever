@@ -1408,7 +1408,8 @@ __ubuntu_codename_translation() {
             DISTRO_CODENAME="bionic"
             ;;
         *)
-            DISTRO_CODENAME="trusty"
+            echo "Unknown distro major version!"
+            DISTRO_CODENAME="xenial"
             ;;
     esac
 }
