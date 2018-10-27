@@ -320,6 +320,8 @@ class RpcHandler(object):
 
 				except Exception:
 					self.log.warning("Failure when processing message!")
+					for line in traceback.format_exc().split("\n"):
+						self.log.warning(line.rstrip())
 					# Push into dead-letter queue.
 					message.reject(requeue=False)
 
