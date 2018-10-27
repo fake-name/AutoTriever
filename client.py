@@ -12,7 +12,8 @@ import amqp_connector
 from state import RUN_STATE
 
 # CHUNK_SIZE_BYTES = 250 * 1024
-CHUNK_SIZE_BYTES = 100 * 1024
+# CHUNK_SIZE_BYTES = 100 * 1024
+CHUNK_SIZE_BYTES = 50 * 1024
 
 
 def chunk_input(inval, chunk_size):
