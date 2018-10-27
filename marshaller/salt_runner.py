@@ -523,6 +523,7 @@ class VpsHerder(object):
 			# ['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {'env' : {'DEBIAN_FRONTEND' : 'noninteractive'}}, None],
 
 			['cmd.run', ["apt-get install -y build-essential git screen", ],                                                                      {}, ['The following NEW packages will be installed:', "g++", "gcc"]],
+			['cmd.run', ["apt-get install -y locales", ],                                                                                         {}, None],
 
 			# Make swap so
 			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=4096", ],                                                                      {}, None],
@@ -535,9 +536,12 @@ class VpsHerder(object):
 
 			# Shit to make the tty work in UTF-8. Otherwise, the logging can asplode
 			# and break all the things.
-			['cmd.run', ['echo LANG=\"en_US.UTF-8\" >> /etc/default/locale', ],                                                                   {}, None],
+			['cmd.run', ['echo LANG=\"en_US.UTF-8\"   >> /etc/default/locale', ],                                                                 {}, None],
 			['cmd.run', ['echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale', ],                                                                 {}, None],
-			['cmd.run', ["dpkg-reconfigure locales", ],                                                                                           {}, ['en_US.UTF-8']],
+			['cmd.run', ['echo "LC_ALL=en_US.UTF-8"   >> /etc/environment', ],                                                                    {}, None],
+			['cmd.run', ['echo "en_US.UTF-8 UTF-8"    >> /etc/locale.gen', ],                                                                     {}, None],
+			['cmd.run', ['echo "LANG=en_US.UTF-8"     > /etc/locale.conf', ],                                                                     {}, None],
+			['cmd.run', ["dpkg-reconfigure -f noninteractive locales", ],                                                                         {}, ['en_US.UTF-8']],
 			['cmd.run', ["locale", ],                                                                                                             {}, None],
 			['cmd.run', ["bash -c \"locale\"", ],                                                                                                 {}, None],
 
