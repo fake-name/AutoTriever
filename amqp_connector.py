@@ -32,13 +32,13 @@ class Connector:
 			'master'                   : kwargs.get('master',                   False),
 			'synchronous'              : kwargs.get('synchronous',              True),
 			'flush_queues'             : kwargs.get('flush_queues',             False),
-			'heartbeat'                : kwargs.get('heartbeat',                 30),
+			'heartbeat'                : kwargs.get('heartbeat',                  60),
 			'sslopts'                  : kwargs.get('ssl',                      None),
 			'poll_rate'                : kwargs.get('poll_rate',                0.25),
 			'prefetch'                 : kwargs.get('prefetch',                    1),
 			'session_fetch_limit'      : kwargs.get('session_fetch_limit',      None),
 			'durable'                  : kwargs.get('durable',                 False),
-			'socket_timeout'           : kwargs.get('socket_timeout',             10),
+			'socket_timeout'           : kwargs.get('socket_timeout',             30),
 		}
 
 
