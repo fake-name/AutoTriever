@@ -122,12 +122,23 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 
 			self.log.info("Checking for ad")
 			soupstr = str(soup)
-			if 'Unlock This Chapter' in soupstr or 'Watch ad to get chapter' in soupstr:
+
+			if '<div class="cha-content " data-report-l1="3">' not in soupstr:
 				self.log.info("Item still ad-wrapped. Not adding.")
 				return None
-			else:
-				self.log.info("Item has no ad.")
-				have['ad_free'] = True
+
+			if (
+					'cha-content _loc'        in soupstr or
+					'Unlock This Chapter'     in soupstr or
+					'Watch ad to get chapter' in soupstr or
+					'Locked Chapter'          in soupstr
+				):
+				self.log.info("Item still ad-wrapped. Not adding.")
+				return None
+
+
+			self.log.info("Item has no ad.")
+			have['ad_free'] = True
 
 			title_div = soup.find("div", class_='cha-tit')
 			if title_div and title_div.h3:
