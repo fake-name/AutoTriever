@@ -465,9 +465,9 @@ class VpsHerder(object):
 					self.log.error("Unknown response type: %s!", type(resp))
 			else:
 				self.log.error("Unknown expect type: %s!", type(resp))
-				if self.debug:
-					import pdb
-					pdb.set_trace()
+				# if self.debug:
+				# 	import pdb
+				# 	pdb.set_trace()
 				raise marshaller_exceptions.InvalidExpectParameter("Invalid expect parameter: '%s' (type: %s)." % (expect_val, type(expect_val)))
 
 		self.log.info("Command response passed validation.")

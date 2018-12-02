@@ -123,9 +123,13 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 			self.log.info("Checking for ad")
 			soupstr = str(soup)
 
+			have['ad_free']   = True
+			have['paywalled'] = False
+
 			if '<div class="cha-content " data-report-l1="3">' not in soupstr:
 				self.log.info("Item still ad-wrapped. Not adding.")
-				return None
+				have['ad_free'] = False
+				have['paywalled'] = True
 
 			if (
 					'cha-content _loc'        in soupstr or
@@ -134,11 +138,12 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 					'Locked Chapter'          in soupstr
 				):
 				self.log.info("Item still ad-wrapped. Not adding.")
-				return None
+				have['ad_free'] = False
+				have['paywalled'] = True
 
+			if have['ad_free']:
+				self.log.info("Item has no ad.")
 
-			self.log.info("Item has no ad.")
-			have['ad_free'] = True
 
 			title_div = soup.find("div", class_='cha-tit')
 			if title_div and title_div.h3:
