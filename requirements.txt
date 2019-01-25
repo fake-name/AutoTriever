@@ -27,7 +27,7 @@ feedparser==5.2.1
 
 webrequest==0.0.52
 
-psutil==5.4.8
+psutil==5.5.0
 
 netifaces==0.10.7
 
