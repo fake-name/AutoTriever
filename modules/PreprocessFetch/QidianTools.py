@@ -123,10 +123,13 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 			self.log.info("Checking for ad")
 			soupstr = str(soup)
 
-			have['ad_free']   = True
-			have['paywalled'] = False
+			have['ad_free']   = False
+			have['paywalled'] = True
 
-			if '<div class="cha-content " data-report-l1="3">' not in soupstr:
+			if soup.find("div", {"class" : "cha-content", "data-report-l1" : "3"}):
+				have['ad_free'] = True
+				have['paywalled'] = False
+			else:
 				self.log.info("Item still ad-wrapped. Not adding.")
 				have['ad_free'] = False
 				have['paywalled'] = True
@@ -163,13 +166,16 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 
 				try:
 					cont = json.loads(chap_info_str)
-					print("Extracted meta:", cont)
+					# print("Extracted meta:", cont)
 					for k, v in self.extract_from_meta(cont).items():
 						have[k] = v
 				except ValueError:
 					print("Bad chapInfo")
 					traceback.print_exc()
+					print("Json str:")
+					print("---------------")
 					print(chap_info_str)
+					print("---------------")
 					have['invalid_meta'] = chap_info.group(1)
 
 			book_type = re.search(r"g_data\.isOriginal = '(\d)';", rawsoupstr)
