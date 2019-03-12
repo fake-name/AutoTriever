@@ -25,7 +25,7 @@ pytz==2018.9
 feedgen==0.7.0
 feedparser==5.2.1
 
-webrequest==0.0.52
+webrequest==0.0.54
 
 psutil==5.5.0
 
