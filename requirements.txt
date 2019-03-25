@@ -12,7 +12,7 @@ rabbitpy==1.0.0
 netdisco==2.5.0
 zeroconf==0.21.3
 
-APScheduler==3.5.3
+APScheduler==3.6.0
 beautifulsoup4==4.7.1
 cchardet==2.1.4
 colorama==0.4.1
