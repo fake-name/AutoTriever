@@ -64,8 +64,8 @@ def loadPlugins(onPath, prefix):
 	# print("Loading modules on path: ", onPath)
 	modules = getPythonScriptModules(onPath)
 	modules = dedup_modules(modules)
-	# pprint.pprint("Modules:")
-	# pprint.pprint(modules)
+	pprint.pprint("Modules:")
+	pprint.pprint(modules)
 	ret = {}
 
 	for fPath, modName in modules:
@@ -80,6 +80,7 @@ def loadPlugins(onPath, prefix):
 				# we only complain if the class is actually different
 				if ret[key] != pClass:
 					print("WARNING? - Two plugins providing an interface with the same name? Name: '%s'" % key)
+					print("Classes: %s, %s" % (ret[key], pClass))
 
 			ret[key] = pClass
 

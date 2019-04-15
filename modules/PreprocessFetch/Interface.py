@@ -2,6 +2,7 @@
 
 from modules.PreprocessFetch import QidianTools
 from modules.PreprocessFetch import LndbTools
+from modules.PreprocessFetch import SmartDispatcher
 
 
 class PluginInterface_PreprocessFetch(object):
@@ -18,6 +19,7 @@ class PluginInterface_PreprocessFetch(object):
 
 			'lndbRenderFetch'                       : self.lndbRenderFetch,
 
+			'smartGetItem'                          : self.smartGetItem,
 		}
 
 
@@ -40,14 +42,19 @@ class PluginInterface_PreprocessFetch(object):
 		ret = proc.forward_render_fetch(*args, **kwargs)
 		return ret
 
-	def test(self):
-		print("Exec()ing `runTest.sh` from directory root!")
+	def smartGetItem(self, *args, **kwargs):
+		proc = SmartDispatcher.SmartDispatcher()
+		ret = proc.smartGetItem(*args, **kwargs)
+		return ret
 
-		import subprocess
-		command = "./runTests.sh"
+	# def test(self):
+	# 	print("Exec()ing `runTest.sh` from directory root!")
 
-		process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-		output, error = process.communicate()
+	# 	import subprocess
+	# 	command = "./runTests.sh"
 
-		print("Command output: ", output)
-		print("Command errors: ", error)
+	# 	process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+	# 	output, error = process.communicate()
+
+	# 	print("Command output: ", output)
+	# 	print("Command errors: ", error)

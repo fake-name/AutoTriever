@@ -165,17 +165,18 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 				chap_info_str = chap_info_str.replace("\\>", ">")
 
 				try:
+					self.log.info("Extracting!")
 					cont = json.loads(chap_info_str)
-					# print("Extracted meta:", cont)
+					# self.log.info("Extracted meta:", cont)
 					for k, v in self.extract_from_meta(cont).items():
 						have[k] = v
 				except ValueError:
-					print("Bad chapInfo")
+					self.log.info("Bad chapInfo")
 					traceback.print_exc()
-					print("Json str:")
-					print("---------------")
-					print(chap_info_str)
-					print("---------------")
+					self.log.info("Json str:")
+					self.log.info("---------------")
+					self.log.info("%s", chap_info_str)
+					self.log.info("---------------")
 					have['invalid_meta'] = chap_info.group(1)
 
 			book_type = re.search(r"g_data\.isOriginal = '(\d)';", rawsoupstr)

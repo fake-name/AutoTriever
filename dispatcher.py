@@ -105,3 +105,30 @@ class RpcCallDispatcher(client.RpcHandler):
 
 		return response
 
+
+
+def test(plug_name=None, call_name=None, *args, **kwargs):
+	import deps.logSetup
+	import logging
+	log = logging.getLogger("Main.Importer")
+	deps.logSetup.initLogging()
+	log.info("Testing import options")
+
+	dp = RpcCallDispatcher(settings=None, lock_dict=None)
+
+	if not plug_name:
+		return
+
+	print("Invoking arguments: '%s'" % (args, ))
+	print("Invoking kwargs: '%s'" % (kwargs, ))
+	return dp.doCall(plug_name, call_name, call_args=args, call_kwargs=kwargs, context_responder=None)
+
+	# plugins = loadPlugins('modules', "PluginInterface_")
+
+	# print("plugins:", plugins)
+
+	# for plugin in plugins:
+	# 	print("Plugin: ", plugin)
+
+if __name__ == "__main__":
+	test()

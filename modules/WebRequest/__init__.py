@@ -24,14 +24,14 @@ class PluginInterface_WebRequest(WebRequest.WebGetRobust):
 			'getItemChromium'          : self.getItemChromium,
 		}
 
-	def test(self):
-		print("Exec()ing `runTest.sh` from directory root!")
+	# def test(self):
+	# 	print("Exec()ing `runTest.sh` from directory root!")
 
-		import subprocess
-		command = "./runTests.sh"
+	# 	import subprocess
+	# 	command = "./runTests.sh"
 
-		process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-		output, error = process.communicate()
+	# 	process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+	# 	output, error = process.communicate()
 
-		print("Command output: ", output)
-		print("Command errors: ", error)
+	# 	print("Command output: ", output)
+	# 	print("Command errors: ", error)

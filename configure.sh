@@ -12,38 +12,6 @@ echo "Current release:"
 git --no-pager log -1 | cat
 
 
-function setup_phantomjs() {
-	set +e
-
-
-	# Use our local phantomjs if it appears to be intact and valid.
-	tar tf ./vendored/phantomjs-2.1.1-linux-x86_64.tar.bz2
-	if [ $? -eq 0 ]
-	then
-		echo Have pre-downloaded phantomjs. Using that.
-		tar -xvf ./vendored/phantomjs-2.1.1-linux-x86_64.tar.bz2
-	else
-		while true; do
-
-			rm -f phantomjs-2.1.1-linux-x86_64.tar.bz2
-			rm -rf phantomjs-2.1.1-linux-x86_64
-
-			wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
-			tar -xvf phantomjs-2.1.1-linux-x86_64.tar.bz2 && break
-
-			# re-enable return checking.
-			echo Error downloading phantomjs!
-			sleep 30
-		done;
-	fi;
-	set -e
-
-
-	sudo mv ./phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/
-	rm -rf phantomjs-2.1.1-linux-x86_64
-
-}
-
 
 function setup_headless_chrome() {
 
@@ -107,7 +75,7 @@ else
 
 	# Disable ret checking since we're manually checking the return of tar
 
-	setup_phantomjs
+
 	setup_headless_chrome
 
 	echo "Creating venv."
