@@ -30,7 +30,7 @@ import datetime
 def gen_random_string(length):
 	if not hasattr(gen_random_string, "rng"):
 		gen_random_string.rng = random.SystemRandom() # Create a static variable
-	return ''.join([ gen_random_string.rng.choice(string.ascii_letters + string.digits) for _ in xrange(length) ])
+	return ''.join([ gen_random_string.rng.choice(string.ascii_letters + string.digits) for _ in range(length) ])
 
 def weighted_choice(weights):
 	totals = []
@@ -140,7 +140,7 @@ class VpsHerder(object):
 		for name, loc_meta in locs.items():
 			if loc_meta['available']:
 				# Why the fuck is this a string?
-				if isinstance(loc_meta['sizes'], (str, unicode)):
+				if isinstance(loc_meta['sizes'], str):
 					loc_meta['sizes'] = ast.literal_eval(loc_meta['sizes'])
 				if isinstance(loc_meta['sizes'], list):
 					avail_locs.setdefault(loc_meta['slug'], set())
@@ -150,7 +150,7 @@ class VpsHerder(object):
 		for name, size_meta in sizes.items():
 			if float(size_meta['price_monthly']) <= MAX_MONTHLY_PRICE_DOLLARS:
 				# Why the fuck is this a string?
-				if isinstance(size_meta['regions'], (str, unicode)):
+				if isinstance(size_meta['regions'], str):
 					size_meta['regions'] = ast.literal_eval(size_meta['regions'])
 				for loc in size_meta['regions']:
 					if loc in avail_locs:
@@ -446,14 +446,14 @@ class VpsHerder(object):
 		assert isinstance(expect, list), "Expect must be a list!"
 
 		for expect_val in expect:
-			if isinstance(expect_val, (str, unicode)):
+			if isinstance(expect_val, str):
 				if isinstance(resp, bool):
 					if self.debug:
 						import pdb
 						pdb.set_trace()
 					raise marshaller_exceptions.InvalidDeployResponse("Expected '%s' response: '%s'" % (expect_val, resp))
 
-				elif isinstance(resp, (str, unicode)):
+				elif isinstance(resp, str):
 					if not expect_val in resp:
 						if self.debug:
 							import pdb
