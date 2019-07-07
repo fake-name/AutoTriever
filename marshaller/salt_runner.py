@@ -522,8 +522,12 @@ class VpsHerder(object):
 			# Anyways, I moved this command to my custom bootstrap script.
 			# ['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {'env' : {'DEBIAN_FRONTEND' : 'noninteractive'}}, None],
 
-			['cmd.run', ["apt-get install -y build-essential git screen", ],                                                                      {}, ['The following NEW packages will be installed:', "g++", "gcc"]],
+			['cmd.run', ["apt-get install -y build-essential git screen curl", ],                                                                 {}, ['The following NEW packages will be installed:', "g++", "gcc"]],
 			['cmd.run', ["apt-get install -y locales", ],                                                                                         {}, None],
+
+			# Adblocking. Lower the chrome cpu costs decently
+			# So long hosts files cause things to explode, so we turn it off.
+			# ['cmd.run', ["curl https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/social/hosts | tee -a /etc/hosts", ],        {}, None],
 
 			# Make swap so
 			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=4096", ],                                                                      {}, None],
