@@ -1,33 +1,33 @@
 
-requests==2.21.0
+requests==2.22.0
 
 astor>=0.6.0
 
 ChromeController==0.3.7
 
-PySocks==1.6.8
-dill==0.2.9
-rabbitpy==1.0.0
+PySocks==1.7.0
+dill==0.3.0
+rabbitpy==2.0.0
 
-netdisco==2.3.0
-zeroconf==0.21.3
+netdisco==2.6.0
+zeroconf==0.23.0
 
-APScheduler==3.5.3
+APScheduler==3.6.0
 beautifulsoup4==4.7.1
 cchardet==2.1.4
 colorama==0.4.1
 selenium==3.141.0
 Faker==1.0.7
 lxml==4.3.4
-cachetools==3.0.0
-msgpack==0.5.6
-pytz==2018.9
+cachetools==3.1.1
+msgpack==0.6.1
+pytz==2019.1
 feedgen==0.7.0
 feedparser==5.2.1
 
 webrequest==0.0.56
 
-psutil==5.5.0
+psutil==5.6.3
 
 netifaces==0.10.9
 
