@@ -490,8 +490,8 @@ class VpsHerder(object):
 			['cmd.run', ["bash -c \"ls /\"", ],                                                                                                   {}, ['scraper', ]],
 			['cmd.run', ['bash -c \"pwd\"', ],                                                                                                    {}, ['/root']],
 			['cmd.run', ['bash -c \"ls -la\"', ],                                                                                                 {}, None],
-			['cmd.run', ['DEBIAN_FRONTEND=noninteractive apt-get update -y -qq', ],                                                               {}, None],
-			['cmd.run', ['DEBIAN_FRONTEND=noninteractive apt-get install -y -qq software-properties-common', ],                                   {}, None],
+			['cmd.run', ['apt-get update -y -qq', ],                                                               {'env' : "DEBIAN_FRONTEND=noninteractive"}, None],
+			['cmd.run', ['apt-get install -y -qq software-properties-common', ],                                   {'env' : "DEBIAN_FRONTEND=noninteractive"}, None],
 
 			# splat in public keys.
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
