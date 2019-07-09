@@ -490,8 +490,8 @@ class VpsHerder(object):
 			['cmd.run', ["bash -c \"ls /\"", ],                                                                                                   {}, ['scraper', ]],
 			['cmd.run', ['bash -c \"pwd\"', ],                                                                                                    {}, ['/root']],
 			['cmd.run', ['bash -c \"ls -la\"', ],                                                                                                 {}, None],
-			['cmd.run', ['DEBIAN_FRONTEND=noninteractive apt-get update -y -qq', ],                                                                                                 {}, None],
-			['cmd.run', ['DEBIAN_FRONTEND=noninteractive apt-get install -y -qq software-properties-common', ],                                                                                                 {}, None],
+			['cmd.run', ['DEBIAN_FRONTEND=noninteractive apt-get update -y -qq', ],                                                               {}, None],
+			['cmd.run', ['DEBIAN_FRONTEND=noninteractive apt-get install -y -qq software-properties-common', ],                                   {}, None],
 
 			# splat in public keys.
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
@@ -528,13 +528,8 @@ class VpsHerder(object):
 			# Anyways, I moved this command to my custom bootstrap script.
 			# ['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {'env' : {'DEBIAN_FRONTEND' : 'noninteractive'}}, None],
 
-<<<<<<< HEAD
-			['cmd.run', ["DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential git screen", ],                                                                      {}, ['The following NEW packages will be installed:', "g++", "gcc"]],
-			['cmd.run', ["DEBIAN_FRONTEND=noninteractive apt-get install -y locales", ],                                                                                         {}, None],
-=======
-			['cmd.run', ["apt-get install -y build-essential git screen curl", ],                                                                 {}, ['The following NEW packages will be installed:', "g++", "gcc"]],
-			['cmd.run', ["apt-get install -y locales", ],                                                                                         {}, None],
->>>>>>> 30ffcb1927082b86851e2574e173fac3482b698e
+			['cmd.run', ["DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential git screen curl", ],                                  {}, ['The following NEW packages will be installed:', "g++", "gcc"]],
+			['cmd.run', ["DEBIAN_FRONTEND=noninteractive apt-get install -y locales", ],                                                          {}, None],
 
 			# Adblocking. Lower the chrome cpu costs decently
 			# So long hosts files cause things to explode, so we turn it off.
