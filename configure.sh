@@ -11,7 +11,7 @@ git --no-pager branch -a | cat
 echo "Current release:"
 git --no-pager log -1 | cat
 
-
+export DEBIAN_FRONTEND="noninteractive"
 
 function setup_headless_chrome() {
 
