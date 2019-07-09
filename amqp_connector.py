@@ -249,7 +249,7 @@ class Connector:
 			out_key   = self.config['response_queue_name'].split(".")[0]
 
 		if routing_key_override:
-			self.log.warning("Response routing key overridden with value '%s'", routing_key_override)
+			self.log.info("Response routing key overridden with value '%s'", routing_key_override)
 			out_key = routing_key_override
 
 		msg_prop = {}
