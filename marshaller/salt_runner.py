@@ -25,6 +25,7 @@ import os.path
 import statsd
 import math
 import datetime
+# import tornado.ioloop
 
 
 def gen_random_string(length):
@@ -102,6 +103,7 @@ class VpsHerder(object):
 
 	def __init__(self, debug=False):
 
+
 		self.debug = debug
 		self.log = logging.getLogger("Main.VpsHerder")
 		try:
@@ -121,6 +123,8 @@ class VpsHerder(object):
 				port = 8125,
 				prefix = 'ReadableWebProxy.VpsHerder',
 				)
+
+		# self.io_loop = tornado.ioloop.IOLoop()
 
 
 	################################################################################################
@@ -174,7 +178,7 @@ class VpsHerder(object):
 
 		provider = "digitalocean"
 		kwargs = {
-			'image': 'ubuntu-16-04-x64',
+			'image': 'ubuntu-18-04-x64',
 			'size': planid,
 			# 'vm_size': planid,
 			'private_networking' : False,
@@ -219,7 +223,7 @@ class VpsHerder(object):
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			'image'              : 'Ubuntu 16.04 x64',
+			'image'              : 'Ubuntu 18.04 x64',
 			'private_networking' : False,
 			'size'               : planid,
 			'location'           : place,
@@ -262,13 +266,13 @@ class VpsHerder(object):
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 16.04 x64',
+			# 'image'              : 'Ubuntu 18.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
 
 			'size'     : random.choice(plans),
-			'image'    : u'Ubuntu 16.04 LTS',
+			'image'    : u'Ubuntu 18.04 LTS',
 			'location' : random.choice(places),
 
 			'script'             : fqscript,
@@ -297,7 +301,7 @@ class VpsHerder(object):
 
 		image = None
 		for key in images:
-			if key.startswith('ubuntu-1604-xenial-'):
+			if key.startswith('ubuntu-1804-xenial-'):
 				image = key
 
 		# pprint.pprint(sizes)
@@ -324,14 +328,14 @@ class VpsHerder(object):
 
 		image, size, places = self.get_gce_5_bux_meta()
 		if not image:
-			raise VmInitError("No Ubuntu 16.04 image found!")
+			raise VmInitError("No Ubuntu 18.04 image found!")
 
 		scriptname = "bootstrap-salt-delay.sh"
 		scriptdir  = os.path.dirname(os.path.realpath(__file__))
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 16.04 x64',
+			# 'image'              : 'Ubuntu 18.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
@@ -375,13 +379,13 @@ class VpsHerder(object):
 		size, location = random.choice(opt_tups)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 16.04 x64',
+			# 'image'              : 'Ubuntu 18.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
 
 			'size'     : size,
-			'image'    : u'Ubuntu Xenial (16.04 latest)',
+			'image'    : u'Ubuntu Xenial (18.04 latest)',
 			'location' : location,
 
 			'script'             : fqscript,
@@ -486,6 +490,8 @@ class VpsHerder(object):
 			['cmd.run', ["bash -c \"ls /\"", ],                                                                                                   {}, ['scraper', ]],
 			['cmd.run', ['bash -c \"pwd\"', ],                                                                                                    {}, ['/root']],
 			['cmd.run', ['bash -c \"ls -la\"', ],                                                                                                 {}, None],
+			['cmd.run', ['DEBIAN_FRONTEND=noninteractive apt-get update -y -qq', ],                                                                                                 {}, None],
+			['cmd.run', ['DEBIAN_FRONTEND=noninteractive apt-get install -y -qq software-properties-common', ],                                                                                                 {}, None],
 
 			# splat in public keys.
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
@@ -522,8 +528,8 @@ class VpsHerder(object):
 			# Anyways, I moved this command to my custom bootstrap script.
 			# ['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {'env' : {'DEBIAN_FRONTEND' : 'noninteractive'}}, None],
 
-			['cmd.run', ["apt-get install -y build-essential git screen", ],                                                                      {}, ['The following NEW packages will be installed:', "g++", "gcc"]],
-			['cmd.run', ["apt-get install -y locales", ],                                                                                         {}, None],
+			['cmd.run', ["DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential git screen", ],                                                                      {}, ['The following NEW packages will be installed:', "g++", "gcc"]],
+			['cmd.run', ["DEBIAN_FRONTEND=noninteractive apt-get install -y locales", ],                                                                                         {}, None],
 
 			# Make swap so
 			['cmd.run', ["dd if=/dev/zero of=/swapfile bs=1M count=4096", ],                                                                      {}, None],
