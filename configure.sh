@@ -61,6 +61,7 @@ else
 	sudo apt-get install python3-dev -y
 	sudo apt-get install python3-dbg -y
 	sudo apt-get install libz-dev -y
+	sudo apt-get install curl -y
 
 
 	# Needed for chromedriver
@@ -85,7 +86,7 @@ else
 	./venv/bin/pip install six
 	# ./venv/bin/pip install cython
 	./venv/bin/pip install requests
-	./venv/bin/pip install chromedriver_installer
+	./venv/bin/pip install chromedriver-binary
 	./venv/bin/pip install git+https://github.com/berkerpeksag/astor.git
 	source venv/bin/activate
 	rm get-pip.py
