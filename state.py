@@ -1,2 +1,0 @@
-
-RUN_STATE = True

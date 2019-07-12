@@ -19,7 +19,7 @@ set -e
 nosetests                       \
 	--with-coverage                              \
 	--exe                                        \
-	--cover-package=util.WebRequest             \
+	--cover-package=autotriever.util.WebRequest             \
 	--nocapture \
 	--stop
 
