@@ -2,7 +2,7 @@
 import logging
 import WebRequest
 
-from autotriever.modules.PreprocessFetch import ProcessorBase
+from autotriever.modules.SmartFetch import ProcessorBase
 
 class LndbProcessor(ProcessorBase.ProcessorBase):
 

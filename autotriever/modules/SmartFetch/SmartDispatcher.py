@@ -4,7 +4,7 @@ import logging
 import bs4
 import WebRequest
 
-from autotriever.modules.PreprocessFetch import ProcessorBase
+from autotriever.modules.SmartFetch import ProcessorBase
 
 class SmartDispatcher(ProcessorBase.ProcessorBase):
 

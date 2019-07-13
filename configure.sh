@@ -19,16 +19,16 @@ function report_git() {
 function setup_headless_chrome() {
 
 	# sudo add-apt-repository ppa:saiarcot895/chromium-dev
-	# sudo apt-get update
-	# sudo apt-get install -y chromium-codecs-ffmpeg-extra
-	# sudo apt-get download chromium-browser
+	# sudo DEBIAN_FRONTEND=noninteractive apt-get update
+	# sudo DEBIAN_FRONTEND=noninteractive apt-get install -yqqq chromium-codecs-ffmpeg-extra
+	# sudo DEBIAN_FRONTEND=noninteractive apt-get download chromium-browser
 	# sudo dpkg -i --force-all chromium-browser*.deb
 
 	wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
 	sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list'
-	sudo apt-get update
-	sudo apt-get install google-chrome-stable -y
-	sudo apt-get install chromium-chromedriver -y
+	sudo DEBIAN_FRONTEND=noninteractive apt-get update
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install google-chrome-stable -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install chromium-chromedriver -yqqq
 
 	if [[ ! -f "/usr/local/bin/chromedriver" ]]; then
 		echo "/usr/local/bin/chromedriver does not exist"
@@ -56,31 +56,31 @@ function do_remote_install() {
 		source venv/bin/activate
 	else
 		echo "No Venv! Checking dependencies are installed."
-		sudo apt-get update
-		# sudo apt-get dist-upgrade -y
-		sudo apt-get install build-essential -y
+		sudo DEBIAN_FRONTEND=noninteractive apt-get update
+		# sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential -yqqq
 
 		# Apparently at least one VPS host has separated git from build-essential?
-		sudo apt-get install git -y
-		sudo apt-get install libfontconfig -y
-		sudo apt-get install wget -y
-		sudo apt-get install htop -y
-		sudo apt-get install libxml2 -y
-		sudo apt-get install libxslt1-dev -y
-		sudo apt-get install python3-dev -y
-		sudo apt-get install python3-dbg -y
-		sudo apt-get install libz-dev -y
-		sudo apt-get install curl -y
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libfontconfig -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install wget -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install htop -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libxml2 -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libxslt1-dev -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install python3-dev -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install python3-dbg -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libz-dev -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install curl -yqqq
 
 
 		# Needed for chromedriver
-		sudo apt-get install libnss3 -y
-		sudo apt-get install libgconf2-4 -y
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libnss3 -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libgconf2-4 -yqqq
 
 		# 16.04 phantomjs apt package is fucked, crashes on start.
 
 		# Remove phantomjs from last run (if present)
-		# sudo apt-get install phantomjs -y
+		# sudo DEBIAN_FRONTEND=noninteractive apt-get install phantomjs -yqqq
 		# wget http://cnpmjs.org/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
 
 		# Disable ret checking since we're manually checking the return of tar
@@ -124,26 +124,26 @@ function go_local_install() {
 		echo "Already set up!"
 	else
 		echo "No config indicator file! Checking dependencies are installed."
-		sudo apt-get update
-		# sudo apt-get dist-upgrade -y
-		sudo apt-get install build-essential -y
+		sudo DEBIAN_FRONTEND=noninteractive apt-get update
+		# sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential -yqqq
 
 		# Apparently at least one VPS host has separated git from build-essential?
-		sudo apt-get install git -y
-		sudo apt-get install libfontconfig -y
-		sudo apt-get install wget -y
-		sudo apt-get install htop -y
-		sudo apt-get install libxml2 -y
-		sudo apt-get install libxslt1-dev -y
-		sudo apt-get install python3-dev -y
-		sudo apt-get install python3-dbg -y
-		sudo apt-get install libz-dev -y
-		sudo apt-get install curl -y
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libfontconfig -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install wget -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install htop -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libxml2 -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libxslt1-dev -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install python3-dev -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install python3-dbg -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libz-dev -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install curl -yqqq
 
 
 		# Needed for chromedriver
-		sudo apt-get install libnss3 -y
-		sudo apt-get install libgconf2-4 -y
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libnss3 -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libgconf2-4 -yqqq
 
 		setup_headless_chrome
 

@@ -9,7 +9,7 @@ import traceback
 from feedgen.feed import FeedGenerator
 import WebRequest
 
-from autotriever.modules.PreprocessFetch import ProcessorBase
+from autotriever.modules.SmartFetch import ProcessorBase
 
 class QidianProcessor(ProcessorBase.ProcessorBase):
 
