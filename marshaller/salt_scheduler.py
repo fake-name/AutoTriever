@@ -68,8 +68,10 @@ class VpsScheduler(object):
 				# This is slightly horrible.
 				provider, kwargs = self.interface.generate_conf()
 				with self.stats_con.timer("VM-Creation-{}".format(provider)):
-					self.interface.make_client(vm_name, provider, kwargs)
-					self.interface.configure_client(vm_name, vm_idx)
+					client_make = self.interface.make_client(vm_name, provider, kwargs)
+					self.log.info("Client make result: %s", client_make)
+					client_conf = self.interface.configure_client(vm_name, vm_idx)
+					self.log.info("Client conf result: %s", client_conf)
 				self.log.info("VM %s created.", vm_name)
 				CREATE_WATCHDOG.value += 1
 			self.stats_con.incr("vm-create.{provider}.ok".format(provider=provider))
