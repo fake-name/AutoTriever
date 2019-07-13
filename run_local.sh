@@ -3,20 +3,14 @@
 # Halt on errors.
 set -e
 
-# This is just a very minimal script that starts the scraper.
-echo "Updating local git repo"
-git fetch --all
-git pull
-
 # Run the configure script
 bash ./configure.sh include_local
 
-if [ -d "venv" ]
+if [ -f "local_configured" ]
 then
-	echo "Venv exists. Activating and starting up!"
-	source venv/bin/activate
-	python3 ./main.py
+	echo "Config indicator file exists. Activating and starting up!"
+	python3 ./local_main.py
 else
-	echo "Venv is missing! Cannot start!"
+	echo "Config indicator file is missing! Cannot start!"
 	exit -1;
 fi;

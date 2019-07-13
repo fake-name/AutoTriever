@@ -145,15 +145,6 @@ function go_local_install() {
 		sudo apt-get install libnss3 -y
 		sudo apt-get install libgconf2-4 -y
 
-		# 16.04 phantomjs apt package is fucked, crashes on start.
-
-		# Remove phantomjs from last run (if present)
-		# sudo apt-get install phantomjs -y
-		# wget http://cnpmjs.org/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2
-
-		# Disable ret checking since we're manually checking the return of tar
-
-
 		setup_headless_chrome
 
 		echo "Doing setup."
@@ -190,9 +181,6 @@ function go_local_install() {
 function go() {
 
 	is_local=false
-
-	echo "Params: $#"
-	echo "Params: $@"
 
 	for i in "$@" ; do
 		echo "Var: $i"
