@@ -1,14 +1,14 @@
 
 import WebRequest
 
-from autotriever.modules.PreprocessFetch import QidianTools
-from autotriever.modules.PreprocessFetch import LndbTools
-from autotriever.modules.PreprocessFetch import SmartDispatcher
+from autotriever.modules.SmartFetch import QidianTools
+from autotriever.modules.SmartFetch import LndbTools
+from autotriever.modules.SmartFetch import SmartDispatcher
 
 
-class PluginInterface_PreprocessFetch(object):
+class PluginInterface_SmartFetch(object):
 
-	name = 'PreprocessFetch'
+	name = 'SmartFetch'
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)

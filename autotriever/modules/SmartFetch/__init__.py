@@ -1,2 +1,2 @@
 
-# from modules.PreprocessFetch.Interface import PluginInterface_PreprocessFetch
+# from modules.SmartFetch.Interface import PluginInterface_SmartFetch
