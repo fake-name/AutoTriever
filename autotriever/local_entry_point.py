@@ -76,11 +76,7 @@ def loadSettings():
 
 
 
-
-
 class FetchInterfaceClass(mprpc.RPCServer):
-
-
 	def __init__(self, settings, lock_dict):
 
 		mp_conf = {"use_bin_type":True}
@@ -95,7 +91,26 @@ class FetchInterfaceClass(mprpc.RPCServer):
 		self.log.info("Connection")
 
 	def dispatch_request(self, params):
-		return self.dispatcher.process(params, context_responder=None)
+		try:
+			return self.dispatcher.process(params, context_responder=None)
+
+		except Exception as exc:
+
+			response = {
+							'success': False,
+							'error': "unknown",
+							'traceback': traceback.format_exc().split("\n"),
+							'cancontinue': True
+			}
+
+			if hasattr(exc, 'log_data'):
+				response['log'] = exc.log_data
+
+			self.log.error("Had exception?")
+			for line in traceback.format_exc().split("\n"):
+				self.log.error(line)
+
+			return response
 
 	def checkOk(self):
 		return (True, b'wattt\0')

@@ -158,11 +158,11 @@ function go_local_install() {
 		sudo pip install git+https://github.com/berkerpeksag/astor.git
 		rm get-pip.py
 
+		sudo pip install --upgrade -r requirements.txt
+		sudo pip install --upgrade -r local_requirements.txt
+
 		touch local_configured
 	fi;
-
-	sudo pip install --upgrade -r requirements.txt
-	sudo pip install --upgrade -r local_requirements.txt
 
 	# If we're in a docker instance, the credentials will have been passed in as a
 	# env var. Therefore, dump them to the settings.json file.

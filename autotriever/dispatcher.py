@@ -45,8 +45,6 @@ class RpcCallDispatcher(client.RpcHandler):
 		self.classCache = {}
 
 
-
-
 	def doCall(self, module, call, call_args, call_kwargs, context_responder):
 		if not module in self.classCache:
 			self.log.info("First call to module '%s'", module)
@@ -61,7 +59,18 @@ class RpcCallDispatcher(client.RpcHandler):
 		if hasattr(self.classCache[module], "can_send_partials"):
 			call_kwargs['partial_resp_interface'] = context_responder
 
-		return self.classCache[module].calls[call](*call_args, **call_kwargs)
+		if not call in self.classCache[module].calls:
+			self.log.error("Call %s missing from target class!", call)
+			self.log.error("Available calls:")
+			for callname in self.classCache[module].calls.keys():
+				self.log.error("	-> %s", callname)
+
+		try:
+			ret = self.classCache[module].calls[call](*call_args, **call_kwargs)
+		finally:
+			self.log.info("Module call complete.")
+
+		return ret
 
 	def process(self, command, context_responder):
 		if not 'module' in command:
