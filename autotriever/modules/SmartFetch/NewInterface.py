@@ -1,4 +1,5 @@
 
+import WebRequest
 
 from autotriever.modules.PreprocessFetch import QidianTools
 from autotriever.modules.PreprocessFetch import LndbTools
@@ -7,19 +8,31 @@ from autotriever.modules.PreprocessFetch import SmartDispatcher
 
 class PluginInterface_PreprocessFetch(object):
 
-	name = 'PreprocessFetch'
+	name = 'SmartWebRequest'
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
+		self.wg = WebRequest.WebGetRobust()
 
 		self.calls = {
 			'qidianSmartFeedFetch'                  : self.qidianSmartFeedFetch,
 			'qidianProcessReleaseList'              : self.qidianProcessReleaseList,
-
 			'lndbRenderFetch'                       : self.lndbRenderFetch,
-
 			'smartGetItem'                          : self.smartGetItem,
+
+			'getpage'                               : self.wg.getpage,
+			'getItem'                               : self.wg.getItem,
+			'getHead'                               : self.wg.getHead,
+			'getFileAndName'                        : self.wg.getFileAndName,
+			'addCookie'                             : self.wg.addCookie,
+			'addSeleniumCookie'                     : self.wg.addSeleniumCookie,
+			'stepThroughCloudFlare'                 : self.wg.stepThroughCloudFlare,
+
+			'chromiumGetRenderedItem'               : self.wg.chromiumGetRenderedItem,
+			'getHeadChromium'                       : self.wg.getHeadChromium,
+			'getHeadTitleChromium'                  : self.wg.getHeadTitleChromium,
+			'getItemChromium'                       : self.wg.getItemChromium,
 		}
 
 
