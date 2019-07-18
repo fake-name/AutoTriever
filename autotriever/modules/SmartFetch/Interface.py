@@ -40,7 +40,7 @@ class PluginInterface_SmartFetch(object):
 		}
 
 
-	def qidianSmartFeedFetch(self, feed_url, meta):
+	def qidianSmartFeedFetch(self, feed_url:str, meta):
 
 		proc = Processor_Qidian.QidianProcessor(wg=self.wg)
 		content = proc.qidianProcessFeedUrls(feed_url, meta)
@@ -60,7 +60,7 @@ class PluginInterface_SmartFetch(object):
 		return ret
 
 
-	def smartGetItem(self, itemUrl, *args, **kwargs):
+	def smartGetItem(self, itemUrl:str, *args, **kwargs):
 		netloc = urllib.parse.urlsplit(itemUrl).netloc
 
 		if netloc.lower().endswith("creativenovels.com"):
