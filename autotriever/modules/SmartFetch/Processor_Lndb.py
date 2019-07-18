@@ -14,7 +14,7 @@ class LndbProcessor(ProcessorBase.ProcessorBase):
 
 
 
-	def forwad_render_fetch(self, *args, **kwargs):
+	def forward_render_fetch(self, *args, **kwargs):
 		content, fileN, mType = self.wg.getItem(*args, **kwargs)
 
 		if 'text/html' in mType:

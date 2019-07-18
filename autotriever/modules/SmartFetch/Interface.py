@@ -1,10 +1,14 @@
 
+import urllib.parse
+
 import WebRequest
 
-from autotriever.modules.SmartFetch import Processor_Qidian
+from autotriever.modules.SmartFetch import Processor_CrN
 from autotriever.modules.SmartFetch import Processor_Lndb
-from autotriever.modules.SmartFetch import SmartDispatcher
+from autotriever.modules.SmartFetch import Processor_Qidian
+from autotriever.modules.SmartFetch import Processor_StoriesOnline
 
+#pylint: disable=R1705
 
 class PluginInterface_SmartFetch(object):
 
@@ -55,19 +59,22 @@ class PluginInterface_SmartFetch(object):
 		ret = proc.forward_render_fetch(*args, **kwargs)
 		return ret
 
-	def smartGetItem(self, *args, **kwargs):
-		proc = SmartDispatcher.SmartDispatcher(wg=self.wg)
-		ret = proc.smartGetItem(*args, **kwargs)
-		return ret
 
-	# def test(self):
-	# 	print("Exec()ing `runTest.sh` from directory root!")
+	def smartGetItem(self, itemUrl, *args, **kwargs):
+		netloc = urllib.parse.urlsplit(itemUrl).netloc
 
-	# 	import subprocess
-	# 	command = "./runTests.sh"
+		if netloc.lower().endswith("creativenovels.com"):
+			crproc   = Processor_CrN.CrNFixer(self.wg)
+			return crproc.smartGetItem(itemUrl=itemUrl, *args, **kwargs)
+		elif netloc.lower().endswith("lndb.info"):
+			lnproc   = Processor_Lndb.LndbProcessor(self.wg)
+			return lnproc.forward_render_fetch(itemUrl=itemUrl, *args, **kwargs)
+		elif netloc.lower().endswith("webnovel.com"):
+			qiproc   = Processor_Qidian.QidianProcessor(self.wg)
+			return qiproc.forwad_render_fetch(itemUrl=itemUrl, *args, **kwargs)
+		elif netloc.lower().endswith("webnovel.com"):
+			soproc   = Processor_StoriesOnline.StoriesOnlineFetch(self.wg)
+			return soproc.getpage(requestedUrl=itemUrl, *args, **kwargs)
+		else:
+			return self.wg.getItem(itemUrl=itemUrl, *args, **kwargs)
 
-	# 	process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-	# 	output, error = process.communicate()
-
-	# 	print("Command output: ", output)
-	# 	print("Command errors: ", error)
