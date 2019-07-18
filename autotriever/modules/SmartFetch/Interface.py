@@ -1,14 +1,14 @@
 
 import WebRequest
 
-from autotriever.modules.SmartFetch import QidianTools
-from autotriever.modules.SmartFetch import LndbTools
+from autotriever.modules.SmartFetch import Processor_Qidian
+from autotriever.modules.SmartFetch import Processor_Lndb
 from autotriever.modules.SmartFetch import SmartDispatcher
 
 
 class PluginInterface_SmartFetch(object):
 
-	name = 'SmartFetch'
+	name = 'SmartWebRequest'
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -38,25 +38,25 @@ class PluginInterface_SmartFetch(object):
 
 	def qidianSmartFeedFetch(self, feed_url, meta):
 
-		proc = QidianTools.QidianProcessor()
+		proc = Processor_Qidian.QidianProcessor(wg=self.wg)
 		content = proc.qidianProcessFeedUrls(feed_url, meta)
 
 		return content, '', 'application/rss+xml'
 
 	def qidianProcessReleaseList(self, feed_urls):
 
-		proc = QidianTools.QidianProcessor()
+		proc = Processor_Qidian.QidianProcessor(wg=self.wg)
 		content = proc.process_release_list(feed_urls)
 
 		return content
 
 	def lndbRenderFetch(self, *args, **kwargs):
-		proc = LndbTools.LndbProcessor()
+		proc = Processor_Lndb.LndbProcessor(wg=self.wg)
 		ret = proc.forward_render_fetch(*args, **kwargs)
 		return ret
 
 	def smartGetItem(self, *args, **kwargs):
-		proc = SmartDispatcher.SmartDispatcher()
+		proc = SmartDispatcher.SmartDispatcher(wg=self.wg)
 		ret = proc.smartGetItem(*args, **kwargs)
 		return ret
 

@@ -64,8 +64,8 @@ def loadPlugins(onPath, prefix):
 	# print("Loading modules on path: ", onPath)
 	modules = getPythonScriptModules(onPath)
 	modules = dedup_modules(modules)
-	pprint.pprint("Modules:")
-	pprint.pprint(modules)
+	# pprint.pprint("Modules:")
+	# pprint.pprint(modules)
 	ret = {}
 
 	for fPath, modName in modules:

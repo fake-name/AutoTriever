@@ -15,9 +15,13 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 
 	log = logging.getLogger("Main.QidianFeedProcessor")
 
-	def __init__(self):
+	def __init__(self, wg:WebRequest.WebGetRobust):
 		super().__init__()
-		self.wg = WebRequest.WebGetRobust()
+		self.wg = wg
+
+	def forwad_render_fetch(self, itemUrl):
+		return self.wg.getItem(itemUrl)
+
 
 	def extract_from_meta(self, meta):
 
@@ -267,9 +271,4 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 		parsed['entries'] = filtered
 
 		reserialized = self.reserialize_feed(parsed)
-		print()
-		print()
-		print(reserialized)
-		print()
-		print()
 		return reserialized

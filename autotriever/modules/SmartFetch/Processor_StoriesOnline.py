@@ -8,11 +8,9 @@ from autotriever.util.Mailinator import MailinatorClient
 
 class StoriesOnlineFetch(object):
 
-	def __init__(self):
-		print("StoriesOnlineFetch __init__()")
-		self.log = logging.getLogger("Main.Text.StoriesOnline")
+	def __init__(self, wg:WebRequest.WebGetRobust):
 		super().__init__()
-		self.wg = WebRequest.WebGetRobust()
+		self.wg = wg
 
 	def activate_account(self, mc, mailid):
 		self.log.info("Received account validation mail. Validating.")

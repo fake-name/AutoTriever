@@ -8,9 +8,10 @@ class LndbProcessor(ProcessorBase.ProcessorBase):
 
 	log = logging.getLogger("Main.LndbFeedProcessor")
 
-	def __init__(self):
+	def __init__(self, wg:WebRequest.WebGetRobust):
 		super().__init__()
-		self.wg = WebRequest.WebGetRobust()
+		self.wg = wg
+
 
 
 	def forwad_render_fetch(self, *args, **kwargs):
