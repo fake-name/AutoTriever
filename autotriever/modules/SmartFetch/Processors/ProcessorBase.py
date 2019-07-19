@@ -1,6 +1,5 @@
 
 import logging
-import urllib.parse
 import abc
 import WebRequest
 
@@ -15,7 +14,7 @@ class ProcessorBase(object, metaclass=abc.ABCMeta):
 		self.wg  = wg
 
 
-	def preprocess_content(self, lowerspliturl:tuple, mimetype:str, contentstr:[str,bytes]):
+	def preprocess_content(self, url:str, lowerspliturl:tuple, mimetype:str, contentstr:[str,bytes]):
 		raise RuntimeError("Cannot call preprocess_content that is not overridden!")
 
 	@staticmethod
@@ -26,7 +25,7 @@ class ProcessorBase(object, metaclass=abc.ABCMeta):
 
 	# Proxy calls for enforcing call-correctness
 	@classmethod
-	def preprocess(cls, lowerspliturl:tuple, mimeType:str, content:[str,bytes], wg:WebRequest.WebGetRobust):
+	def preprocess(cls, url:str, lowerspliturl:tuple, mimeType:str, content:[str,bytes], wg:WebRequest.WebGetRobust):
 		instance = cls(wg)
-		instance.log.info("Preprocessing content from URL: '%s'", urllib.parse.urlunparse(lowerspliturl + ("",)))
-		return instance.preprocess_content(lowerspliturl, mimeType, content)
+		instance.log.info("Preprocessing content from URL: '%s'", url)
+		return instance.preprocess_content(url, lowerspliturl, mimeType, content)

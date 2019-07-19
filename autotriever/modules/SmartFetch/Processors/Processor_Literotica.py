@@ -14,7 +14,7 @@ class LiteroticaProcessor(ProcessorBase.ProcessorBase):
 
 	log_name = "Main.Processor.Literotica"
 
-	def preprocess_content(self, lowerspliturl, mimetype, contentstr):
+	def preprocess_content(self, url, lowerspliturl, mimetype, contentstr):
 		#pylint: disable=unused-argument
 		if not isinstance(contentstr, str):
 			return contentstr

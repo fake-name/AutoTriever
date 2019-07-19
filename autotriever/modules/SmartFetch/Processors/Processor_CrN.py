@@ -18,7 +18,7 @@ class CrNFixer(ProcessorBase.ProcessorBase):
 
 		return lowerspliturl.netloc.endswith("creativenovels.com")
 
-	def preprocess_content(self, lowerspliturl, mimetype, contentstr):
+	def preprocess_content(self, url, lowerspliturl, mimetype, contentstr):
 		if isinstance(contentstr, bytes):
 			contentstr = bs4.UnicodeDammit(contentstr).unicode_markup
 
