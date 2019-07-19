@@ -9,22 +9,24 @@ import traceback
 from feedgen.feed import FeedGenerator
 import WebRequest
 
-from autotriever.modules.SmartFetch import ProcessorBase
+from . import ProcessorBase
 
 class QidianProcessor(ProcessorBase.ProcessorBase):
 
-	log = logging.getLogger("Main.QidianFeedProcessor")
+	log_name = "Main.Processor.Qidian"
 
-	def __init__(self, wg:WebRequest.WebGetRobust):
-		super().__init__()
-		self.wg = wg
+	@staticmethod
+	def wants_url(lowerspliturl, mimetype):
+		return False
+
+	@staticmethod
+	def preemptive_wants_url(lowerspliturl:tuple):
+		return False
 
 	def forwad_render_fetch(self, itemUrl):
 		return self.wg.getItem(itemUrl)
 
-
 	def extract_from_meta(self, meta):
-
 		 #                 '/274367222/msite-read-video3',
 		 #                 '/274367222/msite-read-video4',
 		 #                 '/274367222/msite-read-video5',

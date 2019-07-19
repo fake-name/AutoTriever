@@ -25,8 +25,11 @@ def getPythonScriptModules(dirPath):
 		if not fName.endswith(".py"):
 			continue
 
-
-		fName = fName.split(".")[0]
+		# We need the full module path for import, so we can use relative
+		# imports in the module itself.
+		relp = os.path.relpath(fPath, os.getcwd())
+		fName = relp.split(".")[0]
+		fName = fName.replace("/", ".")
 
 
 		ret.append((fPath, fName))
@@ -71,7 +74,7 @@ def loadPlugins(onPath, prefix):
 	for fPath, modName in modules:
 		loader = SourceFileLoader(modName, fPath)
 		mod = loader.load_module()
-		# print("Loader:", loader, "module: ", mod, 'modName:', modName, "prefix: ", prefix)
+		# print('modName:', modName)
 		plugClasses = findPluginClass(mod, prefix)
 		# print("PlugClasses: ", plugClasses)
 		for key, pClass in plugClasses:

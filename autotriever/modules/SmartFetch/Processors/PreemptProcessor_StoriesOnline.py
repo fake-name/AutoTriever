@@ -5,12 +5,20 @@ import bs4
 import WebRequest
 
 from autotriever.util.Mailinator import MailinatorClient
+from . import PreemptProcessorBase
 
-class StoriesOnlineFetch(object):
+class StoriesOnlineFetch(PreemptProcessorBase.PreemptProcessorBase):
 
-	def __init__(self, wg:WebRequest.WebGetRobust):
-		super().__init__()
-		self.wg = wg
+	log_name = "Main.Processor.StoriesOnline"
+
+	@staticmethod
+	def wants_url(lowerspliturl, mimetype):
+		return False
+
+	@staticmethod
+	def preemptive_wants_url(lowerspliturl:tuple):
+		return False
+
 
 	def activate_account(self, mc, mailid):
 		self.log.info("Received account validation mail. Validating.")
@@ -26,7 +34,7 @@ class StoriesOnlineFetch(object):
 		soup = bs4.BeautifulSoup(activatepage, "lxml")
 		tok = soup.find("input", attrs={'name' : 'token'})
 
-		assert tok != None
+		assert tok is not None
 
 		postdata = {
 			"token"  : tok['value'],

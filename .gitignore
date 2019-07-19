@@ -13,3 +13,4 @@ ghostdriver.log
 /vendored/ChromeHeadless.tar.gz
 /*.coverage
 /local_configured
+/out.pyson

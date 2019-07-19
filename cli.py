@@ -2,7 +2,7 @@
 
 import queue
 import time
-import threading
+import pprint
 import inspect
 import traceback
 import sys
@@ -140,10 +140,9 @@ def dispatch(args):
 
 	ret = try_call(instance.calls[func_name], params)
 
-	print("Returned")
-	print("-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#")
-	print()
-	print(ret)
+
+	with open("out.pyson", "w") as fp:
+		fp.write(pprint.pformat(ret))
 
 
 def go():
