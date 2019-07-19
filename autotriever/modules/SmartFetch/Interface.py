@@ -1,4 +1,5 @@
 
+import logging
 import urllib.parse
 
 import bs4
@@ -9,6 +10,12 @@ from autotriever.modules.SmartFetch.Processors import Processor_Qidian
 from autotriever.modules.SmartFetch.Processors import Processor_Literotica
 from autotriever.modules.SmartFetch.Processors import PreemptProcessor_Lndb
 from autotriever.modules.SmartFetch.Processors import PreemptProcessor_StoriesOnline
+from autotriever.modules.SmartFetch.Processors import Processor_Reddit
+from autotriever.modules.SmartFetch.Processors import Processor_TgStoryTime
+from autotriever.modules.SmartFetch.Processors import Processor_LiveJournal
+from autotriever.modules.SmartFetch.Processors import Processor_ShortSites
+from autotriever.modules.SmartFetch.Processors import Processor_AsianHobbyist
+from autotriever.modules.SmartFetch.Processors import Processor_GravityTales
 
 #pylint: disable=R1705
 
@@ -21,6 +28,12 @@ PROCESSORS = [
 	Processor_CrN.CrNFixer,
 	Processor_Qidian.QidianProcessor,
 	Processor_Literotica.LiteroticaProcessor,
+	Processor_Reddit.RedditProcessor,
+	Processor_TgStoryTime.TgStoryTimeProcessor,
+	Processor_LiveJournal.LJProcessor,
+	Processor_ShortSites.JsRendererPreprocessor,
+	Processor_AsianHobbyist.AsianHobbyistProcessor,
+	Processor_GravityTales.GravityTalesProcessor,
 ]
 
 class PluginInterface_SmartFetch(object):
@@ -29,6 +42,7 @@ class PluginInterface_SmartFetch(object):
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
+		self.log = logging.getLogger("Main.SmartFetcher")
 
 		self.wg = WebRequest.WebGetRobust()
 
@@ -83,11 +97,14 @@ class PluginInterface_SmartFetch(object):
 			if isinstance(content, bytes):
 				content = bs4.UnicodeDammit(content).unicode_markup
 
-
+		processed = False
 		for processor in PROCESSORS:
 			if processor.wants_url(lowerspliturl=lowerspliturl, mimetype=mType):
-				content = processor.preprocess(lowerspliturl=lowerspliturl, mimeType=mType, content=content, wg=self.wg)
+				processed = True
+				content = processor.preprocess(url=itemUrl, lowerspliturl=lowerspliturl, mimeType=mType, content=content, wg=self.wg)
 
+		if processed:
+			self.log.info("All preprocessors completed!")
 		return content, fileN, mType
 
 
