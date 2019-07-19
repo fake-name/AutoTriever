@@ -528,8 +528,9 @@ class VpsHerder(object):
 			# Anyways, I moved this command to my custom bootstrap script.
 			# ['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {'env' : {'DEBIAN_FRONTEND' : 'noninteractive'}}, None],
 
-			['cmd.run', ["DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential git screen curl", ],                                  {}, ['The following NEW packages will be installed:', "g++", "gcc"]],
-			['cmd.run', ["DEBIAN_FRONTEND=noninteractive apt-get install -y locales", ],                                                          {}, None],
+			['cmd.run', ["apt-get install -y build-essential git screen curl", ],                                  {'env' : "DEBIAN_FRONTEND=noninteractive"}, ['The following NEW packages will be installed:', "g++", "gcc"]],
+			['cmd.run', ["apt-get install -y locales", ],                                                          {'env' : "DEBIAN_FRONTEND=noninteractive"}, None],
+			['cmd.run', ["apt-get install -y python3-dev", ],                                                      {'env' : "DEBIAN_FRONTEND=noninteractive"}, None],
 
 			# Adblocking. Lower the chrome cpu costs decently
 			# So long hosts files cause things to explode, so we turn it off.
@@ -577,7 +578,7 @@ class VpsHerder(object):
 
 			['cmd.run', ["chown -R scrapeworker:scrapeworker /scraper", ],                                                                        {}, None],
 
-			['cmd.run', ["./configure.sh", ],                                                     {"cwd" : '/scraper', 'runas' : 'scrapeworker'}, ['Setup OK! System is configured for launch']],
+			['cmd.run', ["./configure.sh", ],                                                     {'env' : "DEBIAN_FRONTEND=noninteractive", "cwd" : '/scraper', 'runas' : 'scrapeworker'}, ['Setup OK! System is configured for launch']],
 		]
 
 		failures = 0
@@ -746,7 +747,7 @@ def vtest():
 	herder.log.info("	using provider: '%s'", provider)
 	herder.log.info("	kwargs: '%s'", kwargs)
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	# print("Create response:", ret)
+	print("Create response:", ret)
 
 	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
