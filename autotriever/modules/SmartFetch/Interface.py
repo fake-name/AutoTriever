@@ -86,6 +86,7 @@ class PluginInterface_SmartFetch(object):
 		lowerspliturl = urllib.parse.urlsplit(itemUrl.lower())
 		for processor in PREEMPTIVE_PROCESSORS:
 			if processor.preemptive_wants_url(lowerspliturl=lowerspliturl):
+				self.log.info("Preemptive fetch handler %s wants to modify content", processor)
 				return processor.premptive_handle(url=itemUrl, wg=self.wg)
 
 
