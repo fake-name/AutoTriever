@@ -19,13 +19,6 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 	def wants_url(lowerspliturl, mimetype):
 		return False
 
-	@staticmethod
-	def preemptive_wants_url(lowerspliturl:tuple):
-		return False
-
-	def forwad_render_fetch(self, itemUrl):
-		return self.wg.getItem(itemUrl)
-
 	def extract_from_meta(self, meta):
 		 #                 '/274367222/msite-read-video3',
 		 #                 '/274367222/msite-read-video4',
