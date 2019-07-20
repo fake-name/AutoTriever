@@ -116,6 +116,8 @@ def test_smart_dispatcher():
 		'http://www.livejournal.com/',
 		'https://www.reddit.com/r/starrankhunter/',
 		'https://www.tgstorytime.com/',
+		'https://www.flying-lines.com/chapter/the-evil-prince-and-his-precious-wife:the-sly-lady/c-127',
+		"https://www.flying-lines.com/novel/the-evil-prince-and-his-precious-wife:the-sly-lady",
 	]
 
 	lock_dict = local_entry_point.initialize_manager()
