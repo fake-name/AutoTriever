@@ -37,64 +37,6 @@ function setup_headless_chrome() {
 
 	curl https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts | sudo tee -a /etc/hosts
 
-	# Install ublock
-	sudo mkdir -p /etc/opt/chrome/policies/managed
-
-	# Try to install ublock origin
-	sudo tee -a /etc/opt/chrome/policies/managed/master_preferences << END
-{
- "extensions": {
-    "settings": {
-       "cjpalhdlnbpafiamejdnhcphjbkeiagm": {
-          "location": 1,
-          "manifest": {
-            "content_scripts": [ {
-              "all_frames": true,
-              "js": [ "js/vapi-client.js", "js/contentscript.js" ],
-              "matches": [ "http://*/*", "https://*/*" ],
-              "run_at": "document_start"
-              } ],
-             "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmJNzUNVjS6Q1qe0NRqpmfX/oSJdgauSZNdfeb5RV1Hji21vX0TivpP5gq0fadwmvmVCtUpOaNUopgejiUFm/iKHPs0o3x7hyKk/eX0t2QT3OZGdXkPiYpTEC0f0p86SQaLoA2eHaOG4uCGi7sxLJmAXc6IsxGKVklh7cCoLUgWEMnj8ZNG2Y8UKG3gBdrpES5hk7QyFDMraO79NmSlWRNgoJHX6XRoY66oYThFQad8KL8q3pf3Oe8uBLKywohU0ZrDPViWHIszXoE9HEvPTFAbHZ1umINni4W/YVs+fhqHtzRJcaKJtsTaYy+cholu5mAYeTZqtHf6bcwJ8t9i2afwIDAQAB",
-             "name": "uBlock Origin",
-             "permissions": [ "contextMenus", "privacy", "storage", "tabs", "unlimitedStorage", "webNavigation", "webRequest", "webRequestBlocking", "<all_urls>" ],
-             "update_url": "https://clients2.google.com/service/update2/crx",
-             "version": "0.0"
-          },
-          "path": "cjpalhdlnbpafiamejdnhcphjbkeiagm\\0.0",
-          "state": 1
-       }
-    }
-  }
-}
-END
-
-	sudo tee -a /etc/opt/chrome/policies/managed/master_preferences.json << END
-{
- "extensions": {
-    "settings": {
-       "cjpalhdlnbpafiamejdnhcphjbkeiagm": {
-          "location": 1,
-          "manifest": {
-            "content_scripts": [ {
-              "all_frames": true,
-              "js": [ "js/vapi-client.js", "js/contentscript.js" ],
-              "matches": [ "http://*/*", "https://*/*" ],
-              "run_at": "document_start"
-              } ],
-             "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmJNzUNVjS6Q1qe0NRqpmfX/oSJdgauSZNdfeb5RV1Hji21vX0TivpP5gq0fadwmvmVCtUpOaNUopgejiUFm/iKHPs0o3x7hyKk/eX0t2QT3OZGdXkPiYpTEC0f0p86SQaLoA2eHaOG4uCGi7sxLJmAXc6IsxGKVklh7cCoLUgWEMnj8ZNG2Y8UKG3gBdrpES5hk7QyFDMraO79NmSlWRNgoJHX6XRoY66oYThFQad8KL8q3pf3Oe8uBLKywohU0ZrDPViWHIszXoE9HEvPTFAbHZ1umINni4W/YVs+fhqHtzRJcaKJtsTaYy+cholu5mAYeTZqtHf6bcwJ8t9i2afwIDAQAB",
-             "name": "uBlock Origin",
-             "permissions": [ "contextMenus", "privacy", "storage", "tabs", "unlimitedStorage", "webNavigation", "webRequest", "webRequestBlocking", "<all_urls>" ],
-             "update_url": "https://clients2.google.com/service/update2/crx",
-             "version": "0.0"
-          },
-          "path": "cjpalhdlnbpafiamejdnhcphjbkeiagm\\0.0",
-          "state": 1
-       }
-    }
-  }
-}
-END
-
 	# set +e
 	# tar tf ./vendored/MinimalHeadless.tar.gz
 	# if [ $? -eq 0 ]
