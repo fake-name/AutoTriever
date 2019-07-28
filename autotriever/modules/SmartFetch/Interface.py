@@ -17,6 +17,7 @@ from autotriever.modules.SmartFetch.Processors import Processor_ShortSites
 from autotriever.modules.SmartFetch.Processors import Processor_AsianHobbyist
 from autotriever.modules.SmartFetch.Processors import Processor_GravityTales
 from autotriever.modules.SmartFetch.Processors import Processor_FlyingLines
+from autotriever.modules.SmartFetch.Processors import PreemptProcessor_FoxTeller
 
 #pylint: disable=R1705
 
@@ -36,6 +37,7 @@ PROCESSORS = [
 	Processor_AsianHobbyist.AsianHobbyistProcessor,
 	Processor_GravityTales.GravityTalesProcessor,
 	Processor_FlyingLines.FlyingLinesProcessor,
+	PreemptProcessor_FoxTeller.FoxTellerFetch,
 ]
 
 class PluginInterface_SmartFetch(object):
