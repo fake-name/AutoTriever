@@ -24,6 +24,7 @@ from autotriever.modules.SmartFetch.Processors import PreemptProcessor_FoxTeller
 PREEMPTIVE_PROCESSORS = [
 	PreemptProcessor_Lndb.LndbProcessor,
 	PreemptProcessor_StoriesOnline.StoriesOnlineFetch,
+	PreemptProcessor_FoxTeller.FoxTellerFetch,
 ]
 
 PROCESSORS = [
@@ -37,7 +38,6 @@ PROCESSORS = [
 	Processor_AsianHobbyist.AsianHobbyistProcessor,
 	Processor_GravityTales.GravityTalesProcessor,
 	Processor_FlyingLines.FlyingLinesProcessor,
-	PreemptProcessor_FoxTeller.FoxTellerFetch,
 ]
 
 class PluginInterface_SmartFetch(object):
