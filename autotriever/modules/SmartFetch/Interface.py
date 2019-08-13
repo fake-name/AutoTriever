@@ -5,6 +5,7 @@ import urllib.parse
 import bs4
 import WebRequest
 
+from autotriever.modules.SmartFetch.Processors import Processor_ShortenedLinks
 from autotriever.modules.SmartFetch.Processors import Processor_CrN
 from autotriever.modules.SmartFetch.Processors import Processor_Qidian
 from autotriever.modules.SmartFetch.Processors import Processor_Literotica
@@ -28,6 +29,7 @@ PREEMPTIVE_PROCESSORS = [
 ]
 
 PROCESSORS = [
+
 	Processor_CrN.CrNFixer,
 	Processor_Qidian.QidianProcessor,
 	Processor_Literotica.LiteroticaProcessor,
@@ -38,6 +40,9 @@ PROCESSORS = [
 	Processor_AsianHobbyist.AsianHobbyistProcessor,
 	Processor_GravityTales.GravityTalesProcessor,
 	Processor_FlyingLines.FlyingLinesProcessor,
+
+	# This processor has to go last.
+	Processor_ShortenedLinks.LinkUnshortenerProcessor,
 ]
 
 class PluginInterface_SmartFetch(object):
@@ -92,8 +97,6 @@ class PluginInterface_SmartFetch(object):
 			if processor.preemptive_wants_url(lowerspliturl=lowerspliturl):
 				self.log.info("Preemptive fetch handler %s wants to modify content", processor)
 				return processor.premptive_handle(url=itemUrl, wg=self.wg)
-
-
 
 		content, fileN, mType = self.wg.getItem(itemUrl=itemUrl, *args, **kwargs)
 
