@@ -51,7 +51,7 @@ class FoxTellerFetch(PreemptProcessorBase.PreemptProcessorBase):
 
 				# Short circuit for the binary content case.
 				if response['binary']:
-					return response['content'], "application/x-binary", fileN
+					return response['content'], fileN, "application/x-binary"
 
 				self.log.info("Waiting for content to render...")
 
@@ -59,7 +59,7 @@ class FoxTellerFetch(PreemptProcessorBase.PreemptProcessorBase):
 					body = cr.get_rendered_page_source()
 					if loading_str not in body:
 						self.log.info("Content appears to have rendered!")
-						return self.de_garbage_html(body), "text/html", fileN
+						return self.de_garbage_html(body), fileN, "text/html"
 					time.sleep(1)
 
 			finally:
