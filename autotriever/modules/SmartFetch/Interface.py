@@ -9,8 +9,6 @@ from autotriever.modules.SmartFetch.Processors import Processor_ShortenedLinks
 from autotriever.modules.SmartFetch.Processors import Processor_CrN
 from autotriever.modules.SmartFetch.Processors import Processor_Qidian
 from autotriever.modules.SmartFetch.Processors import Processor_Literotica
-from autotriever.modules.SmartFetch.Processors import PreemptProcessor_Lndb
-from autotriever.modules.SmartFetch.Processors import PreemptProcessor_StoriesOnline
 from autotriever.modules.SmartFetch.Processors import Processor_Reddit
 from autotriever.modules.SmartFetch.Processors import Processor_TgStoryTime
 from autotriever.modules.SmartFetch.Processors import Processor_LiveJournal
@@ -18,6 +16,10 @@ from autotriever.modules.SmartFetch.Processors import Processor_ShortSites
 from autotriever.modules.SmartFetch.Processors import Processor_AsianHobbyist
 from autotriever.modules.SmartFetch.Processors import Processor_GravityTales
 from autotriever.modules.SmartFetch.Processors import Processor_FlyingLines
+from autotriever.modules.SmartFetch.Processors import Processor_TapRead
+
+from autotriever.modules.SmartFetch.Processors import PreemptProcessor_Lndb
+from autotriever.modules.SmartFetch.Processors import PreemptProcessor_StoriesOnline
 from autotriever.modules.SmartFetch.Processors import PreemptProcessor_FoxTeller
 
 #pylint: disable=R1705
@@ -40,6 +42,7 @@ PROCESSORS = [
 	Processor_AsianHobbyist.AsianHobbyistProcessor,
 	Processor_GravityTales.GravityTalesProcessor,
 	Processor_FlyingLines.FlyingLinesProcessor,
+	Processor_TapRead.TapReadProcessor,
 
 	# This processor has to go last.
 	Processor_ShortenedLinks.LinkUnshortenerProcessor,
