@@ -3,6 +3,7 @@ import re
 import time
 import bs4
 import urllib.parse
+import magic
 import WebRequest
 
 from autotriever.util.Mailinator import MailinatorClient
@@ -30,6 +31,7 @@ class FoxTellerFetch(PreemptProcessorBase.PreemptProcessorBase):
 
 
 
+
 	def premptive_handle_content(self, url):
 		'''
 		Get content with bullshit JS rendering.
@@ -51,7 +53,7 @@ class FoxTellerFetch(PreemptProcessorBase.PreemptProcessorBase):
 
 				# Short circuit for the binary content case.
 				if response['binary']:
-					return response['content'], fileN, "application/x-binary"
+					return response['content'], fileN, magic.from_buffer(response['content'], mime=True)
 
 				self.log.info("Waiting for content to render...")
 
