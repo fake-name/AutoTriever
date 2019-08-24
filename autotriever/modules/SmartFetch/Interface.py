@@ -20,14 +20,15 @@ from autotriever.modules.SmartFetch.Processors import Processor_TapRead
 
 from autotriever.modules.SmartFetch.Processors import PreemptProcessor_Lndb
 from autotriever.modules.SmartFetch.Processors import PreemptProcessor_StoriesOnline
-from autotriever.modules.SmartFetch.Processors import PreemptProcessor_FoxTeller
+from autotriever.modules.SmartFetch.Processors import PreemptProcessor_ChromeRender
 
 #pylint: disable=R1705
 
 PREEMPTIVE_PROCESSORS = [
 	PreemptProcessor_Lndb.LndbProcessor,
 	PreemptProcessor_StoriesOnline.StoriesOnlineFetch,
-	PreemptProcessor_FoxTeller.FoxTellerFetch,
+	PreemptProcessor_ChromeRender.FoxTellerFetch,
+	PreemptProcessor_ChromeRender.MeeJeeFetch,
 ]
 
 PROCESSORS = [
