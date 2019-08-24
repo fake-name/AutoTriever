@@ -8,21 +8,21 @@ ChromeController==0.3.10
 
 PySocks==1.7.0
 dill==0.3.0
-rabbitpy==2.0.0
+rabbitpy==2.0.1
 
 netdisco==2.6.0
 zeroconf==0.23.0
 
-APScheduler==3.6.0
-beautifulsoup4==4.7.1
+APScheduler==3.6.1
+beautifulsoup4==4.8.0
 cchardet==2.1.4
 colorama==0.4.1
 selenium==3.141.0
-Faker==1.0.7
-lxml==4.3.4
+Faker==2.0.1
+lxml==4.4.1
 cachetools==3.1.1
 msgpack==0.6.1
-pytz==2019.1
+pytz==2019.2
 feedgen==0.7.0
 feedparser==5.2.1
 
