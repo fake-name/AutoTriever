@@ -1,4 +1,6 @@
 
+# This has to go first because of monkeypatching in local_entry_point
+from autotriever import local_entry_point # noqa
 
 import sys
 import logging
@@ -13,7 +15,6 @@ import WebRequest
 import autotriever.deps.logSetup
 import autotriever.plugin_loader
 from autotriever import dispatcher
-from autotriever import local_entry_point
 
 def get_plugin_lut():
 	log = logging.getLogger("Main.Importer")

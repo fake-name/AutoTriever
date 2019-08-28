@@ -20,20 +20,22 @@ class FlyingLinesProcessor(ProcessorBase.ProcessorBase):
 		if 'text/html' not in mimetype:
 			return False
 
+		print("Check: ", lowerspliturl.netloc.endswith("flying-lines.com"))
 		return lowerspliturl.netloc.endswith("flying-lines.com")
 
 	def preprocess_content(self, url, lowerspliturl, mimetype, contentstr):
 		if not isinstance(contentstr, str):
 			return contentstr
 
-		if '<span class="chapter_title">chapter title for js | </span>' in contentstr:
+		print()
+		if '<!-- 阅读内容区域 -->' in contentstr:
 			self.log.info("Idiotic jerberscript render. Fetching...")
 			contentstr = self._fetch_jerberscript_chapter(contentstr)
 			self.log.info("Successfully did JS forward rendering.")
 
 		if '<span>Table of Contents</span>' in contentstr:
 			self.log.info("Fixing ToC ordering")
-			contentstr = self._reorder_toc(contentstr)
+			contentstr = self._fix_reorder_toc(url, contentstr)
 			self.log.info("Table of contents reordered")
 
 		return contentstr
@@ -41,24 +43,40 @@ class FlyingLinesProcessor(ProcessorBase.ProcessorBase):
 
 	def _general_clean(self, soup):
 
-		for bad in soup.find_all("div", class_='modal-login'):
-			bad.decompose()
-		for bad in soup.find_all("div", class_='side_bar'):
-			bad.decompose()
-		for bad in soup.find_all("div", class_='f-modal-content'):
-			bad.decompose()
+		gargage_divs = [
+			'user-alert',
+			'browser-push',
+			'alert-box-click',
+			'modal-login',
+			'footer',
+			'side_bar',
+			'f-modal-content',
+		]
+
+		for garbage_div in gargage_divs:
+			for bad in soup.find_all("div", class_=garbage_div):
+				bad.decompose()
 		for bad in soup.find_all("li", class_='subscribe'):
 			bad.decompose()
 		for bad in soup.find_all("span", class_='process'):
+			bad.decompose()
+		for bad in soup.find_all("footer", class_='footer'):
 			bad.decompose()
 		for bad in soup.find_all("a", href='javascript:;'):
 			bad.decompose()
 
 		return soup
 
-	def _reorder_toc(self, contentstr):
+	def _fix_reorder_toc(self, url, contentstr):
 		soup = WebRequest.as_soup(contentstr)
 		soup = self._general_clean(soup)
+
+
+		url_base = url.replace("/novel/", "/chapter/").rstrip("/")
+
+
+		for link_tag in soup.find_all("a", class_='menuChapterUrl'):
+			link_tag['href'] = url_base + "/c-" + str(link_tag['data-chapter-number'])
 
 		content_area = soup.find("ul", class_='details-content')
 
@@ -82,30 +100,35 @@ class FlyingLinesProcessor(ProcessorBase.ProcessorBase):
 
 		conttag = soup.find("div", class_='main_body')
 
-		cid = conttag.attrs.get('data-chapter-id')
-		ctitle = soup.find("span", class_="chapter_title")
+		novel_path  = conttag.attrs.get('data-novel_path')
+		chapter_num = conttag.attrs.get('data-chapternum')
+		cid         = conttag.attrs.get('data-chapter-id')
+		ctitle      = soup.find("span", class_="chapter_title")
 
 
 		if not cid:
+			self.log.error("No chapter ID found!")
 			if ctitle:
 				ctitle.string = "No chapter ID found!"
 			return soup.prettify()
 
 		# This is dynamic in the page jerberscript. I'm being lazy here.
-		chap_endpoint = "https://www.flying-lines.com/chapter/{cid}".format(cid=cid)
+		# chap_endpoint = "https://www.flying-lines.com/chapter/{cid}".format(cid=cid)
+		chap_endpoint = "https://www.flying-lines.com/h5/novel/{novel_path}/{chap_num}".format(novel_path=novel_path, chap_num=chapter_num)
 
 		chap_ep = self.wg.getJson(chap_endpoint)
 
-		if not ('status' in chap_ep and chap_ep['status'] == 'success'):
+		if not ('status' in chap_ep and chap_ep['status'] == 200):
+			self.log.error("Chapter json fetch failed!")
 			if ctitle:
 				ctitle.string = "Chapter json fetch failed!"
 			return soup.prettify()
 
 		cdat = chap_ep['data']
 
-		ctitle.string = cdat['chapter_title']
+		ctitle.string = cdat['title']
 
-		cbody = WebRequest.as_soup(cdat['chapter_content'])
+		cbody = WebRequest.as_soup(cdat['content'])
 
 		# Goddammit
 		cbody.html.unwrap()
@@ -117,20 +140,12 @@ class FlyingLinesProcessor(ProcessorBase.ProcessorBase):
 		for bad in soup.find_all("p", class_='siteCopyrightInfo'):
 			bad.decompose()
 
-		itemp = cdat['path']
+		nav_endpoint = "https://www.flying-lines.com/chapter/{novel_path}/c-{chap_num}"
 
-		_, ctype, series, chap = itemp.split("/")
+		next_chap = nav_endpoint.format(novel_path=novel_path, chap_num=cdat['nextChapterNumber'])
+		prev_chap = nav_endpoint.format(novel_path=novel_path, chap_num=cdat['lastChapterNumber'])
 
-		ignored__prefix, chap_num = chap.split("-")[:2]
-
-		chap_num = int(chap_num)
-
-		chap_format = "https://www.flying-lines.com/{ctype}/{series}/c-{chap}"
-
-		next_chap = chap_format.format(ctype=ctype, series=series, chap=chap_num + 1)
-		prev_chap = chap_format.format(ctype=ctype, series=series, chap=chap_num - 1)
-
-		toc_chap  = "https://www.flying-lines.com/novel/{series}/".format(series=series)
+		toc_chap  = "https://www.flying-lines.com/novel/{series}/".format(series=novel_path)
 
 		chp_div           = soup.new_tag("div")
 
@@ -146,7 +161,8 @@ class FlyingLinesProcessor(ProcessorBase.ProcessorBase):
 		prev_chp_tag['href']   = prev_chap
 		prev_chp_tag.string    = "Previous Chapter"
 
-		chp_div.append(prev_chp_tag)
+		if cdat['lastChapterNumber'] > -1:
+			chp_div.append(prev_chp_tag)
 		chp_div.append(toc_chp_tag)
 		chp_div.append(next_chp_tag)
 

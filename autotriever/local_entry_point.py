@@ -1,3 +1,8 @@
+
+import gevent
+import gevent.monkey
+from gevent.server import StreamServer
+
 import logging
 import threading
 import queue
@@ -12,9 +17,6 @@ import signal
 import traceback
 
 import mprpc
-import gevent
-import gevent.monkey
-from gevent.server import StreamServer
 
 gevent.monkey.patch_all()
 
