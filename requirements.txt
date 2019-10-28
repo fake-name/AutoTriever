@@ -6,7 +6,7 @@ astor>=0.6.0
 
 ChromeController==0.3.10
 
-PySocks==1.7.0
+PySocks==1.7.1
 dill==0.3.0
 rabbitpy==2.0.1
 
