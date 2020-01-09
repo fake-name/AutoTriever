@@ -465,6 +465,16 @@ class VpsHerder(object):
 						raise marshaller_exceptions.InvalidDeployResponse("Expected '%s' in response '%s'" % (expect_val, resp))
 					else:
 						self.log.info("Found %s in response!", expect)
+
+				elif isinstance(resp, dict):
+					if not expect_val in str(resp):
+						if self.debug:
+							import pdb
+							pdb.set_trace()
+						raise marshaller_exceptions.InvalidDeployResponse("Expected '%s' in response '%s'" % (expect_val, resp))
+					else:
+						self.log.info("Found %s in response!", expect)
+
 				else:
 					self.log.error("Unknown response type: %s!", type(resp))
 			else:
@@ -490,8 +500,8 @@ class VpsHerder(object):
 			['cmd.run', ["bash -c \"ls /\"", ],                                                                                                   {}, ['scraper', ]],
 			['cmd.run', ['bash -c \"pwd\"', ],                                                                                                    {}, ['/root']],
 			['cmd.run', ['bash -c \"ls -la\"', ],                                                                                                 {}, None],
-			['cmd.run', ['apt-get update -y -qq', ],                                                               {'env' : "DEBIAN_FRONTEND=noninteractive"}, None],
-			['cmd.run', ['apt-get install -y -qq software-properties-common', ],                                   {'env' : "DEBIAN_FRONTEND=noninteractive"}, None],
+			['pkg.refresh_db', [],                                                                                                                {}, None],
+			['pkg.install', ['software-properties-common', ],                                                                                     {}, None],
 
 			# splat in public keys.
 			['cmd.run', ['echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5n'
@@ -528,9 +538,12 @@ class VpsHerder(object):
 			# Anyways, I moved this command to my custom bootstrap script.
 			# ['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {'env' : {'DEBIAN_FRONTEND' : 'noninteractive'}}, None],
 
-			['cmd.run', ["apt-get install -y build-essential git screen curl", ],                                  {'env' : "DEBIAN_FRONTEND=noninteractive"}, ['The following NEW packages will be installed:', "g++", "gcc"]],
-			['cmd.run', ["apt-get install -y locales", ],                                                          {'env' : "DEBIAN_FRONTEND=noninteractive"}, None],
-			['cmd.run', ["apt-get install -y python3-dev", ],                                                      {'env' : "DEBIAN_FRONTEND=noninteractive"}, None],
+			['pkg.install', ["build-essential", ],                                                                                                 {}, ['g++', 'gcc']],
+			['pkg.install', ["git", ],                                                                                                             {}, None],
+			['pkg.install', ["screen", ],                                                                                                          {}, None],
+			['pkg.install', ["curl", ],                                                                                                            {}, None],
+			['pkg.install', ["locales", ],                                                                                                         {}, None],
+			['pkg.install', ["python3-dev", ],                                                                                                     {}, None],
 
 			# Adblocking. Lower the chrome cpu costs decently
 			# So long hosts files cause things to explode, so we turn it off.
@@ -618,8 +631,18 @@ class VpsHerder(object):
 						raise marshaller_exceptions.VmCreateFailed("Failed to create VM!")
 
 			if resp[clientname]:
-				for line in resp[clientname].split("\n"):
-					self.log.info("	%s", line)
+				if isinstance(resp[clientname], dict):
+					text = pprint.pformat(resp[clientname])
+					for line in text.split("\n"):
+						self.log.info("	%s", line)
+				elif isinstance(resp[clientname], str):
+					for line in resp[clientname].split("\n"):
+						self.log.info("	%s", line)
+				else:
+					self.log.warning("Unknown type: %s", type(resp[clientname]))
+					text = pprint.pformat(resp[clientname])
+					for line in text.split("\n"):
+						self.log.warning("	%s", line)
 			else:
 				self.log.info("Received empty response")
 
@@ -762,7 +785,7 @@ def dtest():
 	herder.log.info("	using provider: '%s'", provider)
 	herder.log.info("	kwargs: '%s'", kwargs)
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	# print("Create response:", ret)
+	print("Create response:", ret)
 
 	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
@@ -777,7 +800,7 @@ def ltest():
 	herder.log.info("	using provider: '%s'", provider)
 	herder.log.info("	kwargs: '%s'", kwargs)
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	# print("Create response:", ret)
+	print("Create response:", ret)
 
 	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
@@ -792,7 +815,7 @@ def stest():
 	herder.log.info("	using provider: '%s'", provider)
 	herder.log.info("	kwargs: '%s'", kwargs)
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	# print("Create response:", ret)
+	print("Create response:", ret)
 
 	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
@@ -809,7 +832,7 @@ def gtest():
 	herder.log.info("	using provider: '%s'", provider)
 	herder.log.info("	kwargs: '%s'", kwargs)
 	ret = herder.cc.create(names=[clientname], provider=provider, **kwargs)
-	# print("Create response:", ret)
+	print("Create response:", ret)
 
 	herder.configure_client(clientname, 0, provider=provider, provider_kwargs=kwargs)
 	herder.log.info("Instance created!")
