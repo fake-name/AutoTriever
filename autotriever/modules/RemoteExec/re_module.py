@@ -7,13 +7,13 @@ from autotriever.modules.RemoteExec import run_test
 import WebRequest
 
 
-class PluginInterface_RemoteExec():
+class PluginInterface_RemoteExec(object):
 
 	name = 'RemoteExec'
 	can_send_partials = True
 
 	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
+		super().__init__()
 		self.log = logging.getLogger("Main.RemoteExec.Caller")
 		self.wg = WebRequest.WebGetRobust()
 
