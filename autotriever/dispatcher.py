@@ -48,7 +48,7 @@ class RpcCallDispatcher(client.RpcHandler):
 	def doCall(self, module, call, call_args, call_kwargs, context_responder):
 		if not module in self.classCache:
 			self.log.info("First call to module '%s'", module)
-			self.classCache[module] =  self.plugins[module]()
+			self.classCache[module] =  self.plugins[module](settings=self.settings)
 			self.log.info("Module provided calls: '%s'", self.classCache[module].calls.keys())
 
 		self.log.info("Calling module '%s'", module)

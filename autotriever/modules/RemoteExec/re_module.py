@@ -12,10 +12,20 @@ class PluginInterface_RemoteExec(object):
 	name = 'RemoteExec'
 	can_send_partials = True
 
-	def __init__(self, *args, **kwargs):
+	def __init__(self, settings=None, *args, **kwargs):
 		super().__init__()
 		self.log = logging.getLogger("Main.RemoteExec.Caller")
-		self.wg = WebRequest.WebGetRobust()
+
+		self.settings = settings if settings else {}
+		twocaptcha_api = self.settings.get('captcha_solvers', {}).get('2captcha', {}).get('api_key', None)
+		anticaptcha_api = self.settings.get('captcha_solvers', {}).get('anti-captcha', {}).get('api_key', None)
+
+
+		self.wg = WebRequest.WebGetRobust(
+				twocaptcha_api_key  = twocaptcha_api,
+				anticaptcha_api_key = anticaptcha_api,
+			)
+
 
 		self.calls = {
 			'callCode'               : self.call_code,
