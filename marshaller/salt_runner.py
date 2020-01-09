@@ -91,6 +91,8 @@ SETTINGS_BASE = {
 
 	"threads"  : 10,
 
+	'captcha_solvers' : {}
+
 }
 
 class VmInitError(RuntimeError):
@@ -440,6 +442,8 @@ class VpsHerder(object):
 
 		conf['sadPanda']['login']  = settings.EX_LOGIN
 		conf['sadPanda']['passWd'] = settings.EX_PASSW
+
+		conf['captcha_solvers'] = settings.CAPTCHA
 
 		return json.dumps(conf)
 

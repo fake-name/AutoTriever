@@ -11,6 +11,11 @@
 	"sadPanda" : {
 		"login"         : "name",
 		"passWd"        : "naaaaaaaaaame"
+	},
+
+	"captcha_solvers" : {
+
 	}
+
 
 }

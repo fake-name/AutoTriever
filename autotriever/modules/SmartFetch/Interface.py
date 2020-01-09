@@ -53,11 +53,22 @@ class PluginInterface_SmartFetch(object):
 
 	name = 'SmartWebRequest'
 
-	def __init__(self, *args, **kwargs):
+	def __init__(self, settings=None, *args, **kwargs):
 		super().__init__(*args, **kwargs)
+
+		self.settings = settings if settings else {}
+
+		print("Settings:", self.settings)
+
+		twocaptcha_api = self.settings.get('captcha_solvers', {}).get('2captcha', {}).get('api_key', None)
+		anticaptcha_api = self.settings.get('captcha_solvers', {}).get('anti-captcha', {}).get('api_key', None)
+
 		self.log = logging.getLogger("Main.SmartFetcher")
 
-		self.wg = WebRequest.WebGetRobust()
+		self.wg = WebRequest.WebGetRobust(
+				twocaptcha_api_key  = twocaptcha_api,
+				anticaptcha_api_key = anticaptcha_api,
+			)
 
 		self.calls = {
 			'qidianSmartFeedFetch'                  : self.qidianSmartFeedFetch,

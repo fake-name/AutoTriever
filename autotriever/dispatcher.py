@@ -23,7 +23,7 @@ class RpcCallDispatcher(client.RpcHandler):
 		for plugin_name in list(self.plugins.keys()):
 
 			# Instantiate the initialization class
-			p = self.plugins[plugin_name]()
+			p = self.plugins[plugin_name](settings=self.settings)
 			self.log.info("Plugin '%s' provides the following %s calls:", plugin_name, len(p.calls))
 			for call_name in p.calls.keys():
 				self.log.info("	Call: '%s'", call_name)
