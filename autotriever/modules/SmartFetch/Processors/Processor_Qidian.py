@@ -166,7 +166,7 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 				try:
 					self.log.info("Extracting!")
 					cont = json.loads(chap_info_str)
-					# self.log.info("Extracted meta:", cont)
+					self.log.info("Extracted meta: %s", cont)
 					for k, v in self.extract_from_meta(cont).items():
 						have[k] = v
 				except ValueError:
@@ -267,3 +267,27 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 
 		reserialized = self.reserialize_feed(parsed)
 		return reserialized
+
+def test():
+
+	import WebRequest
+	wg = WebRequest.WebGetRobust()
+	url = "https://www.webnovel.com/rssbook/15298622505787905/41825301877029563/रिबर्थ-टु-अ-मिलिट्री-मैरिज-:-गुड-मॉर्निंग-चीफ/क़ियाओ-नान-आपकी-बहुत-बड़ी-फैन-है-"
+
+	proc = QidianProcessor(wg=wg)
+
+	item = {
+		'link' : url,
+		'title' : "Test What?",
+	}
+
+	print(proc)
+	ret = proc._check_qidian_release(item, {})
+	# print(ret)
+
+if __name__ == '__main__':
+
+	import autotriever.deps.logSetup
+	autotriever.deps.logSetup.initLogging(logLevel=logging.INFO)
+	test()
+
