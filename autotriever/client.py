@@ -149,7 +149,16 @@ class RpcHandler(object):
 
 			def add_item(self, mid):
 				self.parent.log.info("Adding message ID: %s.", mid)
-				INSTANCE_SEEN_MESSAGE_IDS.add(mid)
+
+				with self.parent.lock_dict['seen_lock']:
+					INSTANCE_SEEN_MESSAGE_IDS.add(mid)
+
+			def get_seen(self):
+				ret = []
+				with self.parent.lock_dict['seen_lock']:
+					for item in INSTANCE_SEEN_MESSAGE_IDS:
+						ret.append(item)
+				return ret
 
 		return LockWrapper()
 
