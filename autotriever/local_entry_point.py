@@ -94,7 +94,7 @@ class FetchInterfaceClass(mprpc.RPCServer):
 
 	def dispatch_request(self, params):
 		try:
-			return self.dispatcher.process(params, context_responder=None)
+			return self.dispatcher.process(params, context_responder=None, lock_interface=None)
 
 		except Exception as exc:
 

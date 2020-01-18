@@ -104,8 +104,9 @@ class RpcHandler(object):
 
 		self.connector = None
 
-	def process(self, body, context_responder):  # pylint: disable=unused-argument
+	def process(self, body, context_responder, lock_interface):  # pylint: disable=unused-argument
 		raise ValueError("This must be subclassed!")
+		return None
 
 	def capture_partial_response(self, context, response_routing_key=None):
 		# Hurray for closure abuse.
@@ -130,8 +131,30 @@ class RpcHandler(object):
 
 		return partial_capture
 
-	def _call_dispatcher(self, body, response_routing_key):
+	def captured_lock_interface(self):
+		parent = self
+		class LockWrapper():
+			def __init__(self):
+				self.parent = parent
 
+			def seen_item(self, mid):
+				with self.parent.lock_dict['seen_lock']:
+					if mid in INSTANCE_SEEN_MESSAGE_IDS:
+						self.parent.log.warning("Seen unique message ID: %s (have %s seen items). Not fetching again",
+							mid, len(INSTANCE_SEEN_MESSAGE_IDS))
+						return True
+					else:
+						self.parent.log.info("New unique message ID: %s. Fetching.", mid)
+						return False
+
+			def add_item(self, mid):
+				self.parent.log.info("Adding message ID: %s.", mid)
+				INSTANCE_SEEN_MESSAGE_IDS.add(mid)
+
+		return LockWrapper()
+
+
+	def _call_dispatcher(self, body, response_routing_key):
 		# Delay is zero, unless overridden
 		delay = 0
 
@@ -141,7 +164,9 @@ class RpcHandler(object):
 
 			self.log.info("Received request. Processing.")
 			captured_partial = self.capture_partial_response(body, response_routing_key)
-			response = self.process(body, captured_partial)
+			lock_interface = self.captured_lock_interface()
+
+			response = self.process(body, captured_partial, lock_interface)
 
 			assert isinstance(response, dict), '`process()` call in child-class must return a dict!'
 
@@ -293,7 +318,6 @@ class RpcHandler(object):
 				self.connector.put_response(bmessage, routing_key_override=routing_key_override)
 
 	def process_messages(self, loops):
-
 		msg_count = 0
 		for message in self.connector.get_iterator():
 			if not RUN_STATE or self.die:

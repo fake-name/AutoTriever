@@ -2,15 +2,17 @@
 import logging
 import msgpack
 
+import WebRequest
+
 from autotriever.modules.RemoteExec import serialize
 from autotriever.modules.RemoteExec import run_test
-import WebRequest
 
 
 class PluginInterface_RemoteExec(object):
 
 	name = 'RemoteExec'
 	can_send_partials = True
+	can_handle_locks = True
 
 	def __init__(self, settings=None, *args, **kwargs):
 		super().__init__()
@@ -20,12 +22,10 @@ class PluginInterface_RemoteExec(object):
 		twocaptcha_api = self.settings.get('captcha_solvers', {}).get('2captcha', {}).get('api_key', None)
 		anticaptcha_api = self.settings.get('captcha_solvers', {}).get('anti-captcha', {}).get('api_key', None)
 
-
 		self.wg = WebRequest.WebGetRobust(
 				twocaptcha_api_key  = twocaptcha_api,
 				anticaptcha_api_key = anticaptcha_api,
 			)
-
 
 		self.calls = {
 			'callCode'               : self.call_code,

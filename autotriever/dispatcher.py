@@ -45,7 +45,7 @@ class RpcCallDispatcher(client.RpcHandler):
 		self.classCache = {}
 
 
-	def doCall(self, module, call, call_args, call_kwargs, context_responder):
+	def doCall(self, module, call, call_args, call_kwargs, context_responder, lock_interface):
 		if not module in self.classCache:
 			self.log.info("First call to module '%s'", module)
 			self.classCache[module] =  self.plugins[module](settings=self.settings)
@@ -58,6 +58,9 @@ class RpcCallDispatcher(client.RpcHandler):
 
 		if hasattr(self.classCache[module], "can_send_partials"):
 			call_kwargs['partial_resp_interface'] = context_responder
+
+		if hasattr(self.classCache[module], "can_handle_locks"):
+			call_kwargs['lock_interface'] = lock_interface
 
 		if not call in self.classCache[module].calls:
 			self.log.error("Call %s missing from target class!", call)
@@ -72,7 +75,7 @@ class RpcCallDispatcher(client.RpcHandler):
 
 		return ret
 
-	def process(self, command, context_responder):
+	def process(self, command, context_responder, lock_interface):
 		if not 'module' in command:
 			self.log.error("No 'module' in message!")
 			self.log.error("Message: '%s'", command)
@@ -101,7 +104,15 @@ class RpcCallDispatcher(client.RpcHandler):
 		if 'kwargs' in command:
 			kwargs = command['kwargs']
 
-		ret = self.doCall(command['module'], command['call'], args, kwargs, context_responder)
+		ret = self.doCall(
+				module            = command['module'],
+				call              = command['call'],
+				call_args         = args,
+				call_kwargs       = kwargs,
+				context_responder = context_responder,
+				lock_interface    = lock_interface
+			)
+
 		# print(ret)
 		response = {
 			'ret'          : ret,
@@ -113,7 +124,6 @@ class RpcCallDispatcher(client.RpcHandler):
 		}
 
 		return response
-
 
 
 def test(plug_name=None, call_name=None, *args, **kwargs):
@@ -130,7 +140,7 @@ def test(plug_name=None, call_name=None, *args, **kwargs):
 
 	print("Invoking arguments: '%s'" % (args, ))
 	print("Invoking kwargs: '%s'" % (kwargs, ))
-	return dp.doCall(plug_name, call_name, call_args=args, call_kwargs=kwargs, context_responder=None)
+	return dp.doCall(plug_name, call_name, call_args=args, call_kwargs=kwargs, context_responder=None, lock_interface=None)
 
 	# plugins = loadPlugins('modules', "PluginInterface_")
 
