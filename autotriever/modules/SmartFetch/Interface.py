@@ -49,6 +49,7 @@ PROCESSORS = [
 	Processor_ShortenedLinks.LinkUnshortenerProcessor,
 ]
 
+
 class PluginInterface_SmartFetch(object):
 
 	name = 'SmartWebRequest'
@@ -58,16 +59,14 @@ class PluginInterface_SmartFetch(object):
 
 		self.settings = settings if settings else {}
 
-		self.log = logging.getLogger("Main.SmartFetcher")
+		self.log = logging.getLogger("Main.%s" % self.name)
+		self.log.info("SmartFetcher!")
 
 		twocaptcha_api = self.settings.get('captcha_solvers', {}).get('2captcha', {}).get('api_key', None)
 		anticaptcha_api = self.settings.get('captcha_solvers', {}).get('anti-captcha', {}).get('api_key', None)
 
 
-		self.wg = WebRequest.WebGetRobust(
-				twocaptcha_api_key  = twocaptcha_api,
-				anticaptcha_api_key = anticaptcha_api,
-			)
+		self.wg = WebRequest.WebGetRobust()
 
 		self.calls = {
 			'qidianSmartFeedFetch'                  : self.qidianSmartFeedFetch,
@@ -79,8 +78,6 @@ class PluginInterface_SmartFetch(object):
 			'getHead'                               : self.wg.getHead,
 			'getFileAndName'                        : self.wg.getFileAndName,
 			'addCookie'                             : self.wg.addCookie,
-			'addSeleniumCookie'                     : self.wg.addSeleniumCookie,
-			'stepThroughCloudFlare'                 : self.wg.stepThroughCloudFlare,
 
 			'chromiumGetRenderedItem'               : self.wg.chromiumGetRenderedItem,
 			'getHeadChromium'                       : self.wg.getHeadChromium,
@@ -130,22 +127,67 @@ class PluginInterface_SmartFetch(object):
 		return content, fileN, mType
 
 
+SINGLETON_WG = WebRequest.WebGetRobust(use_global_tab_pool=False)
+
+class PluginInterface_PersistentSmartFetch(object):
+
+	name = 'PersistentSmartWebRequest'
+
+	def __init__(self, settings=None, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+
+		self.settings = settings if settings else {}
+
+		self.log = logging.getLogger("Main.%s" % self.name)
+		self.log.info("SmartFetcher!")
+
+		twocaptcha_api = self.settings.get('captcha_solvers', {}).get('2captcha', {}).get('api_key', None)
+		anticaptcha_api = self.settings.get('captcha_solvers', {}).get('anti-captcha', {}).get('api_key', None)
 
 
-	# def smartGetItem(self, itemUrl:str, *args, **kwargs):
-	# 	netloc = urllib.parse.urlsplit(itemUrl).netloc
+		self.wg = SINGLETON_WG
+		self.wg.set_twocaptcha_api_key(twocaptcha_api)
+		self.wg.set_anticaptcha_api_key(anticaptcha_api)
 
-	# 	if netloc.lower().endswith("creativenovels.com"):
-	# 		crproc   = Processor_CrN.CrNFixer(self.wg)
-	# 		return crproc.smartGetItem(itemUrl=itemUrl, *args, **kwargs)
-	# 	elif netloc.lower().endswith("lndb.info"):
-	# 		lnproc   = Processor_Lndb.LndbProcessor(self.wg)
-	# 		return lnproc.forward_render_fetch(itemUrl=itemUrl, *args, **kwargs)
-	# 	elif netloc.lower().endswith("webnovel.com"):
-	# 		qiproc   = Processor_Qidian.QidianProcessor(self.wg)
-	# 		return qiproc.forwad_render_fetch(itemUrl=itemUrl, *args, **kwargs)
-	# 	elif netloc.lower().endswith("webnovel.com"):
-	# 		soproc   = Processor_StoriesOnline.StoriesOnlineFetch(self.wg)
-	# 		return soproc.getpage(requestedUrl=itemUrl, *args, **kwargs)
-	# 	else:
-	# 		return self.wg.getItem(itemUrl=itemUrl, *args, **kwargs)
+		self.calls = {
+			'smartGetItem'                          : self.smartGetItem,
+
+			'getpage'                               : self.wg.getpage,
+			'getItem'                               : self.wg.getItem,
+			'getHead'                               : self.wg.getHead,
+			'getFileAndName'                        : self.wg.getFileAndName,
+			'addCookie'                             : self.wg.addCookie,
+
+			'chromiumGetRenderedItem'               : self.wg.chromiumGetRenderedItem,
+			'getHeadChromium'                       : self.wg.getHeadChromium,
+			'getHeadTitleChromium'                  : self.wg.getHeadTitleChromium,
+			'getItemChromium'                       : self.wg.getItemChromium,
+		}
+
+
+	def smartGetItem(self, itemUrl:str, *args, **kwargs):
+
+		lowerspliturl = urllib.parse.urlsplit(itemUrl.lower())
+		for processor in PREEMPTIVE_PROCESSORS:
+			if processor.preemptive_wants_url(lowerspliturl=lowerspliturl):
+				self.log.info("Preemptive fetch handler %s wants to modify content", processor)
+				return processor.premptive_handle(url=itemUrl, wg=self.wg)
+
+		content, fileN, mType = self.wg.getItem(itemUrl=itemUrl, *args, **kwargs)
+
+		# Decode text-type items
+		if mType.startswith('text'):
+			if isinstance(content, bytes):
+				content = bs4.UnicodeDammit(content).unicode_markup
+
+		processed = False
+		for processor in PROCESSORS:
+			if processor.wants_url(lowerspliturl=lowerspliturl, mimetype=mType):
+				processed = True
+				content = processor.preprocess(url=itemUrl, lowerspliturl=lowerspliturl, mimeType=mType, content=content, wg=self.wg)
+
+		if processed:
+			self.log.info("All preprocessors completed!")
+		return content, fileN, mType
+
+
