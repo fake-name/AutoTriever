@@ -114,15 +114,15 @@ class RpcHandler(object):
 			assert isinstance(content, dict), '`partial response` must be passed a dict!'
 			self.log.info("Doing incremental response transmission")
 			response = {
-							'ret': (logs, content),
-							'success': True,
-							'cancontinue': True,
-							'partial': True,
-							'dispatch_key': context['dispatch_key'],
-							'module': context['module'],
-							'call': context['call'],
-							'user': self.settings['clientid'],
-							'user_uuid': self.settings['client_key'],
+							'ret'          : (logs, content),
+							'success'      : True,
+							'cancontinue'  : True,
+							'partial'      : True,
+							'dispatch_key' : context['dispatch_key'],
+							'module'       : context['module'],
+							'call'         : context['call'],
+							'user'         : self.settings['clientid'],
+							'user_uuid'    : self.settings['client_key'],
 			}
 
 			response = forward_attachments(context, response)
@@ -211,12 +211,9 @@ class RpcHandler(object):
 		have_serialize_lock = False
 		early_acked = False
 		try:
-
 			body = msgpack.unpackb(message.body, use_list=True, encoding='utf-8')
 
 			assert isinstance(body, dict) is True, 'The message must decode to a dict!'
-
-
 
 			if 'serialize' in body and body['serialize']:
 				lockname = body['serialize'] if isinstance(body['serialize'], str) else 'generic_job'

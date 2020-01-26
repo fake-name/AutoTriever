@@ -14,7 +14,8 @@ class PluginInterface_RemoteExec(object):
 
 	name = 'RemoteExec'
 	can_send_partials = True
-	can_handle_locks = True
+	can_handle_locks  = True
+	serialize         = False
 
 	def __init__(self, settings=None, *args, **kwargs):
 		super().__init__()

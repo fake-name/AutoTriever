@@ -56,6 +56,16 @@ class RpcCallDispatcher(client.RpcHandler):
 		self.log.info("Args '%s'", call_args)
 		self.log.info("Kwargs '%s'", call_kwargs)
 
+
+		have_lock = False
+		if self.plugins[module].serialize:
+			self.log.info("Module has a locking interface. Serializing.")
+			have_lock = self.plugins[module].get_lock()
+			if not have_lock:
+				raise client.CannotHandleNow
+
+
+
 		if hasattr(self.classCache[module], "can_send_partials"):
 			call_kwargs['partial_resp_interface'] = context_responder
 
@@ -72,6 +82,9 @@ class RpcCallDispatcher(client.RpcHandler):
 			ret = self.classCache[module].calls[call](*call_args, **call_kwargs)
 		finally:
 			self.log.info("Module call complete.")
+
+			if have_lock:
+				self.plugins[module].free_lock()
 
 		return ret
 

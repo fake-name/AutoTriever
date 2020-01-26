@@ -4,6 +4,7 @@ import urllib.parse
 
 import bs4
 import WebRequest
+import threading
 
 from autotriever.modules.SmartFetch.Processors import Processor_ShortenedLinks
 from autotriever.modules.SmartFetch.Processors import Processor_CrN
@@ -53,6 +54,7 @@ PROCESSORS = [
 class PluginInterface_SmartFetch(object):
 
 	name = 'SmartWebRequest'
+	serialize = False
 
 	def __init__(self, settings=None, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -127,11 +129,22 @@ class PluginInterface_SmartFetch(object):
 		return content, fileN, mType
 
 
-SINGLETON_WG = WebRequest.WebGetRobust(use_global_tab_pool=False)
+SINGLETON_WG   = WebRequest.WebGetRobust(use_global_tab_pool=False)
+SINGLETON_LOCK = threading.Lock()
 
 class PluginInterface_PersistentSmartFetch(object):
 
 	name = 'PersistentSmartWebRequest'
+	serialize = True
+
+	@staticmethod
+	def get_lock():
+		return SINGLETON_LOCK.acquire(blocking=False)
+
+	@staticmethod
+	def free_lock():
+		return SINGLETON_LOCK.release()
+
 
 	def __init__(self, settings=None, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -166,7 +179,6 @@ class PluginInterface_PersistentSmartFetch(object):
 
 
 	def smartGetItem(self, itemUrl:str, *args, **kwargs):
-
 		lowerspliturl = urllib.parse.urlsplit(itemUrl.lower())
 		for processor in PREEMPTIVE_PROCESSORS:
 			if processor.preemptive_wants_url(lowerspliturl=lowerspliturl):
