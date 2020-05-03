@@ -105,6 +105,9 @@ class LinkUnshortenerProcessor(ProcessorBase.ProcessorBase):
 							resolved = self.wg.getHead(url)
 							link[attr]      = resolved
 							head_cache[url] = resolved
+				except WebRequest.FetchFailureError:
+					# Fetch failed, just use the URL.
+					head_cache[url] = url
 				except KeyError:
 					continue
 
