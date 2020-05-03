@@ -410,6 +410,7 @@ class VpsHerder(object):
 		gen_calls = [
 				self.generate_do_conf,
 				self.generate_do_conf,
+				# self.generate_vultr_conf,
 				self.generate_vultr_conf,
 				self.generate_linode_conf,
 				self.generate_linode_conf,
@@ -623,7 +624,9 @@ class VpsHerder(object):
 				except (marshaller_exceptions.InvalidDeployResponse, marshaller_exceptions.InvalidExpectParameter) as e:
 					failures += 1
 					err = e
-				failures += 1
+				except Exception as e:
+					failures += 1
+					err = e
 				tries = 3
 				self.log.error("Command failed (attempt %s of %s)!", failures, tries)
 				self.log.error("Response:")
