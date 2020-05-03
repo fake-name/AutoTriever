@@ -155,9 +155,15 @@ class VpsHerder(object):
 
 		for name, size_meta in sizes.items():
 			if float(size_meta['price_monthly']) <= MAX_MONTHLY_PRICE_DOLLARS:
+
+				# Skip 512 mb configurations (they fail setup)
+				if int(size_meta['memory']) < 1000:
+					continue
+
 				# Why the fuck is this a string?
 				if isinstance(size_meta['regions'], str):
 					size_meta['regions'] = ast.literal_eval(size_meta['regions'])
+
 				for loc in size_meta['regions']:
 					if loc in avail_locs:
 						if name in avail_locs[loc]:
