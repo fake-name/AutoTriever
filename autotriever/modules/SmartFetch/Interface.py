@@ -18,6 +18,7 @@ from autotriever.modules.SmartFetch.Processors import Processor_AsianHobbyist
 from autotriever.modules.SmartFetch.Processors import Processor_GravityTales
 from autotriever.modules.SmartFetch.Processors import Processor_FlyingLines
 from autotriever.modules.SmartFetch.Processors import Processor_TapRead
+from autotriever.modules.SmartFetch.Processors import Processor_ScribbleHub
 
 from autotriever.modules.SmartFetch.Processors import PreemptProcessor_Lndb
 from autotriever.modules.SmartFetch.Processors import PreemptProcessor_StoriesOnline
@@ -45,6 +46,7 @@ PROCESSORS = [
 	Processor_GravityTales.GravityTalesProcessor,
 	Processor_FlyingLines.FlyingLinesProcessor,
 	Processor_TapRead.TapReadProcessor,
+	Processor_ScribbleHub.ScribbleHubFixer,
 
 	# This processor has to go last.
 	Processor_ShortenedLinks.LinkUnshortenerProcessor,
@@ -121,6 +123,7 @@ class PluginInterface_SmartFetch(object):
 		processed = False
 		for processor in PROCESSORS:
 			if processor.wants_url(lowerspliturl=lowerspliturl, mimetype=mType):
+				self.log.info("Processor %s wants to modify content", processor)
 				processed = True
 				content = processor.preprocess(url=itemUrl, lowerspliturl=lowerspliturl, mimeType=mType, content=content, wg=self.wg)
 
