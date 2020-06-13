@@ -80,6 +80,8 @@ class PluginInterface_SmartFetch(object):
 			'getpage'                               : self.wg.getpage,
 			'getItem'                               : self.wg.getItem,
 			'getHead'                               : self.wg.getHead,
+			'getFileNameMime'                       : self.wg.getFileNameMime,
+			# 'getFileNameMimeUrl'                    : self.wg.getFileNameMimeUrl,
 			'getFileAndName'                        : self.wg.getFileAndName,
 			'addCookie'                             : self.wg.addCookie,
 
@@ -171,6 +173,8 @@ class PluginInterface_PersistentSmartFetch(object):
 			'getpage'                               : self.wg.getpage,
 			'getItem'                               : self.wg.getItem,
 			'getHead'                               : self.wg.getHead,
+			'getFileNameMime'                       : self.wg.getFileNameMime,
+			# 'getFileNameMimeUrl'                    : self.wg.getFileNameMimeUrl,
 			'getFileAndName'                        : self.wg.getFileAndName,
 			'addCookie'                             : self.wg.addCookie,
 

@@ -40,7 +40,6 @@ def print_help():
 		for call_name, call_func in p.calls.items():
 			log.info("	Call: '%s' -> %s", call_name, inspect.signature(call_func))
 
-
 		if '__setup__' in p.calls:
 			# and then call it's setup method
 			try:
@@ -109,7 +108,109 @@ def try_call(func, args):
 		log.error("Available arguments: %s", cast_args)
 		log.error("Function arguments: %s", [(parm, sig.parameters[parm].default, sig.parameters[parm].kind) for parm in sig.parameters])
 
+
+
+def step_through_chromium(wg, url):
+	with wg._chrome_context(itemUrl=url, extra_tid=None) as cr:
+		wg._syncIntoChromium(cr)
+		cr.blocking_navigate(url)
+
+		for _ in range(60):
+			time.sleep(1)
+			current_title, current_url = cr.get_page_url_title()
+			if current_title and "Just a moment" not in current_title:
+				wg._syncOutOfChromium(cr)
+				return
+			print("Current URL and title: %s" % ((current_url, current_title), ))
+
+		wg._syncOutOfChromium(cr)
+		print("Failed page:")
+		print(cr.get_rendered_page_source())
+
+
+
+	raise RuntimeError("Could not get through cf")
+
+
+def fetch_from_list(params):
+
+	if not params:
+		log.info("fetch_from_list requires a path to a file as a parameter")
+		return
+
+	list_path= params[0]
+
+	if not os.path.exists(list_path):
+		log.info("List file: '%s' does not seem to exist" % (list_path, ))
+		return
+
+
+	settings = main_entry_point.loadSettings()
+	plugins = plugin_loader.loadPlugins('modules', "PluginInterface_")
+	instance = plugins['PersistentSmartWebRequest'](settings=settings)
+
+	with open(list_path, "r") as fp:
+		file_urls = fp.readlines()
+
+
+
+	log.info("Fetch from list")
+
+	cleaned_urls = []
+
+	for url in file_urls:
+		url = url.strip()
+		if not url:
+			continue
+		if url.startswith("#"):
+			continue
+
+		cleaned_urls.append(url)
+
+
+	step_through_chromium(instance.wg, cleaned_urls[0])
+
+	os.makedirs("./fetched/", exist_ok=True)
+
+	for url in cleaned_urls:
+
+		try:
+
+			fname = url.split("/")[-1]
+			fname = fname.strip()
+			fname = os.path.join("./fetched/", fname)
+			assert os.path.abspath("./fetched/") in os.path.abspath(fname)
+
+			if os.path.exists(fname):
+				print("Skipping ", fname)
+				continue
+
+			cont, name, mime = instance.calls["getFileNameMime"](url)
+			fname = url.split("/")[-1]
+			fname = fname.strip()
+			fname = os.path.join("./fetched/", fname)
+			assert os.path.abspath("./fetched/") in os.path.abspath(fname)
+			log.info("Saving to %s", fname)
+			with open(fname, "w") as fp:
+				fp.write(cont)
+
+		except Exception as e:
+			for line in traceback.format_exc().split("\n"):
+				log.error(line.rstrip())
+
+
+def other_dispatch(args):
+	if len(args) < 1:
+		return None, None
+
+	if args[0] == "fetch_from_list":
+		return fetch_from_list, args[1:]
+
+	return None, None
+
+
 def dispatch(args):
+
 	assert len(args) >= 3
 	mod_name, func_name, params = args[1], args[2], args[3:]
 	plugins = plugin_loader.loadPlugins('modules', "PluginInterface_")
@@ -118,7 +219,6 @@ def dispatch(args):
 		log.error("Plugin module '%s' not found!", mod_name)
 		print_help()
 		return
-
 
 	settings = main_entry_point.loadSettings()
 	instance = plugins[mod_name](settings=settings)
@@ -150,6 +250,12 @@ def dispatch(args):
 
 def go():
 	autotriever.deps.logSetup.initLogging(logLevel=logging.INFO)
+
+
+	other_func, remaining_args = other_dispatch(sys.argv[1:])
+	if other_func:
+		return other_func(remaining_args)
+
 	if len(sys.argv) < 3:
 		print_help()
 	else:
