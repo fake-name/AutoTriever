@@ -111,8 +111,7 @@ def try_call(func, args):
 
 
 def step_through_chromium(wg, url):
-	with wg._chrome_context(itemUrl=url, extra_tid=None) as cr:
-		wg._syncIntoChromium(cr)
+	with wg.chrome_tab_context(url=url) as cr:
 		cr.blocking_navigate(url)
 
 		for _ in range(60):
@@ -123,7 +122,6 @@ def step_through_chromium(wg, url):
 				return
 			print("Current URL and title: %s" % ((current_url, current_title), ))
 
-		wg._syncOutOfChromium(cr)
 		print("Failed page:")
 		print(cr.get_rendered_page_source())
 
@@ -199,12 +197,34 @@ def fetch_from_list(params):
 				log.error(line.rstrip())
 
 
+def ipython_tab(args):
+	from IPython import embed
+
+	settings = main_entry_point.loadSettings()
+	plugins = plugin_loader.loadPlugins('modules', "PluginInterface_")
+	instance = plugins['PersistentSmartWebRequest'](settings=settings)
+
+	with instance.wg.chrome_tab_context(url="www.google.com") as cr:
+		cr.blocking_navigate("http://www.google.com")
+		ret = cr.execute_javascript_statement("document.body.innerHTML")
+		# ret = cr.execute_javascript("function() {return {test_func_ret: typeof(document.body.innerHTML), body_content: document.body.innerHTML};}")
+		print("Ret: ")
+		pprint.pprint(ret)
+
+		# embed()
+
+
+
+
 def other_dispatch(args):
 	if len(args) < 1:
 		return None, None
 
 	if args[0] == "fetch_from_list":
 		return fetch_from_list, args[1:]
+
+	if args[0] == "ipython_tab":
+		return ipython_tab, args[1:]
 
 	return None, None
 
