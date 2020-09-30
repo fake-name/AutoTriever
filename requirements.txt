@@ -1,37 +1,37 @@
 
-python-magic==0.4.15
-requests==2.22.0
+python-magic==0.4.18
+requests==2.24.0
 
 astor>=0.8.1
 
-ChromeController==0.3.13
+ChromeController==0.3.19
 
 PySocks==1.7.1
-dill==0.3.1.1
+dill==0.3.2
 rabbitpy==2.0.1
 
-netdisco==2.6.0
-zeroconf==0.24.4
+netdisco==2.8.2
+zeroconf==0.28.5
 
 APScheduler==3.6.3
-beautifulsoup4==4.8.2
-cchardet==2.1.5
+beautifulsoup4==4.9.2
+cchardet==2.1.6
 colorama==0.4.3
 selenium==3.141.0
-Faker==4.0.0
-lxml==4.5.0
-cachetools==4.0.0
+Faker==4.1.3
+lxml==4.5.2
+cachetools==4.1.1
 msgpack==0.6.2
-pytz==2019.3
+pytz==2020.1
 feedgen==0.9.0
-feedparser==5.2.1
+feedparser==6.0.1
 
-webrequest==0.0.73
+webrequest==0.0.76
 
-psutil==5.6.7
+psutil==5.7.2
 
 netifaces==0.10.9
-cloudscraper==1.2.40
+cloudscraper==1.2.48
 
 ## Testing requirements:
 # nose
