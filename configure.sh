@@ -46,7 +46,7 @@ function setup_headless_chrome() {
 		sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
 	fi
 
-	install_chrome_extension("cjpalhdlnbpafiamejdnhcphjbkeiagm" "ublock_origin")
+	install_chrome_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "ublock_origin"
 
 	curl https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts | sudo tee -a /etc/hosts
 
