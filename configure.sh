@@ -15,6 +15,17 @@ function report_git() {
 
 }
 
+install_chrome_extension () {
+	preferences_dir_path="/opt/google/chrome/extensions"
+	pref_file_path="$preferences_dir_path/$1.json"
+	upd_url="https://clients2.google.com/service/update2/crx"
+	sudo mkdir -p "$preferences_dir_path"
+	echo "{" |                                       sudo tee -a "$pref_file_path"
+	echo "  \"external_update_url\": \"$upd_url\"" | sudo tee -a "$pref_file_path"
+	echo "}" |                                       sudo tee -a "$pref_file_path"
+	echo Added \""$pref_file_path"\" ["$2"]
+	sudo chmod ugo+r "$pref_file_path"
+}
 
 function setup_headless_chrome() {
 
@@ -35,7 +46,10 @@ function setup_headless_chrome() {
 		sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
 	fi
 
+	install_chrome_extension("cjpalhdlnbpafiamejdnhcphjbkeiagm" "ublock_origin")
+
 	curl https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts | sudo tee -a /etc/hosts
+
 
 	# set +e
 	# tar tf ./vendored/MinimalHeadless.tar.gz
@@ -57,21 +71,6 @@ function do_remote_install() {
 	else
 		echo "No Venv! Checking dependencies are installed."
 		sudo DEBIAN_FRONTEND=noninteractive apt-get update
-		# sudo DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential -yqqq
-
-		# Apparently at least one VPS host has separated git from build-essential?
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install libfontconfig -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install wget -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install htop -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install libxml2 -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install libxslt1-dev -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install python3-dev -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install python3-dbg -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install libz-dev -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install curl -yqqq
-
 
 		# Needed for chromedriver
 		sudo DEBIAN_FRONTEND=noninteractive apt-get install libnss3 -yqqq
