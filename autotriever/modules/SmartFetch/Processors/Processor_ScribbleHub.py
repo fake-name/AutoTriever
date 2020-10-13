@@ -75,13 +75,14 @@ class ScribbleHubFixer(ProcessorBase.ProcessorBase):
 						tmp_str += row.replace("hrefTextPrefix", '"hrefTextPrefix"') + "\n"
 					elif "hrefTextSuffix" in row:
 						tmp_str += row.replace("hrefTextSuffix", '"hrefTextSuffix"') + "\n"
-
 				tmp_str += "}\n"
-
 				meta = ast.literal_eval(tmp_str)
 
-		if toc_goes_here and meta and 'items' in meta and 'displayedPages' in meta:
+		# print("Meta:", meta)
+		# print("bool(toc_goes_here): ", bool(toc_goes_here))
+		# print('items' in meta, 'displayedPages' in meta)
 
+		if toc_goes_here and meta and 'items' in meta and 'displayedPages' in meta:
 			toc_list = toc_goes_here.find("ol")
 			if not toc_list:
 				self.log.warning("No ToC List?")
@@ -123,6 +124,10 @@ class ScribbleHubFixer(ProcessorBase.ProcessorBase):
 			# print("Contents table:", contents_table)
 			toc_list.clear()
 			toc_list.extend(chapters)
+
+			self.log.info("Found %s chapters to insert into ToC")
+		else:
+			self.log.warning("No ToC found to insert?")
 
 
 
