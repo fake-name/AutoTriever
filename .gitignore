@@ -14,3 +14,4 @@ ghostdriver.log
 /*.coverage
 /local_configured
 /out.pyson
+/db_sqlite.db
