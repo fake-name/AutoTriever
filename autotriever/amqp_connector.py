@@ -164,12 +164,15 @@ class Connector:
 
 	def _setupQueues(self):
 
+		self.log.info("Declaring exchange: '%s'", self.config['task_exchange'])
 		self.channel.exchange_declare(self.config['task_exchange'],     exchange_type=self.config['task_exchange_type'],     auto_delete=False, durable=self.config['durable'])
+		self.log.info("Declaring exchange: '%s'", self.config['response_exchange'])
 		self.channel.exchange_declare(self.config['response_exchange'], exchange_type=self.config['response_exchange_type'], auto_delete=False, durable=self.config['durable'])
 
 		# set up consumer and response queues
 		if self.config['master']:
 			# Master has to declare the response queue so it can listen for responses
+			self.log.info("Declaring queue: '%s'", self.config['response_queue_name'])
 			self.channel.queue_declare(self.config['response_queue_name'], auto_delete=False, durable=self.config['durable'])
 			self.channel.queue_bind(   self.config['response_queue_name'], exchange=self.config['response_exchange'], routing_key=self.config['response_queue_name'].split(".")[0])
 			self.log.info("Binding queue %s to exchange %s.", self.config['response_queue_name'], self.config['response_exchange'])
@@ -190,11 +193,14 @@ class Connector:
 					"x-dead-letter-exchange" : self.config['task_exchange'],
 					"x-message-ttl"          : 30 * 1000
 				}
+				self.log.info("Declaring exchange: '%s'", self.config['dlex_name'])
 				self.channel.exchange_declare(dlex_name, 'direct', auto_delete=False, durable=self.config['durable'])
+				self.log.info("Declaring queue: '%s'", dlq_name)
 				self.channel.queue_declare(dlq_name, auto_delete=False, durable=self.config['durable'], arguments=dlq_args)
 				self.channel.queue_bind(dlq_name, exchange=dlex_name, routing_key=self.config['task_queue_name'].split(".")[0])
 
 			# Clients need to declare their task queues, so the master can publish into them.
+			self.log.info("Declaring queue: '%s'", self.config['task_queue_name'])
 			self.channel.queue_declare(self.config['task_queue_name'], auto_delete=False, durable=self.config['durable'], arguments=baseq_args)
 			self.channel.queue_bind(   self.config['task_queue_name'], exchange=self.config['task_exchange'], routing_key=self.config['task_queue_name'].split(".")[0])
 			self.log.info("Binding queue %s to exchange %s.", self.config['task_queue_name'], self.config['task_exchange'])
