@@ -58,6 +58,7 @@ function setup_headless_chrome() {
 }
 
 function chrome_postinstall() {
+	echo "Chrome postinstall"
 	# sudo DEBIAN_FRONTEND=noninteractive apt-get install chromium-chromedriver -yqqq
 
 	# if [[ ! -f "/usr/local/bin/chromedriver" ]]; then
