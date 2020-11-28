@@ -224,7 +224,6 @@ function go() {
 		chrome_postinstall_remote
 	fi
 
-	chrome_postinstall
 
 }
 
