@@ -129,7 +129,6 @@ function do_remote_install() {
 		echo "SCRAPE_CREDS is set!"
 	fi;
 
-	echo "Setup OK! System is configured for launch"
 
 }
 
@@ -224,6 +223,7 @@ function go() {
 		chrome_postinstall_remote
 	fi
 
+	echo "Setup OK! System is configured for launch"
 
 }
 
