@@ -29,6 +29,7 @@ install_chrome_extension () {
 
 function setup_headless_chrome() {
 
+
 	# sudo add-apt-repository ppa:saiarcot895/chromium-dev
 	# sudo DEBIAN_FRONTEND=noninteractive apt-get update
 	# sudo DEBIAN_FRONTEND=noninteractive apt-get install -yqqq chromium-codecs-ffmpeg-extra
@@ -39,12 +40,7 @@ function setup_headless_chrome() {
 	sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list'
 	sudo DEBIAN_FRONTEND=noninteractive apt-get update
 	sudo DEBIAN_FRONTEND=noninteractive apt-get install google-chrome-stable -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive apt-get install chromium-chromedriver -yqqq
 
-	if [[ ! -f "/usr/local/bin/chromedriver" ]]; then
-		echo "/usr/local/bin/chromedriver does not exist"
-		sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
-	fi
 
 	install_chrome_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "ublock_origin"
 
@@ -59,6 +55,16 @@ function setup_headless_chrome() {
 	# 	tar -xvf ./vendored/MinimalHeadless.tar.gz
 	# fi;
 	# set -e
+}
+
+function chrome_postinstall() {
+	# sudo DEBIAN_FRONTEND=noninteractive apt-get install chromium-chromedriver -yqqq
+
+	# if [[ ! -f "/usr/local/bin/chromedriver" ]]; then
+	# 	echo "/usr/local/bin/chromedriver does not exist"
+	# 	sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
+	# fi
+
 }
 
 function do_remote_install() {
@@ -177,6 +183,13 @@ function go_local_install() {
 }
 
 
+# Snapd is flaming garbage, and should never be installed on anything
+function block_snapd() {
+	echo "Package: snapd" | sudo tee -a /etc/apt/preferences.d/block-snap
+	echo "Pin: release *" | sudo tee -a /etc/apt/preferences.d/block-snap
+	echo "Pin-Priority: -1" | sudo tee -a /etc/apt/preferences.d/block-snap
+}
+
 function go() {
 
 	is_local=false
@@ -190,12 +203,15 @@ function go() {
 		fi
 	done
 
+	block_snapd
 
 	if [ "$is_local" = true ] ; then
 		go_local_install
 	else
 		do_remote_install
 	fi
+
+	chrome_postinstall
 
 }
 
