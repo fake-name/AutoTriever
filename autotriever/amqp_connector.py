@@ -193,7 +193,7 @@ class Connector:
 					"x-dead-letter-exchange" : self.config['task_exchange'],
 					"x-message-ttl"          : 30 * 1000
 				}
-				self.log.info("Declaring exchange: '%s'", self.config['dlex_name'])
+				self.log.info("Declaring exchange: '%s'", dlex_name)
 				self.channel.exchange_declare(dlex_name, 'direct', auto_delete=False, durable=self.config['durable'])
 				self.log.info("Declaring queue: '%s'", dlq_name)
 				self.channel.queue_declare(dlq_name, auto_delete=False, durable=self.config['durable'], arguments=dlq_args)
