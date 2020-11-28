@@ -32,7 +32,7 @@ function setup_headless_chrome() {
 
 	# sudo add-apt-repository ppa:saiarcot895/chromium-dev
 	# sudo DEBIAN_FRONTEND=noninteractive apt-get update
-	# sudo DEBIAN_FRONTEND=noninteractive apt-get install -yqqq chromium-codecs-ffmpeg-extra
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install -yqqq chromium-codecs-ffmpeg-extra
 	# sudo DEBIAN_FRONTEND=noninteractive apt-get download chromium-browser
 	# sudo dpkg -i --force-all chromium-browser*.deb
 
@@ -57,14 +57,24 @@ function setup_headless_chrome() {
 	# set -e
 }
 
-function chrome_postinstall() {
+function chrome_postinstall_remote() {
 	echo "Chrome postinstall"
-	# sudo DEBIAN_FRONTEND=noninteractive apt-get install chromium-chromedriver -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install chromium-chromedriver -yqqq
 
-	# if [[ ! -f "/usr/local/bin/chromedriver" ]]; then
-	# 	echo "/usr/local/bin/chromedriver does not exist"
-	# 	sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
-	# fi
+	if [[ ! -f "/usr/local/bin/chromedriver" ]]; then
+		echo "/usr/local/bin/chromedriver does not exist"
+		sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
+	fi
+
+}
+function chrome_postinstall_local() {
+	echo "Chrome postinstall"
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install chromium-chromedriver -yqqq
+
+	if [[ ! -f "/usr/local/bin/chromedriver" ]]; then
+		echo "/usr/local/bin/chromedriver does not exist"
+		sudo ln -s /usr/local/lib/python3.8/dist-packages/chromedriver_binary/chromedriver /usr/local/bin/chromedriver
+	fi
 
 }
 
@@ -208,8 +218,10 @@ function go() {
 
 	if [ "$is_local" = true ] ; then
 		go_local_install
+		chrome_postinstall_local
 	else
 		do_remote_install
+		chrome_postinstall_remote
 	fi
 
 	chrome_postinstall
