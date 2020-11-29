@@ -388,10 +388,10 @@ class RpcHandler(object):
 									host               = self.settings["RABBIT_SRVER"],
 									virtual_host       = self.settings["RPC_RABBIT_VHOST"],
 
-									task_queue         = self.settings.get("RPC_RABBIT_TASK_QUEUE_NAME", None),
-									response_queue     = self.settings.get("RPC_RABBIT_RESPONSE_QUEUE_NAME", None),
-									task_exchange      = self.settings.get("RPC_RABBIT_TASK_EXCHANGE", None),
-									response_exchange  = self.settings.get("RPC_RABBIT_RESPONSE_EXCHANGE", None),
+									task_queue         = self.settings.get("RPC_RABBIT_TASK_QUEUE_NAME",     "task.q"),
+									response_queue     = self.settings.get("RPC_RABBIT_RESPONSE_QUEUE_NAME", "response.q"),
+									task_exchange      = self.settings.get("RPC_RABBIT_TASK_EXCHANGE",       "tasks.e"),
+									response_exchange  = self.settings.get("RPC_RABBIT_RESPONSE_EXCHANGE",   "resps.e"),
 
 									ssl                = sslopts,
 									prefetch           = 2,
