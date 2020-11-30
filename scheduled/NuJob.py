@@ -1,4 +1,6 @@
 
+import scheduled.model as model
+
 import os.path
 import site
 import datetime
@@ -6,6 +8,7 @@ import logging
 import random
 import time
 import traceback
+import urllib.error
 import WebRequest
 
 wd = os.path.abspath(os.getcwd())
@@ -19,7 +22,6 @@ import WebMirror.OutputFilters.Nu.NuSeriesPageFilter as NuSeriesPageFilter
 
 from WebMirror.OutputFilters.util.TitleParsers import title_from_html
 
-import scheduled.model as model
 
 REFETCH_INTERVAL = datetime.timedelta(days=5)
 FETCH_ATTEMPTS   = 3
@@ -75,21 +77,28 @@ class NuMonitor():
 				)
 			sess.add(have)
 
-
 		# Don't dewaf
 		old_autowaf = self.wg.rules['auto_waf']
 		self.wg.rules['auto_waf'] = False
-		content, _name, _mime, url = self.wg.getFileNameMimeUrl(have.outbound_wrapper, addlHeaders={'Referer': have.referrer})
+		try:
+			content, _name, _mime, url = self.wg.getFileNameMimeUrl(have.outbound_wrapper, addlHeaders={'Referer': have.referrer})
+			if url.startswith("https://www.novelupdates.com/extnu/"):
+				raise RuntimeError("Failure when extracting NU referrer!")
+			pg_title = title_from_html(content)
+
+			have.actual_target    = url
+			have.page_title       = pg_title
+
+		except WebRequest.WebGetException:
+			for line in traceback.format_exc().split("\n"):
+				self.log.error(line)
+		except urllib.error.URLError:
+			for line in traceback.format_exc().split("\n"):
+				self.log.error(line)
+
 		self.wg.rules['auto_waf'] = old_autowaf
 
-		if url.startswith("https://www.novelupdates.com/extnu/"):
-			raise RuntimeError("Failure when extracting NU referrer!")
 
-
-		pg_title = title_from_html(content)
-
-		have.actual_target    = url
-		have.page_title       = pg_title
 		have.fetch_tries     += 1
 
 		sess.commit()
@@ -132,6 +141,15 @@ class NuMonitor():
 			item.fetchtime    = datetime.datetime.now()
 
 		except WebRequest.WebGetException:
+			for line in traceback.format_exc().split("\n"):
+				self.log.error(line)
+			item.state        = "error"
+			item.errno        = -1
+			item.fetchtime    = datetime.datetime.now()
+
+		except urllib.error.URLError:
+			for line in traceback.format_exc().split("\n"):
+				self.log.error(line)
 			item.state        = "error"
 			item.errno        = -1
 			item.fetchtime    = datetime.datetime.now()
@@ -180,7 +198,6 @@ class NuMonitor():
 
 
 if __name__ == "__main__":
-	import logging
 	logging.basicConfig(level=logging.DEBUG)
 
 	mon = NuMonitor()
