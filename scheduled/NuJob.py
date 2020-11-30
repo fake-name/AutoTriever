@@ -89,10 +89,15 @@ class NuMonitor():
 			have.actual_target    = url
 			have.page_title       = pg_title
 
+			self.log.info("URL '%s' resolved to '%s'", have.outbound_wrapper, have.actual_target)
+			self.log.info("Page title: '%s'", pg_title)
+
 		except WebRequest.WebGetException:
+			self.log.info("URL '%s' failed to resolve (TL Group: %s. Series %s, chap: %s)", have.outbound_wrapper, have.groupinfo, have.seriesname, have.releaseinfo)
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
 		except urllib.error.URLError:
+			self.log.info("URL '%s' failed to resolve (TL Group: %s. Series %s, chap: %s)", have.outbound_wrapper, have.groupinfo, have.seriesname, have.releaseinfo)
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
 
@@ -104,9 +109,6 @@ class NuMonitor():
 		sess.commit()
 
 
-		self.log.info("TL Group: %s. Series %s, chap: %s", have.groupinfo, have.seriesname, have.releaseinfo)
-		self.log.info("URL '%s' resolved to '%s'", have.outbound_wrapper, have.actual_target)
-		self.log.info("Page title: '%s'", pg_title)
 		sleep = random.triangular(3,10,30)
 		self.log.info("Sleeping %s", sleep)
 		time.sleep(sleep)
