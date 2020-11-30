@@ -194,7 +194,12 @@ class NuMonitor():
 		soup = self.wg.getSoup(HOMEPAGE_URL)
 
 		ref_pages, releases = self.hpf.extractSeriesReleases(HOMEPAGE_URL, soup)
+		self.fetch_update_series_pages(ref_pages)
+		self.fetch_update_releases(releases)
 
+		soup = self.wg.getSoup(HOMEPAGE_URL + "/?pg=2")
+
+		ref_pages, releases = self.hpf.extractSeriesReleases(HOMEPAGE_URL + "/?pg=2", soup)
 		self.fetch_update_series_pages(ref_pages)
 		self.fetch_update_releases(releases)
 
