@@ -12,35 +12,8 @@ import os
 
 from .deps import logSetup
 from . import dispatcher
-
 from . import state
-
-
-
-class SettingsLoadFailed(ValueError):
-	pass
-
-def loadSettings():
-
-	settings = None
-
-	sPaths = ['./settings.json', '../settings.json']
-
-	for sPath in sPaths:
-		if not os.path.exists(sPath):
-			continue
-		with open('./settings.json', 'r') as fp:
-			print("Found settings.json file! Loading settings.")
-			settings = json.load(fp)
-
-	if not settings and 'SCRAPE_CREDS' in os.environ:
-		print("Found 'SCRAPE_CREDS' environment variable! Loading settings.")
-		settings = json.loads(os.environ['SCRAPE_CREDS'])
-
-	if not settings:
-		raise SettingsLoadFailed("No settings.json file or 'SCRAPE_CREDS' environment variable found!")
-
-	return settings
+from . import load_settings
 
 
 def launchThread(settings, lock_dict):
@@ -79,7 +52,7 @@ def multithread(numThreads, settings, lock_dict):
 def go():
 	print("AutoTreiver Launching!")
 
-	settings = loadSettings()
+	settings = load_settings.loadSettings()
 	threads = 1
 	if 'threads' in settings and settings['threads']:
 		threads = settings['threads']

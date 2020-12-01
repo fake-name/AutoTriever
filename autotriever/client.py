@@ -3,23 +3,16 @@ import logging
 import uuid
 import os.path
 import threading
-import ssl
 import time
 import queue
 import traceback
 import msgpack
 
 from . import amqp_connector
+from . import load_settings
 from .state import RUN_STATE
 
-# CHUNK_SIZE_BYTES = 250 * 1024
-# CHUNK_SIZE_BYTES = 100 * 1024
-CHUNK_SIZE_BYTES = 50 * 1024
 
-
-def chunk_input(inval, chunk_size):
-	for i in range(0, len(inval), chunk_size):
-		yield inval[i:i + chunk_size]
 
 
 class CannotHandleNow(Exception):
@@ -42,31 +35,7 @@ def forward_attachments(context, response):
 	return response
 
 
-def findCert():
-	'''
-	Verify the SSL cert exists in the proper place.
-	'''
-
-	curFile = os.path.abspath(__file__)
-
-	curDir = os.path.split(curFile)[0]
-	caCert = os.path.abspath(os.path.join(curDir, './certs/cacert.pem'))
-	cert = os.path.abspath(os.path.join(curDir, './certs/cert.pem'))
-	keyf = os.path.abspath(os.path.join(curDir, './certs/key.pem'))
-
-	assert os.path.exists(caCert), "No certificates found on path '%s'" % caCert
-	assert os.path.exists(cert), "No certificates found on path '%s'" % cert
-	assert os.path.exists(keyf), "No certificates found on path '%s'" % keyf
-
-	return {
-					"cert_reqs": ssl.CERT_REQUIRED,
-					"ca_certs": caCert,
-					"keyfile": keyf,
-					"certfile": cert,
-	}
-
-
-class RpcHandler(object):
+class RpcHandler:
 	die = False
 
 	def __init__(self, settings, lock_dict):
@@ -106,7 +75,7 @@ class RpcHandler(object):
 
 	def process(self, body, context_responder, lock_interface):  # pylint: disable=unused-argument
 		raise ValueError("This must be subclassed!")
-		return None
+
 
 	def capture_partial_response(self, context, response_routing_key=None):
 		# Hurray for closure abuse.
@@ -295,34 +264,6 @@ class RpcHandler(object):
 					self.log.info("Breaking due to exit flag being set")
 					break
 
-	def put_message_chunked(self, message, routing_key_override=None):
-
-		message_bytes = msgpack.packb(message, use_bin_type=True)
-		if len(message_bytes) < CHUNK_SIZE_BYTES:
-
-			message = {
-							'chunk-type': "complete-message",
-							'data': message,
-			}
-			bmessage = msgpack.packb(message, use_bin_type=True)
-
-			self.log.info("Response message size: %0.3fK. Sending with routing key %s", len(bmessage) / 1024.0, routing_key_override)
-			self.connector.put_response(bmessage, routing_key_override=routing_key_override)
-		else:
-			chunked_id = "chunk-merge-key-" + uuid.uuid4().hex
-			chunkl = list(enumerate(chunk_input(message_bytes, CHUNK_SIZE_BYTES)))
-			for idx, chunk in chunkl:
-				message = {
-								'chunk-type': "chunked-message",
-								'chunk-num': idx,
-								'total-chunks': len(chunkl),
-								'data': chunk,
-								'merge-key': chunked_id,
-				}
-				bmessage = msgpack.packb(message, use_bin_type=True)
-				self.log.info("Response chunk message size: %0.3fK. Sending", len(bmessage) / 1024.0)
-				self.connector.put_response(bmessage, routing_key_override=routing_key_override)
-
 	def process_messages(self, loops):
 		msg_count = 0
 		for message in self.connector.get_iterator():
@@ -336,7 +277,7 @@ class RpcHandler(object):
 				try:
 					early_acked, response, postDelay, routing_key_override = self._dispatch_binary_message(message)
 
-					self.put_message_chunked(response, routing_key_override=routing_key_override)
+					self.connector.put_message_chunked(response, routing_key_override=routing_key_override)
 					# connector_instance.put_response(response)
 
 					if not early_acked:
@@ -360,7 +301,7 @@ class RpcHandler(object):
 			try:
 				extra = self.settings['aux_message_queue'].get_nowait()
 				if extra:
-					self.put_message_chunked(extra)
+					self.connector.put_message_chunked(extra)
 			except queue.Empty:
 				pass
 
@@ -375,7 +316,7 @@ class RpcHandler(object):
 		The AMQP connection is not maintained due to issues with long-lived connections.
 		'''
 
-		sslopts = findCert()
+		sslopts = load_settings.findCert()
 		self.connector = None
 
 		try:
@@ -424,6 +365,7 @@ class RpcHandler(object):
 		self.log.info("Halting message consumer.")
 		try:
 			self.connector.close()
+
 		except Exception:
 			self.log.error("Closing the connector produced an error!")
 			for line in traceback.format_exc().split("\n"):

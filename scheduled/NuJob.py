@@ -1,5 +1,7 @@
 
-import scheduled.model as model
+import scheduled.model            as model
+import autotriever.amqp_connector as amqp_connector
+import autotriever.load_settings  as load_settings
 
 import os.path
 import site
@@ -19,8 +21,8 @@ site.addsitedir(abs_module_path)
 
 import WebMirror.OutputFilters.Nu.NUHomepageFilter   as NUHomepageFilter
 import WebMirror.OutputFilters.Nu.NuSeriesPageFilter as NuSeriesPageFilter
-
 from WebMirror.OutputFilters.util.TitleParsers import title_from_html
+
 
 
 REFETCH_INTERVAL = datetime.timedelta(days=5)
@@ -28,6 +30,47 @@ FETCH_ATTEMPTS   = 3
 SINGLETON_WG     = WebRequest.WebGetRobust(use_global_tab_pool=False)
 
 HOMEPAGE_URL = "https://www.novelupdates.com"
+
+class NuPageUpdater():
+	def __init__(self):
+		self.log = logging.getLogger("Main.NuMonitor")
+
+		settings = load_settings.loadSettings()
+		sslopts  = load_settings.findCert()
+
+		# self.connector = amqp_connector.Connector(
+		# 				userid             = settings["RABBIT_LOGIN"],
+		# 				password           = settings["RABBIT_PASWD"],
+		# 				host               = settings["RABBIT_SRVER"],
+		# 				virtual_host       = settings["RPC_RABBIT_VHOST"],
+
+		# 				task_queue         = settings.get("RPC_RABBIT_TASK_QUEUE_NAME",     "task.q"),
+		# 				response_queue     = settings.get("RPC_RABBIT_RESPONSE_QUEUE_NAME", "response.q"),
+		# 				task_exchange      = settings.get("RPC_RABBIT_TASK_EXCHANGE",       "tasks.e"),
+		# 				response_exchange  = settings.get("RPC_RABBIT_RESPONSE_EXCHANGE",   "resps.e"),
+
+		# 				ssl                = sslopts,
+		# 				prefetch           = 2,
+		# 				synchronous        = True,
+		# 				task_exchange_type = "direct",
+		# 				durable            = True, )
+
+		# self.log.info("AMQP Connection initialized. Entering runloop!")
+
+
+	def load_recent(self):
+		with model.session_context() as sess:
+			pass
+
+
+
+
+	def go(self):
+		recent = self.load_recent()
+
+
+
+
 
 class NuMonitor():
 	def __init__(self):
@@ -48,6 +91,23 @@ class NuMonitor():
 			)
 
 		self.wg = SINGLETON_WG
+
+		self.connector = amqp_connector.Connector(
+						userid             = settings["RABBIT_LOGIN"],
+						password           = settings["RABBIT_PASWD"],
+						host               = settings["RABBIT_SRVER"],
+						virtual_host       = settings["RPC_RABBIT_VHOST"],
+
+						task_queue         = settings.get("RPC_RABBIT_TASK_QUEUE_NAME",     "task.q"),
+						response_queue     = settings.get("RPC_RABBIT_RESPONSE_QUEUE_NAME", "response.q"),
+						task_exchange      = settings.get("RPC_RABBIT_TASK_EXCHANGE",       "tasks.e"),
+						response_exchange  = settings.get("RPC_RABBIT_RESPONSE_EXCHANGE",   "resps.e"),
+
+						ssl                = sslopts,
+						prefetch           = 2,
+						synchronous        = True,
+						task_exchange_type = "direct",
+						durable            = True, )
 
 
 	def __check_load_extnu(self, item, sess):
@@ -207,7 +267,8 @@ class NuMonitor():
 if __name__ == "__main__":
 	logging.basicConfig(level=logging.DEBUG)
 
-	mon = NuMonitor()
+	# mon = NuMonitor()
+	mon = NuPageUpdater()
 
 	mon.go()
 

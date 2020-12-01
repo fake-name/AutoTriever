@@ -4,6 +4,7 @@ import traceback
 
 from . import client
 from . import plugin_loader
+import util.build_response as build_response
 
 class RpcCallDispatcher(client.RpcHandler):
 	'''
@@ -126,15 +127,13 @@ class RpcCallDispatcher(client.RpcHandler):
 				lock_interface    = lock_interface
 			)
 
-		# print(ret)
-		response = {
-			'ret'          : ret,
-			'success'      : True,
-			'cancontinue'  : True,
-			'dispatch_key' : command['dispatch_key'],
-			'module'       : command['module'],
-			'call'         : command['call'],
-		}
+		response = build_response.bundle_func_resp(
+				ret          = ret,
+				dispatch_key = command['dispatch_key'],
+				module       = command['module'],
+				call         = command['call'],
+			)
+
 
 		return response
 

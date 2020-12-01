@@ -22,6 +22,7 @@ gevent.monkey.patch_all()
 
 from .deps import logSetup
 from . import dispatcher
+from . import load_settings
 
 
 
@@ -49,32 +50,6 @@ def base_abort():
 	for server in TO_EXIT:
 		server.close()
 
-
-
-class SettingsLoadFailed(ValueError):
-	pass
-
-def loadSettings():
-
-	settings = None
-
-	sPaths = ['./settings.json', '../settings.json']
-
-	for sPath in sPaths:
-		if not os.path.exists(sPath):
-			continue
-		with open('./settings.json', 'r') as fp:
-			print("Found settings.json file! Loading settings.")
-			settings = json.load(fp)
-
-	if not settings and 'SCRAPE_CREDS' in os.environ:
-		print("Found 'SCRAPE_CREDS' environment variable! Loading settings.")
-		settings = json.loads(os.environ['SCRAPE_CREDS'])
-
-	if not settings:
-		raise SettingsLoadFailed("No settings.json file or 'SCRAPE_CREDS' environment variable found!")
-
-	return settings
 
 
 
@@ -145,7 +120,7 @@ def initialize_manager():
 
 def run():
 
-	settings = loadSettings()
+	settings = load_settings.loadSettings()
 	logSetup.initLogging()
 
 	# Make sure the socket does not already exist

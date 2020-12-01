@@ -11,5 +11,6 @@ def days(count):
 
 
 JOBS = [
-	(NuJob.NuMonitor,            "NuJob",            minutes(45)),
+	(NuJob.NuMonitor,            "NuJob",                 minutes(45)),
+	(NuJob.NuPageUpdater,        "NuPageUpdater",            days( 1)),
 ]

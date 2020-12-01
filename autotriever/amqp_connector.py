@@ -13,6 +13,14 @@ import traceback
 
 from .state import RUN_STATE
 
+# CHUNK_SIZE_BYTES = 250 * 1024
+# CHUNK_SIZE_BYTES = 100 * 1024
+CHUNK_SIZE_BYTES = 50 * 1024
+
+
+def chunk_input(inval, chunk_size):
+	for i in range(0, len(inval), chunk_size):
+		yield inval[i:i + chunk_size]
 
 
 class Connector:
@@ -280,3 +288,29 @@ class Connector:
 
 		self.channel.basic_publish(body=out_msg, exchange=out_queue, routing_key=out_key, properties=msg_prop)
 
+
+	def put_message_chunked(self, message, routing_key_override=None):
+		message_bytes = msgpack.packb(message, use_bin_type=True)
+		if len(message_bytes) < CHUNK_SIZE_BYTES:
+			message = {
+							'chunk-type': "complete-message",
+							'data': message,
+			}
+			bmessage = msgpack.packb(message, use_bin_type=True)
+
+			self.log.info("Response message size: %0.3fK. Sending with routing key %s", len(bmessage) / 1024.0, routing_key_override)
+			self.put_response(bmessage, routing_key_override=routing_key_override)
+		else:
+			chunked_id = "chunk-merge-key-" + uuid.uuid4().hex
+			chunkl = list(enumerate(chunk_input(message_bytes, CHUNK_SIZE_BYTES)))
+			for idx, chunk in chunkl:
+				message = {
+								'chunk-type': "chunked-message",
+								'chunk-num': idx,
+								'total-chunks': len(chunkl),
+								'data': chunk,
+								'merge-key': chunked_id,
+				}
+				bmessage = msgpack.packb(message, use_bin_type=True)
+				self.log.info("Response chunk message size: %0.3fK. Sending", len(bmessage) / 1024.0)
+				self.put_response(bmessage, routing_key_override=routing_key_override)
