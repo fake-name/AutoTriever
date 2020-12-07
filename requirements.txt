@@ -28,7 +28,7 @@ feedparser==6.0.2
 
 webrequest==0.0.78
 
-psutil==5.7.2
+psutil==5.7.3
 
 netifaces==0.10.9
 cloudscraper==1.2.48
