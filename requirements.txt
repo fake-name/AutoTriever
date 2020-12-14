@@ -1,6 +1,6 @@
 
 python-magic==0.4.18
-requests==2.24.0
+requests==2.25.0
 
 astor>=0.8.1
 
