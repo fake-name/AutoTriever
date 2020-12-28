@@ -31,7 +31,7 @@ webrequest==0.0.78
 psutil==5.8.0
 
 netifaces==0.10.9
-cloudscraper==1.2.48
+cloudscraper==1.2.50
 
 ## Testing requirements:
 # nose
