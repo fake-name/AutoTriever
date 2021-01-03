@@ -81,12 +81,14 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 			if '/rssbook/' in entry['link']:
 				content = self.wg.getpage(entry['link'])
 
-				url_re = re.compile(r"g_data\.url ?= ?\'(.+?)\';")
+				url_re = re.compile(r"g_data\.url ?= ?[\'\"](.+?)[\'\"]")
 				url = url_re.search(content)
 
 				if not url:
 					self.log.info("No actual content URL found")
 					self.log.info("Content: %s", content)
+					import pdb
+					pdb.set_trace()
 					return None
 
 
@@ -268,7 +270,7 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 		reserialized = self.reserialize_feed(parsed)
 		return reserialized
 
-def test():
+def test_unwral_url():
 
 	import WebRequest
 	wg = WebRequest.WebGetRobust()
@@ -285,9 +287,20 @@ def test():
 	ret = proc._check_qidian_release(item, {})
 	# print(ret)
 
+def test_unrss():
+	import WebRequest
+	wg = WebRequest.WebGetRobust()
+	proc = QidianProcessor(wg=wg)
+	ret = proc.qidianProcessFeedUrls("https://www.webnovel.com/feed/", {})
+
+	print(ret)
+
+
+
 if __name__ == '__main__':
 
 	import autotriever.deps.logSetup
 	autotriever.deps.logSetup.initLogging(logLevel=logging.INFO)
-	test()
+	# test_unwral_url()
+	test_unrss()
 
