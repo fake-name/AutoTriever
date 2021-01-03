@@ -14,6 +14,7 @@ import os
 import autotriever.deps.logSetup
 
 from autotriever import plugin_loader
+from autotriever import load_settings
 from autotriever import main_entry_point
 
 log = logging.getLogger("Main.CLI")
@@ -240,7 +241,7 @@ def dispatch(args):
 		print_help()
 		return
 
-	settings = main_entry_point.loadSettings()
+	settings = load_settings.loadSettings()
 	instance = plugins[mod_name](settings=settings)
 
 

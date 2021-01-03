@@ -39,6 +39,7 @@ function setup_headless_chrome() {
 	wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
 	sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list'
 	sudo DEBIAN_FRONTEND=noninteractive apt-get update
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install -yqqq chromium-codecs-ffmpeg-extra
 	sudo DEBIAN_FRONTEND=noninteractive apt-get install google-chrome-stable -yqqq
 
 
@@ -91,7 +92,7 @@ function do_remote_install() {
 
 		# Needed for chromedriver
 		sudo DEBIAN_FRONTEND=noninteractive apt-get install libnss3 -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install libgconf2-4 -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libgconf-2-4 -yqqq
 
 		# 16.04 phantomjs apt package is fucked, crashes on start.
 
@@ -154,6 +155,7 @@ function go_local_install() {
 		sudo DEBIAN_FRONTEND=noninteractive apt-get install python3-dbg -yqqq
 		sudo DEBIAN_FRONTEND=noninteractive apt-get install libz-dev -yqqq
 		sudo DEBIAN_FRONTEND=noninteractive apt-get install curl -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libpq-dev -yqqq
 
 
 		# Needed for chromedriver
@@ -175,6 +177,7 @@ function go_local_install() {
 
 		sudo pip install --upgrade -r requirements.txt
 		sudo pip install --upgrade -r local_requirements.txt
+		sudo pip install --upgrade -r scheduled/NuUpdate/requirements.txt
 
 		touch local_configured
 	fi;
@@ -195,9 +198,12 @@ function go_local_install() {
 
 # Snapd is flaming garbage, and should never be installed on anything
 function block_snapd() {
-	echo "Package: snapd" | sudo tee -a /etc/apt/preferences.d/block-snap
+	echo "Package: snap" | sudo tee /etc/apt/preferences.d/block-snap
 	echo "Pin: release *" | sudo tee -a /etc/apt/preferences.d/block-snap
 	echo "Pin-Priority: -1" | sudo tee -a /etc/apt/preferences.d/block-snap
+	echo "Package: snapd" | sudo tee /etc/apt/preferences.d/block-snapd
+	echo "Pin: release *" | sudo tee -a /etc/apt/preferences.d/block-snapd
+	echo "Pin-Priority: -1" | sudo tee -a /etc/apt/preferences.d/block-snapd
 }
 
 function go() {

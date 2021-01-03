@@ -35,8 +35,8 @@ class NuPageUpdater():
 	def __init__(self):
 		self.log = logging.getLogger("Main.NuMonitor")
 
-		settings = load_settings.loadSettings()
-		sslopts  = load_settings.findCert()
+		self.settings = load_settings.loadSettings()
+		self.sslopts  = load_settings.findCert()
 
 		# self.connector = amqp_connector.Connector(
 		# 				userid             = settings["RABBIT_LOGIN"],
@@ -92,18 +92,22 @@ class NuMonitor():
 
 		self.wg = SINGLETON_WG
 
+
+		self.settings = load_settings.loadSettings()
+		self.sslopts  = load_settings.findCert()
+
 		self.connector = amqp_connector.Connector(
-						userid             = settings["RABBIT_LOGIN"],
-						password           = settings["RABBIT_PASWD"],
-						host               = settings["RABBIT_SRVER"],
-						virtual_host       = settings["RPC_RABBIT_VHOST"],
+						userid             = self.settings["RABBIT_LOGIN"],
+						password           = self.settings["RABBIT_PASWD"],
+						host               = self.settings["RABBIT_SRVER"],
+						virtual_host       = self.settings["RPC_RABBIT_VHOST"],
 
-						task_queue         = settings.get("RPC_RABBIT_TASK_QUEUE_NAME",     "task.q"),
-						response_queue     = settings.get("RPC_RABBIT_RESPONSE_QUEUE_NAME", "response.q"),
-						task_exchange      = settings.get("RPC_RABBIT_TASK_EXCHANGE",       "tasks.e"),
-						response_exchange  = settings.get("RPC_RABBIT_RESPONSE_EXCHANGE",   "resps.e"),
+						task_queue         = self.settings.get("RPC_RABBIT_TASK_QUEUE_NAME",     "task.q"),
+						response_queue     = self.settings.get("RPC_RABBIT_RESPONSE_QUEUE_NAME", "response.q"),
+						task_exchange      = self.settings.get("RPC_RABBIT_TASK_EXCHANGE",       "tasks.e"),
+						response_exchange  = self.settings.get("RPC_RABBIT_RESPONSE_EXCHANGE",   "resps.e"),
 
-						ssl                = sslopts,
+						ssl                = self.sslopts,
 						prefetch           = 2,
 						synchronous        = True,
 						task_exchange_type = "direct",
@@ -267,8 +271,8 @@ class NuMonitor():
 if __name__ == "__main__":
 	logging.basicConfig(level=logging.DEBUG)
 
-	# mon = NuMonitor()
-	mon = NuPageUpdater()
+	mon = NuMonitor()
+	# mon = NuPageUpdater()
 
 	mon.go()
 
