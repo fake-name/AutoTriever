@@ -1,15 +1,85 @@
 
 import logging
-import pprint
 import re
-import ast
 import json
-import feedparser
+import time
 import traceback
+import feedparser
 from feedgen.feed import FeedGenerator
 import WebRequest
 
 from . import ProcessorBase
+
+def unescape_inline_js_object(in_str):
+
+	# Qidian does a bunch of escaping I don't understand, that breaks shit.
+	in_str = in_str.replace("\\ ", " ")
+	in_str = in_str.replace("\\'", "'")
+	in_str = in_str.replace("\\/", "/")
+	in_str = in_str.replace("\\<", "<")
+	in_str = in_str.replace("\\>", ">")
+	in_str = in_str.replace("\\&", "&")
+
+	return in_str
+
+def trim_to_bracket(in_str):
+	assert in_str[0] == "{"
+	out, in_str = in_str[0], in_str[1:]
+
+	while in_str:
+		if in_str[0] == "{":
+			tmp, in_str = trim_to_bracket(in_str)
+			out += tmp
+		elif in_str[0] == "}":
+			out += in_str[0]
+			in_str = in_str[1:]
+			return out, in_str
+		else:
+			out += in_str[0]
+			in_str = in_str[1:]
+
+	print("Non-symmetric brackets?")
+	print("in_str", in_str)
+	print("out   ", out)
+
+	return out
+
+def book_chap_ids_to_url(book_id, chap_id):
+
+	return "https://www.webnovel.com/book/{book_id}/{chp_id}".format(
+					book_id = book_id,
+					chp_id  = chap_id,
+				)
+
+def make_nav_tags(soup, ctnt):
+	series_id = ctnt['bookInfo']['bookId']
+
+	next_chp_id = ctnt['chapterInfo']['nextChapterId']
+	next_chp_txt = ctnt['chapterInfo']['nextChapterName']
+
+	prev_chp_id = ctnt['chapterInfo']['preChapterId']
+	prev_chp_txt = ctnt['chapterInfo']['preChapterName']
+
+	if prev_chp_id == "-1":
+		prev_tag = soup.new_tag("span")
+		prev_tag.string = "No Previous Chapter"
+	else:
+		prev_tag = soup.new_tag("a", href=book_chap_ids_to_url(series_id, prev_chp_id))
+		prev_tag.string = "Previous Chapter: " + prev_chp_txt
+
+	if next_chp_id == "-1":
+		next_tag = soup.new_tag("span")
+		next_tag.string = "No Next Chapter"
+	else:
+		next_tag = soup.new_tag("a", href=book_chap_ids_to_url(series_id, next_chp_id))
+		next_tag.string = "Next Chapter: " + next_chp_txt
+
+	container = soup.new_tag("div")
+	container.append(prev_tag)
+	container.append(soup.new_tag("br"))
+	container.append(next_tag)
+
+	return container
 
 class QidianProcessor(ProcessorBase.ProcessorBase):
 
@@ -17,7 +87,15 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 
 	@staticmethod
 	def wants_url(lowerspliturl, mimetype):
-		return False
+		if 'text/html' not in mimetype:
+			return False
+
+		return lowerspliturl.netloc.endswith("webnovel.com")
+
+
+	########################################################################
+	# RSS Processing
+	########################################################################
 
 	def extract_from_meta(self, meta):
 		 #                 '/274367222/msite-read-video3',
@@ -270,7 +348,174 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 		reserialized = self.reserialize_feed(parsed)
 		return reserialized
 
-def test_unwral_url():
+
+	########################################################################
+	# HTML Processing
+	########################################################################
+
+	def get_csrf_tok_from_wg(self):
+
+		cooks = [
+				cook
+			for
+				cook
+			in
+				self.wg.cj
+			if
+				cook.domain.endswith('webnovel.com')
+			]
+
+		csrf_token_name = "_csrfToken"
+
+		for cook in cooks:
+			if cook.name == csrf_token_name:
+				return (csrf_token_name, cook.value)
+
+		raise RuntimeError("No CSRF Cookie?")
+
+	def _build_chapter_li(self, soup, dat, meta, vol_info = None):
+		chp_tag = soup.new_tag("li")
+		chp_link = soup.new_tag("a")
+
+
+		for key, value in dat.items():
+
+			chp_link['data-preprocessor-{}'.format(key)] = str(value)
+		chp_link['data-preprocessor-vol']     = vol_info if vol_info else ""
+		chp_link['href'] = book_chap_ids_to_url(
+				book_id = meta['bookId'],
+				chap_id = dat['id'],
+			)
+
+		chp_link.string = dat['name']
+		chp_tag.append(chp_link)
+
+
+		return chp_tag
+
+	def _built_toc(self, soup, toc_dat):
+
+		toc_div = soup.find(class_='power-bar-wrap')
+		toc_div.clear()
+
+		header_str = soup.new_tag("h3")
+		header_str.string = "Table of Contents"
+		toc_div.append(header_str)
+
+		ul_tag = soup.new_tag("ul")
+
+		data = toc_dat['data']
+
+		book_info = data['bookInfo']
+
+		if 'volumeItems' in data:
+			for volume in data['volumeItems']:
+				for chap in volume['chapterItems']:
+					chap_li = self._build_chapter_li(soup, chap, book_info, vol_info = volume['name'])
+					ul_tag.append(chap_li)
+
+		elif 'chapterItems' in data:
+			for chap in data['chapterItems']:
+				chap_li = self._build_chapter_li(soup, chap, book_info)
+				ul_tag.append(chap_li)
+		else:
+			self.log.warning("No chapter or volume items?")
+
+		toc_div.append(ul_tag)
+
+
+
+	def _insert_toc(self, url, contentstr):
+		book_info = re.search(r"g_data.book ?= ?({.*?})<", contentstr)
+
+		if not book_info:
+			return contentstr + "<br><br><br><H1>No book info on page!</H1>"
+
+		book_info_str = book_info.group(1)
+		book_info_str = unescape_inline_js_object(book_info_str)
+
+		self.log.info("Extracting!")
+		ctnt = json.loads(book_info_str)
+		# self.log.info("Extracted meta: %s", ctnt)
+
+		_, csrf_tok = self.get_csrf_tok_from_wg()
+
+		toc_dat = self.wg.getJson("https://www.webnovel.com/apiajax/chapter/GetChapterList?_csrfToken={csrf_tok}&bookId={book_id}&_={time_ms}".format(
+					csrf_tok = csrf_tok,
+					book_id  = ctnt['bookInfo']['bookId'],
+					time_ms  = int(time.time() * 1000),
+				)
+			)
+
+		soup = WebRequest.as_soup(contentstr)
+
+		self._built_toc(soup, toc_dat) # in-place modify soup
+
+
+		for bad in soup.find_all(class_='det-tab-nav'):
+			bad.decompose()
+
+		imgs_tag = soup.find(class_='g_thumb')
+		if imgs_tag:
+			for img in imgs_tag.find_all("img")[1:]:
+				img.decompose()
+
+		return soup.prettify()
+
+
+	def _fix_chapter(self, url, contentstr):
+		_, start_json = contentstr.split("var chapInfo= {")
+
+		start_json = "{"+start_json
+		chap_info_str, _ = trim_to_bracket(start_json)
+
+		if not chap_info_str:
+			return contentstr + "<br><br><br><H1>No chapter info on page!</H1>"
+
+		chap_info_str = unescape_inline_js_object(chap_info_str)
+
+		self.log.info("Extracting!")
+		ctnt = json.loads(chap_info_str)
+		# self.log.info("Extracted meta: %s", ctnt)
+
+
+		soup = WebRequest.as_soup(contentstr)
+
+
+		for bad in soup.find_all(class_='det-tab-nav'):
+			bad.decompose()
+
+		for bad in soup.find_all("para-comment"):
+			bad.decompose()
+
+		content_section = soup.find("div", class_='cha-words')
+
+		content_section.insert_before(make_nav_tags(soup, ctnt))
+		content_section.insert_after(make_nav_tags(soup, ctnt))
+
+
+		return soup.prettify()
+
+
+	def preprocess_content(self, url, lowerspliturl, mimetype, contentstr):
+		#pylint: disable=unused-argument
+
+		if not isinstance(contentstr, str):
+			return contentstr
+
+
+		if 'data-for="#contents" title="Table of Contents" class="j_show_contents"' in contentstr and '<span>Table of Contents</span></a>' in contentstr:
+			self.log.info("Need to insert table of contents")
+			contentstr = self._insert_toc(url, contentstr)
+
+		if 'cha-content' in contentstr:
+			self.log.info("Need to insert chapter nav links")
+			contentstr = self._fix_chapter(url, contentstr)
+
+		return contentstr
+
+
+def test_unwrap_url():
 
 	import WebRequest
 	wg = WebRequest.WebGetRobust()
@@ -295,12 +540,17 @@ def test_unrss():
 
 	print(ret)
 
-
+def test_bracket_segment():
+	print("Bracket fiddle!")
+	print(trim_to_bracket("{wat{}}asdasdasdasd"))
+	print(trim_to_bracket("{wat{}} }asdasdasdasd"))
+	print(trim_to_bracket("{wat{{{}} }asdasdasdasd"))
 
 if __name__ == '__main__':
 
 	import autotriever.deps.logSetup
 	autotriever.deps.logSetup.initLogging(logLevel=logging.INFO)
-	# test_unwral_url()
-	test_unrss()
+	# test_unwrap_url()
+	# test_unrss()
+	test_bracket_segment()
 
