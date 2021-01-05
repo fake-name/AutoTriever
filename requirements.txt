@@ -33,6 +33,10 @@ psutil==5.7.2
 netifaces==0.10.9
 cloudscraper==1.2.48
 
+js2py
+## esprima
+## jsonnet
+
 ## Testing requirements:
 # nose
 # coverage

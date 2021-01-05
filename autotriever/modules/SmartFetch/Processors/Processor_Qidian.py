@@ -4,7 +4,10 @@ import re
 import json
 import time
 import traceback
+
+import js2py
 import feedparser
+
 from feedgen.feed import FeedGenerator
 import WebRequest
 
@@ -34,15 +37,29 @@ def trim_to_bracket(in_str):
 			out += in_str[0]
 			in_str = in_str[1:]
 			return out, in_str
+
+		elif in_str[0] == "\n" or in_str[0] == "\r":
+			print("Reached end of line?")
+			# print("in_str", in_str)
+			# print("out   ", out)
+
+			import pdb
+			pdb.set_trace()
+
+			return out, in_str
+
 		else:
 			out += in_str[0]
 			in_str = in_str[1:]
 
-	print("Non-symmetric brackets?")
-	print("in_str", in_str)
-	print("out   ", out)
+	print("Reached end of document?")
+	# print("in_str", in_str)
+	# print("out   ", out)
 
-	return out
+	import pdb
+	pdb.set_trace()
+
+	return out, in_str
 
 def book_chap_ids_to_url(book_id, chap_id):
 
@@ -80,6 +97,39 @@ def make_nav_tags(soup, ctnt):
 	container.append(next_tag)
 
 	return container
+
+def get_script_containing(soup, desired_str):
+	for script in soup.find_all("script"):
+		if not script.string:
+			continue
+		if desired_str in script.string:
+			return script.string
+
+	return None
+
+def get_script_line_containing(soup, desired_str):
+	script = get_script_containing(soup, desired_str)
+
+	if not script:
+		return None
+
+	for line in script.split("\n"):
+		if desired_str in line:
+			return line
+
+	return None
+
+
+def load_js_obj(script_line):
+
+	context = js2py.EvalJs({'g_data': {}})
+	context.execute(script_line)
+
+	return context
+
+
+
+
 
 class QidianProcessor(ProcessorBase.ProcessorBase):
 
@@ -393,7 +443,7 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 
 		return chp_tag
 
-	def _built_toc(self, soup, toc_dat):
+	def _build_toc(self, soup, toc_dat):
 
 		toc_div = soup.find(class_='power-bar-wrap')
 		toc_div.clear()
@@ -407,35 +457,42 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 		data = toc_dat['data']
 
 		book_info = data['bookInfo']
-
+		toc_item_cnt = 0
 		if 'volumeItems' in data:
 			for volume in data['volumeItems']:
 				for chap in volume['chapterItems']:
 					chap_li = self._build_chapter_li(soup, chap, book_info, vol_info = volume['name'])
 					ul_tag.append(chap_li)
+					toc_item_cnt += 1
 
 		elif 'chapterItems' in data:
 			for chap in data['chapterItems']:
 				chap_li = self._build_chapter_li(soup, chap, book_info)
 				ul_tag.append(chap_li)
+				toc_item_cnt += 1
 		else:
 			self.log.warning("No chapter or volume items?")
 
+		self.log.info("Inserted %s items into generated table-of-contents.", toc_item_cnt)
 		toc_div.append(ul_tag)
 
 
 
 	def _insert_toc(self, url, contentstr):
-		book_info = re.search(r"g_data.book ?= ?({.*?})<", contentstr)
 
-		if not book_info:
+
+		soup = WebRequest.as_soup(contentstr)
+		script_line = get_script_line_containing(soup, "g_data.book=")
+
+
+		context_obj = load_js_obj(script_line)
+
+		try:
+			ctnt = context_obj.g_data.book
+		except js2py.PyJsException:
 			return contentstr + "<br><br><br><H1>No book info on page!</H1>"
 
-		book_info_str = book_info.group(1)
-		book_info_str = unescape_inline_js_object(book_info_str)
 
-		self.log.info("Extracting!")
-		ctnt = json.loads(book_info_str)
 		# self.log.info("Extracted meta: %s", ctnt)
 
 		_, csrf_tok = self.get_csrf_tok_from_wg()
@@ -447,9 +504,13 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 				)
 			)
 
-		soup = WebRequest.as_soup(contentstr)
 
-		self._built_toc(soup, toc_dat) # in-place modify soup
+
+		for bad in soup.find_all(class_='m_down_app_wrap _on'):
+			bad.decompose()
+
+
+		self._build_toc(soup, toc_dat) # in-place modify soup
 
 
 		for bad in soup.find_all(class_='det-tab-nav'):
@@ -464,25 +525,20 @@ class QidianProcessor(ProcessorBase.ProcessorBase):
 
 
 	def _fix_chapter(self, url, contentstr):
-		_, start_json = contentstr.split("var chapInfo= {")
+		soup = WebRequest.as_soup(contentstr)
+		script_line = get_script_line_containing(soup, "var chapInfo= {")
 
-		start_json = "{"+start_json
-		chap_info_str, _ = trim_to_bracket(start_json)
+		context_obj = load_js_obj(script_line)
 
-		if not chap_info_str:
+		try:
+			ctnt = context_obj.chapInfo
+		except js2py.PyJsException:
 			return contentstr + "<br><br><br><H1>No chapter info on page!</H1>"
 
-		chap_info_str = unescape_inline_js_object(chap_info_str)
-
-		self.log.info("Extracting!")
-		ctnt = json.loads(chap_info_str)
-		# self.log.info("Extracted meta: %s", ctnt)
-
-
-		soup = WebRequest.as_soup(contentstr)
-
-
 		for bad in soup.find_all(class_='det-tab-nav'):
+			bad.decompose()
+
+		for bad in soup.find_all(class_='m_down_app_wrap _on'):
 			bad.decompose()
 
 		for bad in soup.find_all("para-comment"):
