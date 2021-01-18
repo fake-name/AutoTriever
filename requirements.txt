@@ -21,7 +21,7 @@ selenium==3.141.0
 Faker==5.6.1
 lxml==4.6.2
 cachetools==4.2.0
-msgpack==0.6.2
+msgpack==1.0.2
 pytz==2020.1
 feedgen==0.9.0
 feedparser==6.0.1
