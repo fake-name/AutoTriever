@@ -20,7 +20,7 @@ colorama==0.4.4
 selenium==3.141.0
 Faker==6.1.1
 lxml==4.6.2
-cachetools==4.1.1
+cachetools==4.2.1
 msgpack==0.6.2
 pytz==2020.1
 feedgen==0.9.0
