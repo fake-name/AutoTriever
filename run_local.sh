@@ -4,7 +4,7 @@
 set -e
 
 # Run the configure script
-bash ./configure.sh include_local
+#bash ./configure.sh include_local
 
 if [ -f "local_configured" ]
 then

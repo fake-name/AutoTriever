@@ -75,16 +75,16 @@ class Connector:
 		assert 'socket_timeout'           in config
 
 
-		assert 'host'                     is not None, "Passed parameter host is none"
-		assert 'userid'                   is not None, "Passed parameter userid is none"
-		assert 'password'                 is not None, "Passed parameter password is none"
-		assert 'virtual_host'             is not None, "Passed parameter virtual_host is none"
-		assert 'task_queue_name'          is not None, "Passed parameter task_queue_name is none"
-		assert 'response_queue_name'      is not None, "Passed parameter response_queue_name is none"
-		assert 'task_exchange'            is not None, "Passed parameter task_exchange is none"
-		assert 'task_exchange_type'       is not None, "Passed parameter task_exchange_type is none"
-		assert 'response_exchange'        is not None, "Passed parameter response_exchange is none"
-		assert 'response_exchange_type'   is not None, "Passed parameter response_exchange_type is none"
+		assert config['host' ]                    is not None, "Passed parameter host is none"
+		assert config['userid']                   is not None, "Passed parameter userid is none"
+		assert config['password']                 is not None, "Passed parameter password is none"
+		assert config['virtual_host']             is not None, "Passed parameter virtual_host is none"
+		assert config['task_queue_name']          is not None, "Passed parameter task_queue_name is none"
+		assert config['response_queue_name']      is not None, "Passed parameter response_queue_name is none"
+		assert config['task_exchange']            is not None, "Passed parameter task_exchange is none"
+		assert config['task_exchange_type']       is not None, "Passed parameter task_exchange_type is none"
+		assert config['response_exchange']        is not None, "Passed parameter response_exchange is none"
+		assert config['response_exchange_type']   is not None, "Passed parameter response_exchange_type is none"
 
 
 
