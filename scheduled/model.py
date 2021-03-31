@@ -1,4 +1,5 @@
 
+import contextlib
 import datetime
 
 from sqlalchemy import create_engine
@@ -33,19 +34,26 @@ Session.configure(bind=engine)
 dlstate_enum   = Enum('new', 'fetching', 'complete', 'error', name='dlstate_enum')
 
 
+@contextlib.contextmanager
+def session_context():
+	session = Session()
+	try:
+		yield session
+	finally:
+		Session.remove()
+
 class WebPages(Base):
 
 	__tablename__ = 'web_pages'
 	name = 'web_pages'
 
-	id                = Column(BigInteger, primary_key = True, index = True)
+	id                = Column(BigInteger().with_variant(Integer, "sqlite"), primary_key = True)
 	state             = Column(dlstate_enum, default='new', index=True, nullable=False)
 	errno             = Column(Integer, default='0')
 	url               = Column(Text, nullable = False, index = True, unique = True)
-	netloc            = Column(Text, nullable = False, index = True)
 
+	mimetype          = Column(Text)
 	is_text           = Column(Boolean, default=False)
-	limit_netloc      = Column(Boolean, default=True)
 
 	content           = Column(Text)
 
@@ -56,9 +64,12 @@ class WebPages(Base):
 
 class NuReleaseItem(Base):
 	__tablename__ = 'nu_release_item'
-	id               = Column(BigInteger, primary_key=True)
+	id               = Column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True)
 
 	actual_target    = Column(Text)
+	page_title       = Column(Text)
+
+	fetch_tries      = Column(Integer, default='0')
 
 	seriesname       = Column(Text, nullable=False, index=True)
 	releaseinfo      = Column(Text)

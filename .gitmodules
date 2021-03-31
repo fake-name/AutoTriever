@@ -1,0 +1,3 @@
+[submodule "scheduled/NuUpdate"]
+	path = scheduled/NuUpdate
+	url = git@github.com:fake-name/ReadableWebProxy.git
