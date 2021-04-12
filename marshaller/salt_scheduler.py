@@ -135,6 +135,12 @@ class VpsScheduler(object):
 		self.log.info("VM Creation complete.")
 
 	def destroy_vm(self, vm_name):
+
+		# Don't start a destroy before we have a sane number of live VMs.
+		if self.get_missing_vms():
+			self.log.warning("Missing a VM. Not destroying any additional VMs until all target VMs are present.")
+			return
+
 		self.interface.list_nodes()
 		self.log.info("Destroying VM named: %s, current workers: %s", vm_name, [worker for provider, worker in self.interface.list_nodes()])
 		dest_cnt = 0
@@ -184,6 +190,28 @@ class VpsScheduler(object):
 		Maximally dumb function to kick over the stats system.
 		'''
 		self.get_active_vms()
+
+	def get_missing_vms(self):
+		self.log.info("Validating active VPSes")
+		active = self.get_active_vms()
+
+		self.log.info("Active nodes:")
+		for node_tmp in active:
+			self.log.info("	%s", node_tmp)
+
+		target = self.build_target_vm_list()
+
+		# Whoo set math!
+		missing = target - active
+		extra   = active - target
+
+		self.log.info("Active managed VPSes: %s", active)
+		self.log.info("Target VPS set      : %s", target)
+		self.log.info("Need to create VMs  : %s", missing)
+		self.log.info("Need to destroy VMs : %s", extra)
+
+		return missing
+
 
 	def ensure_active_workers(self):
 		self.log.info("Validating active VPSes")
@@ -278,7 +306,7 @@ def run():
 
 	new_create_timeout_secs = hrs_to_sec(settings.VPS_LIFETIME_HOURS + 1.5)
 
-
+	loops = 0
 	while 1:
 		# If there's no thread, create it.
 		if proc is None:
@@ -295,7 +323,9 @@ def run():
 			state = "Failed to get"
 
 
-		print("Watchdog looping! Value: %s, last update: %s/%s ago, thread: %s->%s" % (CREATE_WATCHDOG.value, int(time.time() - last_zero), new_create_timeout_secs, state, proc))
+		print("\rWatchdog looping %s! Value: %s, last update: %s/%s ago, thread: %s->%s" % (loops, CREATE_WATCHDOG.value, int(time.time() - last_zero), new_create_timeout_secs, state, proc), end="")
+		loops += 1
+
 		# If the worker has touched the watchdog flag, capture the
 		# time that happened.
 		if CREATE_WATCHDOG.value != 0:
@@ -316,13 +346,17 @@ def run():
 				print("Exception in terminate!")
 				traceback.print_exc()
 
+				# Die with a segv
+				import ctypes
+				ctypes.string_at(0)
+
 			proc = None
 
-		time.sleep(5)
+		time.sleep(1)
 
 
 if __name__ == '__main__':
-	logSetup.initLogging()
+	logSetup.initLogging(1)
 
 	if 'refresh' in sys.argv:
 		refresh()

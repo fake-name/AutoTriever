@@ -205,6 +205,32 @@ function block_snapd() {
 	echo "Pin-Priority: -1" | sudo tee -a /etc/apt/preferences.d/block-snap
 }
 
+
+function install_unit_file() {
+
+	echo ""                           | sudo tee    "/etc/systemd/system/rwpscraper.service"
+	echo "[Unit]"                     | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "Description=foo"            | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "StartLimitInterval=0"       | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "StartLimitIntervalSec=0"    | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo ""                           | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "[Service]"                  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "User=scrapeworker"          | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "WorkingDirectory=/scraper"  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "Type=simple"                | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "RestartSec=10"              | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "Restart=always"             | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "ExecStart=/scraper/run.sh"  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo ""                           | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "[Install]"                  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	echo "WantedBy=multi-user.target" | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+
+	sudo systemctl enable rwpscraper.service
+	sudo systemctl start rwpscraper.service
+
+}
+
+
 function go() {
 
 	is_local=false
@@ -226,6 +252,7 @@ function go() {
 	else
 		do_remote_install
 		chrome_postinstall_remote
+		install_unit_file
 	fi
 
 	echo "Setup OK! System is configured for launch"

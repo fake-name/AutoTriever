@@ -1,5 +1,3 @@
-
-
 import sys
 import pprint
 import random
@@ -138,20 +136,25 @@ class VpsHerder(object):
 
 		sizes = self.cc.list_sizes(provider='digitalocean')['digitalocean']['digitalocean']
 		locs = self.cc.list_locations(provider='digitalocean')['digitalocean']['digitalocean']
+		images = self.cc.list_images(provider='digitalocean')['digitalocean']['digitalocean']
+
+		im = images['18.04 (LTS) x64']
 
 		self.log.info("Found %s sizes, %s locations", len(sizes), len(locs))
 		items = []
 
-		avail_locs = {}
+		avail_im_locs = set(im['regions'])
+		avail_hw_locs = {}
+
 		for name, loc_meta in locs.items():
 			if loc_meta['available']:
 				# Why the fuck is this a string?
 				if isinstance(loc_meta['sizes'], str):
 					loc_meta['sizes'] = ast.literal_eval(loc_meta['sizes'])
 				if isinstance(loc_meta['sizes'], list):
-					avail_locs.setdefault(loc_meta['slug'], set())
+					avail_hw_locs.setdefault(loc_meta['slug'], set())
 					for size in loc_meta['sizes']:
-						avail_locs[loc_meta['slug']].add(size)
+						avail_hw_locs[loc_meta['slug']].add(size)
 
 		for name, size_meta in sizes.items():
 			if float(size_meta['price_monthly']) <= MAX_MONTHLY_PRICE_DOLLARS:
@@ -165,8 +168,8 @@ class VpsHerder(object):
 					size_meta['regions'] = ast.literal_eval(size_meta['regions'])
 
 				for loc in size_meta['regions']:
-					if loc in avail_locs:
-						if name in avail_locs[loc]:
+					if loc in avail_im_locs and loc in avail_hw_locs:
+						if name in avail_hw_locs[loc]:
 							items.append((name, loc))
 
 
@@ -251,8 +254,9 @@ class VpsHerder(object):
 		locations = self.cc.list_locations(provider='linode')['linode']['linode']
 		sizel = []
 		locl = []
+
 		for name, size_meta in sizes.items():
-			if size_meta[u'PRICE'] <= 5:
+			if size_meta[u'price']['monthly'] <= 5:
 				sizel.append(name)
 
 
@@ -280,7 +284,7 @@ class VpsHerder(object):
 			# 'location'           : random.choice(places),
 
 			'size'     : random.choice(plans),
-			'image'    : u'Ubuntu 18.04 LTS',
+			'image'    : u'linode/ubuntu18.04',
 			'location' : random.choice(places),
 
 			'script'             : fqscript,
@@ -725,7 +729,10 @@ class VpsHerder(object):
 		try:
 			ret = self.cc.create(names=[clientname], provider=provider, **kwargs)
 
-			# self.log.info("Response: %s", ret)
+			self.log.info("Response: %s", ret)
+			if clientname in ret and not ret[clientname]:
+				raise marshaller_exceptions.VmCreateFailed("Failed when creating VM? Exception: %s" % e)
+
 			self.log.info("Instance created!")
 
 			if provider == 'linode' and clientname in ret and ret[clientname] is False:
@@ -930,7 +937,8 @@ def list_vultr_options():
 
 def list_do_options():
 	herder = VpsHerder()
-	herder.list_do_options()
+	herder.generate_do_conf()
+	# herder.list_do_options()
 
 
 def list_gce_options():
