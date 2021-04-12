@@ -15,7 +15,14 @@ if [ -d "venv" ]
 then
 	echo "Venv exists. Activating and starting up!"
 	source venv/bin/activate
-	python3 ./main.py
+
+	until python3 ./main.py; do
+		echo "Server 'python3 ./main.py' crashed with exit code $?.  Respawning.." >&2
+		killall -r "python3"
+		killall chrome
+		sleep 30
+	done
+
 else
 	echo "Venv is missing! Cannot start!"
 	exit -1;

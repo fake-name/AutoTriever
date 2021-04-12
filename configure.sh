@@ -66,6 +66,11 @@ function chrome_postinstall_remote() {
 		sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
 	fi
 
+	# Install hourly reboot
+	echo $(echo "$(($RANDOM % 60)) * * * * reboot") | sudo crontab -
+
+
+
 }
 function chrome_postinstall_local() {
 	echo "Chrome postinstall"
