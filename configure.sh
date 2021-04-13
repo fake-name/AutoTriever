@@ -333,6 +333,9 @@ function go_local_install() {
 		echo "SCRAPE_CREDS is set!"
 	fi;
 
+	# Fix perms (if the setup was run as root, .git will be inaccessible)
+	sudo chown -R scrapeworker:scrapeworker /scraper
+
 	echo "Setup OK! System is configured for launch"
 
 }
@@ -393,6 +396,7 @@ function go() {
 		do_remote_install
 		chrome_postinstall_remote
 		install_unit_file
+
 	fi
 
 	echo "Setup OK! System is configured for launch"
