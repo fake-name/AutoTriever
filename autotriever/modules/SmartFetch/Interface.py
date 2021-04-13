@@ -76,6 +76,9 @@ class PluginInterface_SmartFetch(object):
 				cloudflare = False,
 			)
 
+		self.wg.rules['auto_waf'] = False
+
+
 		self.calls = {
 			'qidianSmartFeedFetch'                  : self.qidianSmartFeedFetch,
 			'qidianProcessReleaseList'              : self.qidianProcessReleaseList,

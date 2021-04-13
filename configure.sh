@@ -363,25 +363,30 @@ function block_snapd() {
 
 function install_start_unit_file() {
 
-	echo ""                           | sudo tee    "/etc/systemd/system/rwpscraper.service"
-	echo "[Unit]"                     | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "Description=foo"            | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "StartLimitInterval=0"       | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "StartLimitIntervalSec=0"    | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo ""                           | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "[Service]"                  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "User=scrapeworker"          | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "WorkingDirectory=/scraper"  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "Type=simple"                | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "RestartSec=10"              | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "Restart=always"             | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "ExecStart=/scraper/run.sh"  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo ""                           | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "[Install]"                  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
-	echo "WantedBy=multi-user.target" | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+	if [ ! -f /etc/systemd/system/rwpscraper.service ]; then
 
-	sudo systemctl enable rwpscraper.service
-	sudo systemctl start rwpscraper.service
+		echo ""                           | sudo tee    "/etc/systemd/system/rwpscraper.service"
+		echo "[Unit]"                     | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "Description=foo"            | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "StartLimitInterval=0"       | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "StartLimitIntervalSec=0"    | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo ""                           | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "[Service]"                  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "User=scrapeworker"          | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "WorkingDirectory=/scraper"  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "Type=simple"                | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "RestartSec=10"              | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "Restart=always"             | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "ExecStart=/scraper/run.sh"  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo ""                           | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "[Install]"                  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "WantedBy=multi-user.target" | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+
+		sudo systemctl enable rwpscraper.service
+		sudo systemctl start rwpscraper.service
+	else
+		echo "Do not need to install unit file, as it already exists"
+	fi
 
 }
 
