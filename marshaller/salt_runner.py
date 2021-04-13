@@ -616,6 +616,9 @@ class VpsHerder(object):
 			['cmd.run', ["mkswap /swapfile", ],                                                                                                   {}, None],
 			['cmd.run', ["chmod 0600 /swapfile", ],                                                                                               {}, None],
 			['cmd.run', ["swapon /swapfile", ],                                                                                                   {}, None],
+			['cmd.run', ['echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab', ],                                                   {}, None],
+			['cmd.run', ["bash -c \"ls /\"", ],                                                                                                   {}, ['swapfile', ]],
+			['cmd.run', ["bash -c \"cat /etc/fstab /\"", ],                                                                                       {}, ['swapfile', ]],
 
 			# Needed to make GCE play nice. I think they just flat-out don't preinstall a locale
 			# ['cmd.run', ["sudo apt-get install language-pack-en -y", ],                                                                           {}, ['The following NEW packages will be installed:', 'language-pack-en-base']],

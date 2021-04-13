@@ -83,6 +83,22 @@ function chrome_postinstall_local() {
 
 }
 
+function check_install_swap() {
+	# Make swap so we don't explode because chrome is gonna chrome
+	if [ -f "$FILE" ]; then
+		echo "Swap exists. Nothing to do."
+	else
+		echo "Creating swapfile"
+		dd if=/dev/zero of=/swapfile bs=1M count=4096
+		mkswap /swapfile
+		chmod 0600 /swapfile
+		swapon /swapfile
+		echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
+	fi
+
+}
+
+
 function no_salt_install()
 {
 	bash -c 'whoami' | grep -q 'root'
@@ -178,12 +194,6 @@ function no_salt_install()
 	# So long hosts files cause things to explode, so we turn it off.
 	# ['cmd.run', ["curl https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/social/hosts | tee -a /etc/hosts
 
-	# Make swap so
-	dd if=/dev/zero of=/swapfile bs=1M count=4096
-	mkswap /swapfile
-	chmod 0600 /swapfile
-	swapon /swapfile
-	echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
 
 	# Needed to make GCE play nice. I think they just flat-out don't preinstall a locale
 	# ['cmd.run', ["sudo apt-get install language-pack-en -y", ],                                                                           {}, ['The following NEW packages will be installed:', 'language-pack-en-base']],
@@ -389,6 +399,7 @@ function go() {
 	done
 
 	block_snapd
+	check_install_swap
 
 	if [ "$is_local" = true ] ; then
 		go_local_install
@@ -405,5 +416,5 @@ function go() {
 }
 
 
-go $@
+go "$@"
 
