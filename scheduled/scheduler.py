@@ -62,6 +62,19 @@ def job_evt_listener(event):
 		log.info('Traceback: %s', event.traceback)
 	else:
 		log.info('Job event code: %s, job: %s', JOB_MAP[event.code], event.job_id)
+	if event.code == apscheduler.events.EVENT_JOB_MAX_INSTANCES:
+
+		log.info('Job event code: %s, job: %s', JOB_MAP[event.code], event.job_id)
+		log.error("Missed job execution! Killing job executor to unstick jobs")
+
+
+		print('Job event code: %s, job: %s' % (JOB_MAP[event.code], event.job_id))
+		print("Missed job execution! Killing job executor to unstick jobs")
+
+		import ctypes
+		ctypes.string_at(1)
+		import os
+		os.kill(0,4)
 
 
 def run_scheduler_thread():
