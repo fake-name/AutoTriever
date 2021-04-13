@@ -84,16 +84,17 @@ function chrome_postinstall_local() {
 }
 
 function check_install_swap() {
+
 	# Make swap so we don't explode because chrome is gonna chrome
-	if [ -f "$FILE" ]; then
-		echo "Swap exists. Nothing to do."
-	else
+	if [ ! -f /swapfile ]; then
 		echo "Creating swapfile"
 		dd if=/dev/zero of=/swapfile bs=1M count=4096
 		mkswap /swapfile
 		chmod 0600 /swapfile
 		swapon /swapfile
 		echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
+	else
+		echo "Swap exists. Nothing to do."
 	fi
 
 }
