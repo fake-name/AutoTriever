@@ -183,6 +183,7 @@ function no_salt_install()
 	mkswap /swapfile
 	chmod 0600 /swapfile
 	swapon /swapfile
+	echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
 
 	# Needed to make GCE play nice. I think they just flat-out don't preinstall a locale
 	# ['cmd.run', ["sudo apt-get install language-pack-en -y", ],                                                                           {}, ['The following NEW packages will be installed:', 'language-pack-en-base']],
