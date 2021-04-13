@@ -83,6 +83,146 @@ function chrome_postinstall_local() {
 
 }
 
+function no_salt_install()
+{
+	bash -c 'whoami' | grep -q 'root'
+	mkdir -p .ssh/
+	python -c 'import os.path, sys, os; os.makedirs(".ssh/") if not os.path.exists(".ssh/") else None; print("Dir exists and is dir: ", os.path.isdir(".ssh/"));sys.exit(1 if os.path.isdir(".ssh/") else 0);'
+	python -c 'import os.path, sys, os; os.makedirs("/scraper") if not os.path.exists("/scraper") else None; print("Dir exists and is dir: ", os.path.isdir("/scraper"));sys.exit(1 if os.path.isdir("/scraper") else 0);'
+	ls /             | grep -q  'scraper'
+	pwd              | grep -q  '/root'
+
+
+	sudo apt update
+	sudo DEBIAN_FRONTEND=noninteractive software-properties-common -yqqq
+
+			# splat in public keys.
+	echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCoNUeZ/L6QYntVXtBCdFLk3L7X1Smio+pKi/63W4i9VQdocxY7zl3fCyu5LsPzVQUBU5nLKb/iJkABH+hxq8ZL7kXiKuGgeHsI60I2wECMxg17Qs918ND626AkXqlMIUW1SchcAi3rYRMVY0OaGSOutIcjR+mJ6liogTv1DLRD0eRbuollz7XsYz4ILbi9kEsqwaly92vK6vlIVlAWtDoNf95c6jk/lh0M5p1LV0lwrEtfCreuv1rrOldUdwgU4wCFgRI+p6FXs69+OsNWxZSOSr28eE9sbsHxIxthcRHMtsnDxzeJ1PVhvC4JclFEHEZSlYaemI6zOezVuBuipwSv Neko@ODO | tee -a .ssh/authorized_keys
+	echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCi7/9jOHVJj0ODnPqinqFbOaErT2pNaeq0pYKapcG2DHGrvVlX3ZUO8z7uY1QZX0OiC3y7rv4c7NEl7/OtmRDfNPd5YgpAuXelbwu5Pj1BjQq1pn3CeP4zhw4gcEPx2UAc5Rw1jzH8vE7NMf2iReBiHr2SfSLh8T/jt5bEAVDCnhMS/8YvoPLLftESiLoi+TU6Y9/zw4zac3AyJJ02tHpHLSpWWPPLi31ASEu/p+lWynUd+dSTMbwmc3hwBQkZTrK6P1I3431eQqYVNOyWJe+GeCXLaw5CvO8qlE7Nj3Z+dics3Bq0F7ugDC+27qWk7m5soPfbZ8qlQz4CWFv01GHWdWwdHh9SR2bplNZ6MDuED91mu7gxyx2Wyo2AIiKsLcpGOIdLnIvrSA9VGpdgKbflbnqtfyIm6gloPpITnAJXimWSvIxF76PVFjdZa86jAx7JZfBfirvtRg6/qXbDUDAErF3OllqxBvuGOzHptDDgha/29tabzxUIxhpBrG0TiRTMDmmqgM+b9kANgzEe4Yef2w/IaTC96D/oLxRHmRBbof8GIMlNZjFlVw8XIyzYxnvALwCE7gRubba13f6qU0lT56be9HKYrSvHVy9/855lKlLwTCePaHK0EPBGuMWZOBexGKyxTFXmA+oqkBg5zFnZLyxcsaVZQtZRnDU4Cu4jyQ== rwpscrape@fake-url.com | tee -a .ssh/authorized_keys
+	echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDMv9sMkEOjqsFu8wPiG2jUP62qKEpxmvQ7IiYaLKogW/LQlLhKP7KCIE2MVUmctwdvyEFrXGOXDCVgFMFLEZiCi2+B7itMcFBlxJsZYQ9Y5FzXg/xK/Xld9rZu2ST+4z9xrX03n0rrsvO3HgpbNoIWF1LbXrc8L80CUCf13GWkZErhzc4mcd44McLVxXq+hcikMguVdOcejpLJTQkq2LRLEx2zhrz+CfNe9AQ0I5AOsh8Os3rrILFs0t290hejMX82nwJUCIcODTBJqR0o7qs/Tt8zLy3YKnAN3eGqfO7tw/d75AD/nENup5kJscpVb/6v3xfWnjgAjalj/hw2bwoc3SE+Y3u2wmyuhrJcSy6rw/IltFc+BaZamZMBW/si8tW+xo9rb903GXANJbjVOABECJSp2i03xtPfYfk9KqZb/vUkpYTmwRQGvDK9u1viIF8nIomE4omN6buFktvVjH1IG6bOPeMi4Y0zBNds7Q1W28Um1ygaBU+NCalep8UDEWInNkfYe1E/hj5A5EaMPaRjnPhXJqUzglOl1O2Tco2FYhfvCiyZvAHv25LLrGzePidR59SzTP7/fLxK7FgmH0m79AOKvjuZaNjb7njmgDhyQggOLU6bJwiiJ7MqldPlic2qCKyQVavLv2nXGIGVXEovtM9YfgSYuglkiYmbs6LU0w== durr@mainnas | tee -a .ssh/authorized_keys
+	chmod 0600 .ssh/authorized_keys
+	cat .ssh/authorized_keys | grep -q ' Neko@ODO'
+	cat .ssh/authorized_keys | grep -q ' rwpscrape@fake-url.com'
+	cat .ssh/authorized_keys | grep -q ' durr@mainnas'
+
+
+	eval ssh-agent $SHELL
+	ssh-add .ssh/authorized_keys
+	ssh-add -l
+	eval ssh-agent $SHELL;
+	ssh-add .ssh/authorized_keys; ssh-add -l
+
+	apt-get update
+
+	# So trying to have salt update itself makes it poop itself,
+	# and never come back.
+	# Siiiiiigh.
+	# Anyways, I moved this command to my custom bootstrap script.
+	# ['cmd.run', ["apt-get dist-upgrade -y", ],                                                                                            {'env' : {'DEBIAN_FRONTEND' : 'noninteractive'}}, None],
+
+	# Apparently at least one VPS host has separated git from build-essential?
+	# ['pkg.install', ['build-essential', 'locales', 'git', 'libfontconfig', 'wget', 'htop', 'libxml2', 'libxslt1-dev',
+	# 	'python3-dev', 'python3-dbg', 'python3-distutils', 'libz-dev', 'curl', 'screen'],
+	# ['pkg.install', ['libasound2', 'libatk1.0-0', 'libc6', 'libcairo2', 'libcups2', 'libdbus-1-3', 'libexpat1', 'libfontconfig1', 'libgcc1',
+	# 		'libgconf-2-4', 'libgdk-pixbuf2.0-0', 'libglib2.0-0', 'libgtk-3-0', 'libnspr4', 'libpango-1.0-0', 'libpangocairo-1.0-0', 'libstdc++6',
+	# 		'libx11-6', 'libx11-xcb1', 'libxcb1', 'libxcursor1', 'libxdamage1', 'libxext6', 'libxfixes3', 'libxi6', 'libxrandr2', 'libxrender1',
+	# 		'libxss1', 'libxtst6', 'libnss3'],
+
+	sudo DEBIAN_FRONTEND=noninteractive build-essential -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive locales -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive git -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libfontconfig -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive wget -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive htop -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxml2 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxslt1-dev -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive python3-dev -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive python3-dbg -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive python3-distutils -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libz-dev -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive curl -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive screen -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libasound2 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libatk1.0-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libc6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libcairo2 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libcups2 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libdbus-1-3 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libexpat1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libfontconfig1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libgcc1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libgconf-2-4 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libgdk-pixbuf2.0-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libglib2.0-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libgtk-3-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libnspr4 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libpango-1.0-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libpangocairo-1.0-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libstdc++6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libx11-6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libx11-xcb1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxcb1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxcursor1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxdamage1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxext6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxfixes3 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxi6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxrandr2 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxrender1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxss1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libxtst6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive libnss3 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive xvfb -yqqq
+
+	# Adblocking. Lower the chrome cpu costs decently
+	# So long hosts files cause things to explode, so we turn it off.
+	# ['cmd.run', ["curl https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/social/hosts | tee -a /etc/hosts
+
+	# Make swap so
+	dd if=/dev/zero of=/swapfile bs=1M count=4096
+	mkswap /swapfile
+	chmod 0600 /swapfile
+	swapon /swapfile
+
+	# Needed to make GCE play nice. I think they just flat-out don't preinstall a locale
+	# ['cmd.run', ["sudo apt-get install language-pack-en -y", ],                                                                           {}, ['The following NEW packages will be installed:', 'language-pack-en-base']],
+
+	# Shit to make the tty work in UTF-8. Otherwise, the logging can asplode
+	# and break all the things.
+	echo LANG=\"en_US.UTF-8\"   >> /etc/default/locale
+	echo LC_ALL=\"en_US.UTF-8\" >> /etc/default/locale
+	echo "LC_ALL=en_US.UTF-8"   >> /etc/environment
+	echo "en_US.UTF-8 UTF-8"    >> /etc/locale.gen
+	echo "LANG=en_US.UTF-8"     > /etc/locale.conf
+	dpkg-reconfigure -f noninteractive locales | grep -q 'en_US.UTF-8'
+	locale
+	bash -c \"locale\"
+
+
+	# Clone and Install settings
+	ls / | grep -q 'scraper'
+	git clone https://github.com/fake-name/AutoTriever.git /scraper
+
+			# Make sure it all checked out at least somewhat
+	ls /scraper  | grep -q 'configure.sh'
+	ls /scraper  | grep -q 'run.sh'
+	ls /scraper  | grep -q 'settings.json'
+
+	# Finally, run the thing
+
+	adduser scrapeworker --disabled-password --gecos ""
+	usermod -a -G sudo scrapeworker
+	echo 'scrapeworker ALL=(ALL) NOPASSWD: ALL' | tee -a /etc/sudoers
+
+	wget https://raw.githubusercontent.com/solarkennedy/instant-py-bt/master/py-bt -O /usr/local/bin/py-bt
+	wget https://raw.githubusercontent.com/aurora/rmate/master/rmate -O /usr/local/bin/rmate
+	chmod +x /usr/local/bin/py-bt
+	chmod +x /usr/local/bin/rmate
+
+	chown -R scrapeworker:scrapeworker /scraper
+}
+
+
 function do_remote_install() {
 	report_git
 
@@ -261,3 +401,4 @@ function go() {
 
 
 go $@
+
