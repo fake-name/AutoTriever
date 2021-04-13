@@ -67,7 +67,7 @@ function chrome_postinstall_remote() {
 	fi
 
 	# Install hourly reboot
-	echo $(echo "$(($RANDOM % 60)) * * * * reboot") | sudo crontab -
+	echo "$(($RANDOM % 60)) * * * * reboot" | sudo crontab -
 
 
 
