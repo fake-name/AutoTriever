@@ -360,7 +360,7 @@ function block_snapd() {
 }
 
 
-function install_unit_file() {
+function install_start_unit_file() {
 
 	echo ""                           | sudo tee    "/etc/systemd/system/rwpscraper.service"
 	echo "[Unit]"                     | sudo tee -a "/etc/systemd/system/rwpscraper.service"
@@ -407,7 +407,8 @@ function go() {
 	else
 		do_remote_install
 		chrome_postinstall_remote
-		install_unit_file
+
+		install_start_unit_file
 
 	fi
 

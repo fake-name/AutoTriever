@@ -717,8 +717,8 @@ class VpsHerder(object):
 		if resp[clientname] and not resp[clientname].strip().endswith('Setup OK! System is configured for launch'):
 			raise VmInitError("Setup command did not return success!")
 
-		self.log.info("Node configured! Starting scraper client!")
-		jobid = self.local.cmd_async(tgt=clientname, fun='cmd.run', arg=["screen -d -m ./run.sh", ], kwarg={"cwd" : '/scraper', 'runas' : 'scrapeworker'})
+		self.log.info("Node configured! Rebooting!")
+		jobid = self.local.cmd_async(tgt=clientname, fun='cmd.run', arg=["reboot", ])
 		self.log.info("Job id: '%s'", jobid)
 
 	################################################################################################
