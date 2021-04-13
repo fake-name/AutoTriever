@@ -70,7 +70,11 @@ class PluginInterface_SmartFetch(object):
 		anticaptcha_api = self.settings.get('captcha_solvers', {}).get('anti-captcha', {}).get('api_key', None)
 
 
-		self.wg = WebRequest.WebGetRobust()
+		# Disable auto-waf until I have time to prevent it from killing my VPSes.
+		self.wg = WebRequest.WebGetRobust(
+				auto_waf   = False,
+				cloudflare = False,
+			)
 
 		self.calls = {
 			'qidianSmartFeedFetch'                  : self.qidianSmartFeedFetch,
