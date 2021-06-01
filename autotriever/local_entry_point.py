@@ -124,8 +124,9 @@ def run_rpc(interface_dict, settings):
 	print("MpRPC server Started.")
 	server_instance = FetchInterfaceClass(settings=settings, lock_dict=interface_dict)
 	mprpc_server = StreamServer(('0.0.0.0', 4315), server_instance)
+	handler = build_mprpc_handler(mprpc_server)
 
-	gevent.signal(signal.SIGINT, build_mprpc_handler(mprpc_server))
+	gevent.signal.signal(signal.SIGINT, handler)
 	mprpc_server.serve_forever()
 
 

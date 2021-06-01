@@ -62,9 +62,10 @@ class ScribbleHubFixer(ProcessorBase.ProcessorBase):
 				'#pagination-profile-recent',
 				'#pagination-mesh-toc',
 			]
+
 		for item in soup.find_all("script"):
-			stxt =  item.get_text()
-			if any([tmp in stxt for tmp in trigger_strings]):
+			stxt =  item.string
+			if stxt and any([tmp in stxt for tmp in trigger_strings]):
 				tmp_str = "{\n"
 				for row in stxt.split("\n"):
 					if   "itemsOnPage" in row:
@@ -86,6 +87,7 @@ class ScribbleHubFixer(ProcessorBase.ProcessorBase):
 					elif "hrefTextSuffix" in row:
 						tmp_str += row.replace("hrefTextSuffix", '"hrefTextSuffix"') + "\n"
 				tmp_str += "}\n"
+				print("Evaluating literal string:", tmp_str)
 				return ast.literal_eval(tmp_str)
 
 		return None
@@ -162,9 +164,9 @@ class ScribbleHubFixer(ProcessorBase.ProcessorBase):
 
 		meta = self._extract_scripts(soup)
 
-		# print("Meta:", meta)
-		# print("bool(toc_goes_here): ", bool(toc_goes_here))
-		# print('items' in meta, 'displayedPages' in meta)
+		print("Meta:", meta)
+		print("bool(toc_goes_here): ", bool(toc_goes_here))
+		print('items' in meta, 'displayedPages' in meta)
 
 		meta_series_name = soup.find("meta", property="og:title")
 		if meta_series_name:

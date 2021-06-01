@@ -3,14 +3,15 @@
 # Halt on errors.
 set -e
 
-# Run the configure script
-bash ./configure.sh include_local
 
 if [ -f "local_configured" ]
 then
-	echo "Config indicator file exists. Activating and starting up!"
-	python3 ./main_local.py
+	echo "Config indicator file exists. Skipping setup!"
 else
-	echo "Config indicator file is missing! Cannot start!"
-	exit -1;
+	echo "Config indicator file is missing! Doing setup!"
+	# Run the configure script
+	bash ./configure.sh include_local
 fi;
+
+
+python3 ./main_local.py

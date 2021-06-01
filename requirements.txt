@@ -1,34 +1,33 @@
 
-python-magic==0.4.18
-requests==2.24.0
+python-magic==0.4.22
+requests==2.25.1
 
 astor>=0.8.1
 
-ChromeController==0.3.19
+ChromeController==0.3.20
 
 PySocks==1.7.1
-dill==0.3.2
+dill==0.3.3
 rabbitpy==2.0.1
 
-netdisco==2.8.2
-zeroconf==0.28.5
+netdisco==2.8.3
+zeroconf==0.31.0
 
-APScheduler==3.6.3
-beautifulsoup4==4.8.2
-cchardet==2.1.6
-colorama==0.4.3
+APScheduler==3.7.0
+beautifulsoup4==4.9.3
+cchardet==2.1.7
+colorama==0.4.4
 selenium==3.141.0
-Faker==4.1.3
+Faker==8.4.0
 lxml==4.6.3
-cachetools==4.1.1
-msgpack==0.6.2
-pytz==2020.1
+cachetools==4.2.2
+pytz==2021.1
 feedgen==0.9.0
-feedparser==6.0.1
-
+feedparser==6.0.2
 webrequest==0.0.78
 
-psutil==5.7.2
+
+psutil==5.8.0
 
 netifaces==0.10.9
 cloudscraper==1.2.48

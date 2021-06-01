@@ -1,3 +1,6 @@
 
-mprpc==0.1.16
-gevent==1.4.0
+mprpc==0.1.17
+gevent==21.1.2
+sqlalchemy
+colorama
+alembic

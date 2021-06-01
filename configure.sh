@@ -145,51 +145,51 @@ function no_salt_install()
 	# 		'libx11-6', 'libx11-xcb1', 'libxcb1', 'libxcursor1', 'libxdamage1', 'libxext6', 'libxfixes3', 'libxi6', 'libxrandr2', 'libxrender1',
 	# 		'libxss1', 'libxtst6', 'libnss3'],
 
-	sudo DEBIAN_FRONTEND=noninteractive build-essential -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive locales -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive git -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libfontconfig -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive wget -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive htop -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxml2 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxslt1-dev -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive python3-dev -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive python3-dbg -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive python3-distutils -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libz-dev -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive curl -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive screen -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libasound2 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libatk1.0-0 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libc6 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libcairo2 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libcups2 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libdbus-1-3 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libexpat1 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libfontconfig1 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libgcc1 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libgconf-2-4 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libgdk-pixbuf2.0-0 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libglib2.0-0 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libgtk-3-0 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libnspr4 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libpango-1.0-0 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libpangocairo-1.0-0 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libstdc++6 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libx11-6 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libx11-xcb1 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxcb1 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxcursor1 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxdamage1 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxext6 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxfixes3 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxi6 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxrandr2 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxrender1 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxss1 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libxtst6 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive libnss3 -yqqq
-	sudo DEBIAN_FRONTEND=noninteractive xvfb -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install locales -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libfontconfig -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install wget -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install htop -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxml2 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxslt1-dev -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install python3-dev -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install python3-dbg -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install python3-distutils -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libz-dev -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install curl -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install screen -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libasound2 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libatk1.0-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libc6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libcairo2 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libcups2 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libdbus-1-3 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libexpat1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libfontconfig1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libgcc1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libgconf-2-4 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libgdk-pixbuf2.0-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libglib2.0-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libgtk-3-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libnspr4 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libpango-1.0-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libpangocairo-1.0-0 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libstdc++6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libx11-6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libx11-xcb1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxcb1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxcursor1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxdamage1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxext6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxfixes3 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxi6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxrandr2 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxrender1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxss1 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libxtst6 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libnss3 -yqqq
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install xvfb -yqqq
 
 	# Adblocking. Lower the chrome cpu costs decently
 	# So long hosts files cause things to explode, so we turn it off.
@@ -248,7 +248,7 @@ function do_remote_install() {
 
 		# Needed for chromedriver
 		sudo DEBIAN_FRONTEND=noninteractive apt-get install libnss3 -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install libgconf2-4 -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libgconf-2-4 -yqqq
 
 		# 16.04 phantomjs apt package is fucked, crashes on start.
 
@@ -315,7 +315,7 @@ function go_local_install() {
 
 		# Needed for chromedriver
 		sudo DEBIAN_FRONTEND=noninteractive apt-get install libnss3 -yqqq
-		sudo DEBIAN_FRONTEND=noninteractive apt-get install libgconf2-4 -yqqq
+		sudo DEBIAN_FRONTEND=noninteractive apt-get install libgconf-2-4 -yqqq
 
 		setup_headless_chrome
 
@@ -413,7 +413,6 @@ function go() {
 	else
 		do_remote_install
 		chrome_postinstall_remote
-
 		install_start_unit_file
 
 	fi
