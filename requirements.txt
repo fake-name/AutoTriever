@@ -29,7 +29,7 @@ webrequest==0.0.78
 
 psutil==5.8.0
 
-netifaces==0.10.9
+netifaces==0.11.0
 cloudscraper==1.2.48
 
 ## Testing requirements:
