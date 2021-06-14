@@ -18,7 +18,7 @@ beautifulsoup4==4.9.3
 cchardet==2.1.7
 colorama==0.4.4
 selenium==3.141.0
-Faker==8.4.0
+Faker==8.7.0
 lxml==4.6.3
 cachetools==4.2.2
 pytz==2021.1
