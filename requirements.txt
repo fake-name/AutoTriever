@@ -26,6 +26,7 @@ feedgen==0.9.0
 feedparser==6.0.2
 webrequest==0.0.78
 
+msgpack-python
 
 psutil==5.8.0
 
