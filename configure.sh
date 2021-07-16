@@ -377,6 +377,7 @@ function install_start_unit_file() {
 		echo "Type=simple"                | sudo tee -a "/etc/systemd/system/rwpscraper.service"
 		echo "RestartSec=10"              | sudo tee -a "/etc/systemd/system/rwpscraper.service"
 		echo "Restart=always"             | sudo tee -a "/etc/systemd/system/rwpscraper.service"
+		echo "StartLimitIntervalSec=0"    | sudo tee -a "/etc/systemd/system/rwpscraper.service"
 		echo "ExecStart=/scraper/run.sh"  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
 		echo ""                           | sudo tee -a "/etc/systemd/system/rwpscraper.service"
 		echo "[Install]"                  | sudo tee -a "/etc/systemd/system/rwpscraper.service"
