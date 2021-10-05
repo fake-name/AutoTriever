@@ -1,6 +1,7 @@
 
 
 from . import NuJob
+from . import SHJob
 
 def minutes(count):
 	return count * 60
@@ -12,4 +13,5 @@ def days(count):
 
 JOBS = [
 	(NuJob.NuMonitor,            "NuJob",            minutes(45)),
+	(SHJob.SHMonitor,            "SHJob",            minutes(20)),
 ]

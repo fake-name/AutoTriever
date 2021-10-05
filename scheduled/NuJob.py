@@ -84,6 +84,7 @@ class NuMonitor():
 			content, _name, _mime, url = self.wg.getFileNameMimeUrl(have.outbound_wrapper, addlHeaders={'Referer': have.referrer})
 			if url.startswith("https://www.novelupdates.com/extnu/"):
 				raise RuntimeError("Failure when extracting NU referrer!")
+
 			pg_title = title_from_html(content)
 
 			have.actual_target    = url
@@ -97,6 +98,10 @@ class NuMonitor():
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
 		except urllib.error.URLError:
+			self.log.info("URL '%s' failed to resolve (TL Group: %s. Series %s, chap: %s)", have.outbound_wrapper, have.groupinfo, have.seriesname, have.releaseinfo)
+			for line in traceback.format_exc().split("\n"):
+				self.log.error(line)
+		except RuntimeError:
 			self.log.info("URL '%s' failed to resolve (TL Group: %s. Series %s, chap: %s)", have.outbound_wrapper, have.groupinfo, have.seriesname, have.releaseinfo)
 			for line in traceback.format_exc().split("\n"):
 				self.log.error(line)
