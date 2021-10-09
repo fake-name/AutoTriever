@@ -195,7 +195,7 @@ class VpsHerder(object):
 			'private_networking' : False,
 			'location' : place,
 
-			'script'             : fqscript,
+			# 'script'             : fqscript,
 		}
 
 		return provider, kwargs
@@ -234,7 +234,8 @@ class VpsHerder(object):
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			'image'              : 'Ubuntu 18.04 x64',
+			# 'image'              : 'Ubuntu 18.04 x64',
+			'image'              : 270,  # ID for Ubuntu 18.04 x64
 			'private_networking' : False,
 			'size'               : planid,
 			'location'           : place,
@@ -421,7 +422,7 @@ class VpsHerder(object):
 				self.generate_do_conf,
 				self.generate_do_conf,
 				# self.generate_vultr_conf,
-				self.generate_vultr_conf,
+				# self.generate_vultr_conf,
 				self.generate_linode_conf,
 				self.generate_linode_conf,
 				# self.generate_gce_conf,
@@ -775,6 +776,7 @@ class VpsHerder(object):
 	################################################################################################
 
 	def list_nodes(self):
+		print("List nodes!")
 
 		sources = [
 			'digitalocean',
@@ -985,7 +987,7 @@ def go():
 		cmd_args.remove("-v")
 		logSetup.initLogging(logLevel=logging.DEBUG)
 	else:
-		logSetup.initLogging()
+		logSetup.initLogging(logLevel=logging.INFO)
 
 	fmap = {
 
