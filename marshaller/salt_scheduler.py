@@ -313,7 +313,7 @@ def run():
 		# If there's no thread, create it.
 		if proc is None:
 			print("Thread is none. Creating.")
-			proc = multiprocessing.Process(target=run_scheduler)
+			proc = multiprocessing.Process(target=run_scheduler, daemon=True)
 			proc.start()
 			CREATE_WATCHDOG.value = 0
 			last_zero = time.time()
@@ -327,6 +327,8 @@ def run():
 
 		print("\rWatchdog looping %s! Value: %s, last update: %s/%s ago, thread: %s->%s" % (loops, CREATE_WATCHDOG.value, int(time.time() - last_zero), new_create_timeout_secs, state, proc), end="")
 		loops += 1
+
+		multiprocessing.active_children()
 
 		# If the worker has touched the watchdog flag, capture the
 		# time that happened.
@@ -342,8 +344,9 @@ def run():
 			try:
 				while proc.is_alive():
 					print("Trying!")
-					proc.terminate()
-					proc.join(timeout=1.0)
+					proc.kill()
+					proc.join()
+
 			except Exception:
 				print("Exception in terminate!")
 				traceback.print_exc()
