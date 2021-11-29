@@ -1,6 +1,6 @@
 
 mprpc==0.1.17
-gevent==21.1.2
+gevent==21.8.0
 sqlalchemy
 colorama
 alembic
