@@ -14,7 +14,7 @@ netdisco==3.0.0
 zeroconf==0.37.0
 
 APScheduler==3.8.1
-beautifulsoup4==4.9.3
+beautifulsoup4==4.10.0
 cchardet==2.1.7
 colorama==0.4.4
 selenium==3.141.0
