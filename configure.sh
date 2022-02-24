@@ -263,7 +263,8 @@ function do_remote_install() {
 
 		echo "Creating venv."
 		python3 -m venv --without-pip venv
-		wget https://bootstrap.pypa.io/get-pip.py
+		wget https://bootstrap.pypa.io/pip/3.6/get-pip.py
+		# wget https://bootstrap.pypa.io/get-pip.py
 		./venv/bin/python3 get-pip.py --force-reinstall
 		./venv/bin/pip install six
 		# ./venv/bin/pip install cython
