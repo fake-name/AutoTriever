@@ -28,7 +28,7 @@ webrequest==0.0.78
 
 msgpack-python==0.5.6
 
-psutil==5.8.0
+psutil==5.9.0
 
 netifaces==0.10.9
 cloudscraper==1.2.48
