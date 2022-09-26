@@ -17,7 +17,7 @@ APScheduler==3.9.1
 beautifulsoup4==4.11.1
 cchardet==2.1.7
 colorama==0.4.5
-selenium==3.141.0
+selenium==4.4.3
 Faker==8.4.0
 lxml==4.6.3
 cachetools==4.2.2
