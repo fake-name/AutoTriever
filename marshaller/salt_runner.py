@@ -96,8 +96,8 @@ SETTINGS_BASE = {
 class VmInitError(RuntimeError):
 	pass
 
-dirmake_ssh_oneliner = 'python -c \'import os.path, sys, os; os.makedirs(".ssh/") if not os.path.exists(".ssh/") else None; print("Dir exists and is dir: ", os.path.isdir(".ssh/"));sys.exit(1 if os.path.isdir(".ssh/") else 0);\''
-dirmake_oneliner = 'python -c \'import os.path, sys, os; os.makedirs("/scraper") if not os.path.exists("/scraper") else None; print("Dir exists and is dir: ", os.path.isdir("/scraper"));sys.exit(1 if os.path.isdir("/scraper") else 0);\''
+dirmake_ssh_oneliner = 'python3 -c \'import os.path, sys, os; os.makedirs(".ssh/") if not os.path.exists(".ssh/") else None; print("Dir exists and is dir: ", os.path.isdir(".ssh/"));sys.exit(1 if os.path.isdir(".ssh/") else 0);\''
+dirmake_oneliner = 'python3 -c \'import os.path, sys, os; os.makedirs("/scraper") if not os.path.exists("/scraper") else None; print("Dir exists and is dir: ", os.path.isdir("/scraper"));sys.exit(1 if os.path.isdir("/scraper") else 0);\''
 
 class VpsHerder(object):
 
@@ -138,7 +138,7 @@ class VpsHerder(object):
 		locs = self.cc.list_locations(provider='digitalocean')['digitalocean']['digitalocean']
 		images = self.cc.list_images(provider='digitalocean')['digitalocean']['digitalocean']
 
-		im = images['20.04 (LTS) x64']
+		im = images['18.04 (LTS) x64']
 
 		self.log.info("Found %s sizes, %s locations", len(sizes), len(locs))
 		items = []
@@ -195,7 +195,7 @@ class VpsHerder(object):
 			'private_networking' : False,
 			'location' : place,
 
-			'script'             : fqscript,
+			# 'script'             : fqscript,
 		}
 
 		return provider, kwargs
@@ -234,12 +234,13 @@ class VpsHerder(object):
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			'image'              : 'Ubuntu 20.04 x64',
+			# 'image'              : 'Ubuntu 18.04 x64',
+			'image'              : 270,  # ID for Ubuntu 18.04 x64
 			'private_networking' : False,
 			'size'               : planid,
 			'location'           : place,
 
-			'script'             : fqscript,
+			# 'script'             : fqscript,
 			# 'script_args'        : "-D",
 		}
 
@@ -278,16 +279,16 @@ class VpsHerder(object):
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 20.04 x64',
+			# 'image'              : 'Ubuntu 18.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
 
 			'size'     : random.choice(plans),
-			'image'    : u'linode/ubuntu20.04',
+			'image'    : u'linode/ubuntu18.04',
 			'location' : random.choice(places),
 
-			'script'             : fqscript,
+			# 'script'             : fqscript,
 			# 'script_args'        : "-D",
 
 			'password'           : gen_random_string(32),
@@ -313,7 +314,7 @@ class VpsHerder(object):
 
 		image = None
 		for key in images:
-			if key.startswith('ubuntu-2004-focal-'):
+			if key.startswith('ubuntu-1804-xenial-'):
 				image = key
 
 		# pprint.pprint(sizes)
@@ -340,14 +341,14 @@ class VpsHerder(object):
 
 		image, size, places = self.get_gce_5_bux_meta()
 		if not image:
-			raise VmInitError("No Ubuntu 20.04 image found!")
+			raise VmInitError("No Ubuntu 18.04 image found!")
 
 		scriptname = "bootstrap-salt-delay.sh"
 		scriptdir  = os.path.dirname(os.path.realpath(__file__))
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 20.04 x64',
+			# 'image'              : 'Ubuntu 18.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
@@ -356,7 +357,7 @@ class VpsHerder(object):
 			'image'    : image,
 			'location' : random.choice(places),
 
-			'script'             : fqscript,
+			# 'script'             : fqscript,
 			# 'script_args'        : "-D",
 
 			# I think the gce driver maps 'preemptible' to 'ex_preemptible'
@@ -391,16 +392,16 @@ class VpsHerder(object):
 		size, location = random.choice(opt_tups)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 20.04 x64',
+			# 'image'              : 'Ubuntu 18.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
 
 			'size'     : size,
-			'image'    : u'Ubuntu Focal (20.04 latest)',
+			'image'    : u'Ubuntu Xenial (18.04 latest)',
 			'location' : location,
 
-			'script'             : fqscript,
+			# 'script'             : fqscript,
 			# 'script_args'        : "-D",
 
 			# 'password'           : gen_random_string(32),
@@ -421,7 +422,7 @@ class VpsHerder(object):
 				self.generate_do_conf,
 				self.generate_do_conf,
 				# self.generate_vultr_conf,
-				self.generate_vultr_conf,
+				# self.generate_vultr_conf,
 				self.generate_linode_conf,
 				self.generate_linode_conf,
 				# self.generate_gce_conf,
@@ -775,6 +776,7 @@ class VpsHerder(object):
 	################################################################################################
 
 	def list_nodes(self):
+		print("List nodes!")
 
 		sources = [
 			'digitalocean',
@@ -985,7 +987,7 @@ def go():
 		cmd_args.remove("-v")
 		logSetup.initLogging(logLevel=logging.DEBUG)
 	else:
-		logSetup.initLogging()
+		logSetup.initLogging(logLevel=logging.INFO)
 
 	fmap = {
 

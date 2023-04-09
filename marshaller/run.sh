@@ -9,6 +9,7 @@ fi
 until python3 ./salt_scheduler.py; do
 	echo "Server 'python3 ./salt_scheduler.py' crashed with exit code $?.  Respawning.." >&2
 	killall -r "python3"
+	sudo killall python3
 	sleep 30
 done
 

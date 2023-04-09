@@ -5,6 +5,8 @@ import datetime
 import sys
 import traceback
 import multiprocessing
+import pystuck
+
 import pytz
 from apscheduler.schedulers.blocking import BlockingScheduler
 import logSetup
@@ -311,7 +313,7 @@ def run():
 		# If there's no thread, create it.
 		if proc is None:
 			print("Thread is none. Creating.")
-			proc = multiprocessing.Process(target=run_scheduler, daemon=True)
+			proc = multiprocessing.Process(target=run_scheduler)
 			proc.start()
 			CREATE_WATCHDOG.value = 0
 			last_zero = time.time()
@@ -357,12 +359,26 @@ def run():
 
 		time.sleep(1)
 
+def test():
+	interface = salt_runner.VpsHerder()
+
+	for x in range(10):
+
+		vm_names = interface.list_nodes()
+		print("Loop ", x)
+		for provider, worker in vm_names:
+
+			print("	%s -> %s" % (provider, worker))
 
 if __name__ == '__main__':
 	logSetup.initLogging(1)
 
+	pystuck.run_server()
+
 	if 'refresh' in sys.argv:
 		refresh()
+	elif 'test_loop' in sys.argv:
+		test()
 	else:
 		run()
 
