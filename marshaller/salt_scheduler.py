@@ -313,7 +313,7 @@ def run():
 		# If there's no thread, create it.
 		if proc is None:
 			print("Thread is none. Creating.")
-			proc = multiprocessing.Process(target=run_scheduler, daemon=True)
+			proc = multiprocessing.Process(target=run_scheduler)
 			proc.start()
 			CREATE_WATCHDOG.value = 0
 			last_zero = time.time()

@@ -96,8 +96,8 @@ SETTINGS_BASE = {
 class VmInitError(RuntimeError):
 	pass
 
-dirmake_ssh_oneliner = 'python -c \'import os.path, sys, os; os.makedirs(".ssh/") if not os.path.exists(".ssh/") else None; print("Dir exists and is dir: ", os.path.isdir(".ssh/"));sys.exit(1 if os.path.isdir(".ssh/") else 0);\''
-dirmake_oneliner = 'python -c \'import os.path, sys, os; os.makedirs("/scraper") if not os.path.exists("/scraper") else None; print("Dir exists and is dir: ", os.path.isdir("/scraper"));sys.exit(1 if os.path.isdir("/scraper") else 0);\''
+dirmake_ssh_oneliner = 'python3 -c \'import os.path, sys, os; os.makedirs(".ssh/") if not os.path.exists(".ssh/") else None; print("Dir exists and is dir: ", os.path.isdir(".ssh/"));sys.exit(1 if os.path.isdir(".ssh/") else 0);\''
+dirmake_oneliner = 'python3 -c \'import os.path, sys, os; os.makedirs("/scraper") if not os.path.exists("/scraper") else None; print("Dir exists and is dir: ", os.path.isdir("/scraper"));sys.exit(1 if os.path.isdir("/scraper") else 0);\''
 
 class VpsHerder(object):
 
@@ -240,7 +240,7 @@ class VpsHerder(object):
 			'size'               : planid,
 			'location'           : place,
 
-			'script'             : fqscript,
+			# 'script'             : fqscript,
 			# 'script_args'        : "-D",
 		}
 
@@ -288,7 +288,7 @@ class VpsHerder(object):
 			'image'    : u'linode/ubuntu18.04',
 			'location' : random.choice(places),
 
-			'script'             : fqscript,
+			# 'script'             : fqscript,
 			# 'script_args'        : "-D",
 
 			'password'           : gen_random_string(32),
@@ -357,7 +357,7 @@ class VpsHerder(object):
 			'image'    : image,
 			'location' : random.choice(places),
 
-			'script'             : fqscript,
+			# 'script'             : fqscript,
 			# 'script_args'        : "-D",
 
 			# I think the gce driver maps 'preemptible' to 'ex_preemptible'
@@ -401,7 +401,7 @@ class VpsHerder(object):
 			'image'    : u'Ubuntu Xenial (18.04 latest)',
 			'location' : location,
 
-			'script'             : fqscript,
+			# 'script'             : fqscript,
 			# 'script_args'        : "-D",
 
 			# 'password'           : gen_random_string(32),
