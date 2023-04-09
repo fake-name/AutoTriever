@@ -33,7 +33,7 @@ REFETCH_INTERVAL = datetime.timedelta(days=5)
 FETCH_ATTEMPTS   = 3
 SINGLETON_WG     = WebRequest.WebGetRobust(use_global_tab_pool=False)
 
-HOMEPAGE_URL = "https://www.scribblehub.com/rssfeed.php?type=main"
+HOMEPAGE_URL = "https://www.scribblehub.com/feed/"
 
 class SHMonitor():
 	def __init__(self):

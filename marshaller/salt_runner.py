@@ -138,7 +138,7 @@ class VpsHerder(object):
 		locs = self.cc.list_locations(provider='digitalocean')['digitalocean']['digitalocean']
 		images = self.cc.list_images(provider='digitalocean')['digitalocean']['digitalocean']
 
-		im = images['18.04 (LTS) x64']
+		im = images['20.04 (LTS) x64']
 
 		self.log.info("Found %s sizes, %s locations", len(sizes), len(locs))
 		items = []
@@ -234,7 +234,7 @@ class VpsHerder(object):
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			'image'              : 'Ubuntu 18.04 x64',
+			'image'              : 'Ubuntu 20.04 x64',
 			'private_networking' : False,
 			'size'               : planid,
 			'location'           : place,
@@ -278,13 +278,13 @@ class VpsHerder(object):
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 18.04 x64',
+			# 'image'              : 'Ubuntu 20.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
 
 			'size'     : random.choice(plans),
-			'image'    : u'linode/ubuntu18.04',
+			'image'    : u'linode/ubuntu20.04',
 			'location' : random.choice(places),
 
 			'script'             : fqscript,
@@ -313,7 +313,7 @@ class VpsHerder(object):
 
 		image = None
 		for key in images:
-			if key.startswith('ubuntu-1804-xenial-'):
+			if key.startswith('ubuntu-2004-focal-'):
 				image = key
 
 		# pprint.pprint(sizes)
@@ -340,14 +340,14 @@ class VpsHerder(object):
 
 		image, size, places = self.get_gce_5_bux_meta()
 		if not image:
-			raise VmInitError("No Ubuntu 18.04 image found!")
+			raise VmInitError("No Ubuntu 20.04 image found!")
 
 		scriptname = "bootstrap-salt-delay.sh"
 		scriptdir  = os.path.dirname(os.path.realpath(__file__))
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 18.04 x64',
+			# 'image'              : 'Ubuntu 20.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
@@ -391,13 +391,13 @@ class VpsHerder(object):
 		size, location = random.choice(opt_tups)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 18.04 x64',
+			# 'image'              : 'Ubuntu 20.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
 
 			'size'     : size,
-			'image'    : u'Ubuntu Xenial (18.04 latest)',
+			'image'    : u'Ubuntu Focal (20.04 latest)',
 			'location' : location,
 
 			'script'             : fqscript,
