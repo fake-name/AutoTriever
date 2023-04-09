@@ -138,7 +138,7 @@ class VpsHerder(object):
 		locs = self.cc.list_locations(provider='digitalocean')['digitalocean']['digitalocean']
 		images = self.cc.list_images(provider='digitalocean')['digitalocean']['digitalocean']
 
-		im = images['18.04 (LTS) x64']
+		im = images['22.04 (LTS) x64']
 
 		self.log.info("Found %s sizes, %s locations", len(sizes), len(locs))
 		items = []
@@ -189,7 +189,7 @@ class VpsHerder(object):
 
 		provider = "digitalocean"
 		kwargs = {
-			'image': 'ubuntu-18-04-x64',
+			'image': 'ubuntu-20-04-x64',
 			'size': planid,
 			# 'vm_size': planid,
 			'private_networking' : False,
@@ -234,8 +234,8 @@ class VpsHerder(object):
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 18.04 x64',
-			'image'              : 270,  # ID for Ubuntu 18.04 x64
+			# 'image'              : 'Ubuntu 22.04 x64',
+			'image'              : 1743,  # ID for Ubuntu 22.04 x64
 			'private_networking' : False,
 			'size'               : planid,
 			'location'           : place,
@@ -279,13 +279,13 @@ class VpsHerder(object):
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 18.04 x64',
+			# 'image'              : 'Ubuntu 22.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
 
 			'size'     : random.choice(plans),
-			'image'    : u'linode/ubuntu18.04',
+			'image'    : u'linode/ubuntu22.04',
 			'location' : random.choice(places),
 
 			# 'script'             : fqscript,
@@ -341,14 +341,14 @@ class VpsHerder(object):
 
 		image, size, places = self.get_gce_5_bux_meta()
 		if not image:
-			raise VmInitError("No Ubuntu 18.04 image found!")
+			raise VmInitError("No Ubuntu 22.04 image found!")
 
 		scriptname = "bootstrap-salt-delay.sh"
 		scriptdir  = os.path.dirname(os.path.realpath(__file__))
 		fqscript = os.path.join(scriptdir, scriptname)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 18.04 x64',
+			# 'image'              : 'Ubuntu 22.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
@@ -392,13 +392,13 @@ class VpsHerder(object):
 		size, location = random.choice(opt_tups)
 
 		kwargs = {
-			# 'image'              : 'Ubuntu 18.04 x64',
+			# 'image'              : 'Ubuntu 22.04 x64',
 			# 'private_networking' : False,
 			# 'size'               : planid,
 			# 'location'           : random.choice(places),
 
 			'size'     : size,
-			'image'    : u'Ubuntu Xenial (18.04 latest)',
+			'image'    : u'Ubuntu Xenial (22.04 latest)',
 			'location' : location,
 
 			# 'script'             : fqscript,
