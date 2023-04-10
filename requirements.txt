@@ -37,7 +37,7 @@ sqlalchemy_utils==0.40.0
 ftfy==6.1.1
 semantic==1.0.3
 hiredis==2.2.2
-redis
+redis==4.5.4
 # vmprof
 
 setproctitle
