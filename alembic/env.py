@@ -24,8 +24,9 @@ fileConfig(config.config_file_name)
 # target_metadata = mymodel.Base.metadata
 
 from scheduled import model
+import settings
 
-context.config.set_main_option('sqlalchemy.url', model.SQLALCHEMY_DATABASE_URI)
+context.config.set_main_option('sqlalchemy.url', settings.SQLALCHEMY_DATABASE_URI)
 
 base = model.Base
 target_metadata = [model.Base.metadata]
