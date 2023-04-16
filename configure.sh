@@ -392,16 +392,37 @@ function install_start_unit_file() {
 
 }
 
+function do_submodule_init() {
+	git submodule init
+	git submodule update
+
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install libunwind-dev -yqqq
+
+	sudo pip install --upgrade -r scheduled/NuUpdate/requirements.txt
+
+	# I need to get rid of this dependency.
+	sudo pip install --upgrade cloudscraper==1.2.48
+	sudo pip install --upgrade markupsafe==2.0.1
+	sudo pip install --upgrade itsdangerous==2.0.1
+
+}
+
 
 function go() {
 
 	is_local=false
+	include_submodule=false
 
 	for i in "$@" ; do
 		echo "Var: $i"
 		if [[ $i == "include_local" ]] ; then
 			echo "Local!"
 			is_local=true
+			break
+		fi
+		if [[ $i == "include_submodule" ]] ; then
+			echo "Submodule!"
+			include_submodule=true
 			break
 		fi
 	done
@@ -416,8 +437,12 @@ function go() {
 		do_remote_install
 		chrome_postinstall_remote
 		install_start_unit_file
-
 	fi
+
+	if [ "$include_submodule" = true ] ; then
+		do_submodule_init
+	fi
+
 
 	echo "Setup OK! System is configured for launch"
 
