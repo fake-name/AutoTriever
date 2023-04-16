@@ -20,13 +20,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import sqlalchemy.exc
 
+import settings
 
-
-SQLALCHEMY_DATABASE_URI = 'sqlite:///db_sqlite.db'
 
 Base = declarative_base()
 
-engine = create_engine(SQLALCHEMY_DATABASE_URI)
+engine = create_engine(settings.SQLALCHEMY_DATABASE_URI)
 
 Session = scoped_session(sessionmaker())
 Session.configure(bind=engine)

@@ -15,7 +15,9 @@
 
 	"captcha_solvers" : {
 
-	}
+	},
+
+	"sqlalchemy_db_uri" : null,
 
 
 }
