@@ -2,5 +2,5 @@
 mprpc==0.1.17
 gevent==23.7.0
 sqlalchemy==2.0.20
-colorama
+colorama==0.4.6
 alembic
