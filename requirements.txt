@@ -19,7 +19,7 @@ cchardet==2.1.7
 colorama==0.4.6
 selenium==4.16.0
 Faker==21.0.0
-lxml==4.9.2
+lxml==4.9.4
 cachetools==5.2.1
 pytz==2022.7
 feedgen==0.9.0
