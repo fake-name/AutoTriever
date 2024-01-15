@@ -3,4 +3,4 @@ mprpc==0.1.17
 gevent==23.9.1
 sqlalchemy==2.0.25
 colorama==0.4.6
-alembic
+alembic==1.13.1
