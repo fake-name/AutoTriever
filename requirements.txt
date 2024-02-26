@@ -45,7 +45,7 @@ xxhash==3.4.1
 cssutils==2.9.0
 statsd==4.0.1
 influxdb==5.3.1
-parsedatetime
+parsedatetime==2.6
 bleach
 
 git+https://github.com/fake-name/unshortenit.git
