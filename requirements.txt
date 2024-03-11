@@ -34,7 +34,7 @@ netifaces==0.11.0
 cloudscraper==1.2.71
 
 sqlalchemy_utils==0.41.1
-ftfy
+ftfy==6.1.3
 semantic
 hiredis
 redis
