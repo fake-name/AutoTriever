@@ -21,7 +21,7 @@ selenium==4.20.0
 Faker==25.0.1
 lxml==5.2.1
 cachetools==5.3.3
-pytz==2022.7
+pytz==2024.1
 feedgen==0.9.0
 feedparser==6.0.10
 webrequest==0.0.78
