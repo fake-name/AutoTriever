@@ -42,7 +42,7 @@ redis==5.0.8
 
 setproctitle==1.3.3
 xxhash==3.4.1
-cssutils
+cssutils==2.11.1
 statsd
 influxdb
 parsedatetime
