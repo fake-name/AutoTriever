@@ -41,7 +41,7 @@ redis==5.2.1
 # vmprof
 
 setproctitle==1.3.5
-xxhash
+xxhash==3.5.0
 cssutils
 statsd
 influxdb
