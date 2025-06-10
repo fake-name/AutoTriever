@@ -23,7 +23,7 @@ lxml==5.4.0
 cachetools==6.0.0
 pytz==2025.2
 feedgen==1.0.0
-feedparser==6.0.10
+feedparser==6.0.11
 webrequest==0.0.78
 
 msgpack-python
