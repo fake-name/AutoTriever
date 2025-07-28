@@ -40,7 +40,7 @@ hiredis==3.2.1
 redis==6.2.0
 # vmprof
 
-setproctitle
+setproctitle==1.3.6
 xxhash
 cssutils
 statsd
