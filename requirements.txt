@@ -36,7 +36,7 @@ cloudscraper==1.2.71
 sqlalchemy_utils==0.42.0
 ftfy==6.3.1
 semantic==1.0.3
-hiredis
+hiredis==3.2.1
 redis
 # vmprof
 
