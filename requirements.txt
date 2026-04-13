@@ -22,7 +22,7 @@ Faker==40.13.0
 lxml==6.0.4
 cachetools==7.0.5
 pytz==2026.1.post1
-feedgen==0.9.0
+feedgen==1.0.0
 feedparser==6.0.10
 webrequest==0.0.78
 
