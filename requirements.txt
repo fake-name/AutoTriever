@@ -4,7 +4,7 @@ requests==2.33.1
 
 astor>=0.8.1
 
-ChromeController==0.3.26
+ChromeController==0.3.32
 
 PySocks==1.7.1
 dill==0.3.6
