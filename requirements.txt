@@ -24,7 +24,7 @@ cachetools==7.1.2
 pytz==2026.2
 feedgen==1.0.0
 feedparser==6.0.12
-webrequest==0.0.78
+webrequest==0.1.0
 
 msgpack-python
 
