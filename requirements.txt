@@ -43,7 +43,7 @@ redis==8.1.0
 setproctitle==1.3.7
 xxhash==4.0.1
 cssutils==2.15.0
-statsd
+statsd==4.0.1
 influxdb
 parsedatetime
 bleach
