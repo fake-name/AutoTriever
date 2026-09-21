@@ -15,7 +15,7 @@ zeroconf==0.151.3
 
 APScheduler==3.11.3
 beautifulsoup4==4.15.0
-cchardet==2.1.7
+cchardet==2.3.0
 colorama==0.4.6
 selenium==4.7.2
 Faker==15.3.4
