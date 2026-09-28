@@ -33,7 +33,7 @@ psutil==7.2.2
 netifaces==0.11.0
 cloudscraper==1.2.71
 
-sqlalchemy_utils
+sqlalchemy_utils==0.42.1
 ftfy
 semantic
 hiredis
