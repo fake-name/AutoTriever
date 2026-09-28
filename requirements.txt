@@ -8,7 +8,7 @@ ChromeController==0.3.32
 
 PySocks==1.7.1
 dill==0.4.1
-rabbitpy==2.0.1
+rabbitpy==3.0.2
 
 netdisco==3.0.0
 zeroconf==0.47.1
